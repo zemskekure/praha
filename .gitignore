@@ -1,0 +1,4 @@
+trips/*/.cache/
+trips/*/art/raw/
+trips/*/art/ledger.json
+node_modules/
