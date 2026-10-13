@@ -50,7 +50,9 @@
   const SUN = new THREE.Vector3(-0.55, 0.62, 0.56).normalize();   // late afternoon, from the south-west
   scene.add(new THREE.HemisphereLight(0xdfe9f2, 0x8a7d66, 0.62));
   const sun = new THREE.DirectionalLight(0xfff1d8, 0.78);
-  sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0006;
+  const LITE = Math.min(innerWidth, innerHeight) < 700 || (navigator.hardwareConcurrency || 8) <= 4;   // phones: smaller shadows, chunkier pixels
+  const SMAP = LITE ? 1024 : 2048;
+  sun.castShadow = true; sun.shadow.mapSize.set(SMAP, SMAP); sun.shadow.bias = -0.0006;
   scene.add(sun, sun.target);
 
   // Every material: ordered dither + posterise at the end, so the whole frame shares one pixel palette.
@@ -502,7 +504,7 @@
 
   // ---------------------------------------------------------------- size: a low-resolution frame, scaled up with hard pixels
   function resize() {
-    const px = Math.max(2, Math.round(innerHeight / 270)), w = Math.ceil(innerWidth / px), h = Math.ceil(innerHeight / px);
+    const px = Math.max(2, Math.round(innerHeight / (LITE ? 220 : 270))), w = Math.ceil(innerWidth / px), h = Math.ceil(innerHeight / px);
     renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
   }
   addEventListener('resize', resize); resize();
@@ -524,7 +526,7 @@
     if (Math.abs(camera.fov - cur.fov) > 0.05) { camera.fov = cur.fov; camera.updateProjectionMatrix(); }
     sky.position.copy(camera.position); sky.material.uniforms.time.value = now / 1000;
     // The sun's shadow box follows the camera, snapped to its texels so shadows do not shimmer.
-    const R = V.shadow, focus = new THREE.Vector3().lerpVectors(camera.position, look, 0.5), texel = 2 * R / 2048;
+    const R = V.shadow, focus = new THREE.Vector3().lerpVectors(camera.position, look, 0.5), texel = 2 * R / SMAP;
     focus.x = Math.round(focus.x / texel) * texel; focus.z = Math.round(focus.z / texel) * texel;
     const sc = sun.shadow.camera; if (sc.right !== R) { sc.left = -R; sc.right = R; sc.top = R; sc.bottom = -R; sc.near = 1; sc.far = 6000; sc.updateProjectionMatrix(); }
     sun.target.position.copy(focus); sun.position.copy(focus).addScaledVector(SUN, 2500);

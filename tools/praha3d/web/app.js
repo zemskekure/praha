@@ -458,7 +458,9 @@
     for (let q = 2; q < pts.length - 2; q += 6) {
       if (pts[q][2]) continue;
       const a = pts[q - 1], b = pts[q + 1], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1;
-      for (const side of [1, -1]) lamps.push([pts[q][0] - dz / l * 7.5 * side, pts[q][1] + dx / l * 7.5 * side, Math.atan2(dx, dz) + (side > 0 ? Math.PI / 2 : -Math.PI / 2)]);
+      for (const side of [1, -1]) { const lx = pts[q][0] - dz / l * 7.5 * side, lz = pts[q][1] + dx / l * 7.5 * side, gi = Math.round((lx - N.x0) / N.cell), gj = Math.round((lz - N.z0) / N.cell);
+        if (gi >= 0 && gj >= 0 && gi < GN.w && gj < GN.h && wmask[(gj * GN.w + gi) * 4 + 3] > 100) continue;   // not in the river
+        lamps.push([pts[q][0] - dz / l * 7.5 * side, pts[q][1] + dx / l * 7.5 * side, Math.atan2(dx, dz) + (side > 0 ? Math.PI / 2 : -Math.PI / 2)]); }
     }
     const post = new THREE.BoxGeometry(0.22, 7, 0.22); post.translate(0, 3.5, 0);
     const arm = new THREE.BoxGeometry(0.16, 0.16, 1.6); arm.translate(0, 6.9, 0.7);
