@@ -10,6 +10,7 @@ set -euo pipefail
 S=.claude/skills/pixel-path/scripts
 TRIP=trips/prague
 LEVEL=${LEVEL:-moderate}
+export NODE_USE_ENV_PROXY=1   # Node fetch ignores HTTPS_PROXY without this (cloud sessions)
 export PIXEL_PATH_USER_AGENT=${PIXEL_PATH_USER_AGENT:-"praha-pixel-path/1.0 (github.com/zemskekure/praha)"}
 
 case "${1:-}" in
