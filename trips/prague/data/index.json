@@ -1,0 +1,310 @@
+{
+  "title": "Praha, Česko to Praha, Česko",
+  "from": "Praha, Česko",
+  "to": "Praha, Česko",
+  "stops": [
+    {
+      "name": "Praha, Česko",
+      "at": 0
+    },
+    {
+      "name": "Praha, Česko",
+      "at": 4366
+    },
+    {
+      "name": "Praha, Česko",
+      "at": 7595
+    }
+  ],
+  "total": 7595,
+  "chunk": 10000,
+  "step": 10,
+  "count": 1,
+  "country": "cz",
+  "drive": "right",
+  "units": "km",
+  "centre": "white",
+  "dry": false,
+  "line": [
+    1439747,
+    5008856,
+    -907,
+    -98,
+    -31,
+    177,
+    121,
+    321,
+    732,
+    89,
+    188,
+    -27,
+    1012,
+    170,
+    79,
+    -38,
+    -18,
+    -88,
+    -285,
+    -44,
+    -23,
+    -38,
+    277,
+    -3,
+    111,
+    -275,
+    424,
+    -77,
+    132,
+    -55,
+    -218,
+    -440,
+    -41,
+    -265,
+    95,
+    -223,
+    34,
+    -214,
+    -51,
+    -196,
+    21,
+    -325,
+    101,
+    -454,
+    218,
+    19,
+    -8,
+    -57,
+    333,
+    -155,
+    -6,
+    -31,
+    -108,
+    15,
+    -13,
+    -40,
+    150,
+    -36,
+    76,
+    -62,
+    2,
+    -19,
+    -316,
+    37
+  ],
+  "places": [
+    [
+      1006,
+      "Střešovice",
+      1
+    ],
+    [
+      2620,
+      "Starý Bubeneč",
+      1
+    ],
+    [
+      4448,
+      "Staré Město",
+      1
+    ]
+  ],
+  "chunks": [
+    {
+      "c": 0,
+      "s0": 0,
+      "km": 7.6,
+      "land": {
+        "pave": 32,
+        "lawn": 24,
+        "grass": 18,
+        "lot": 0,
+        "forest": 3,
+        "farm": 14,
+        "water": 8
+      },
+      "types": {
+        "residential": 3170,
+        "commercial": 388,
+        "civic": 1814,
+        "shed": 132,
+        "yes": 1646,
+        "station": 34,
+        "farm": 168,
+        "industrial": 42,
+        "house": 306,
+        "church": 64
+      },
+      "built": 0.51,
+      "maxH": 83,
+      "cross": 45,
+      "places": [
+        "Hradčany",
+        "Bubeneč",
+        "Smíchov",
+        "Josefov",
+        "Staré Město",
+        "Břevnov"
+      ],
+      "perKm": [
+        {
+          "s0": 0,
+          "land": {
+            "pave": 59,
+            "lawn": 9,
+            "grass": 32,
+            "lot": 1
+          },
+          "types": {
+            "residential": 782,
+            "commercial": 14,
+            "civic": 480,
+            "shed": 32,
+            "yes": 446,
+            "station": 6,
+            "farm": 20
+          },
+          "maxH": 60
+        },
+        {
+          "s0": 1000,
+          "land": {
+            "forest": 8,
+            "grass": 47,
+            "lawn": 13,
+            "farm": 16,
+            "pave": 18
+          },
+          "types": {
+            "yes": 484,
+            "residential": 68,
+            "industrial": 18,
+            "house": 26,
+            "commercial": 36,
+            "farm": 148,
+            "civic": 96
+          },
+          "maxH": 37
+        },
+        {
+          "s0": 2000,
+          "land": {
+            "farm": 54,
+            "grass": 9,
+            "lawn": 23,
+            "pave": 3,
+            "forest": 12
+          },
+          "types": {
+            "civic": 60,
+            "yes": 24,
+            "shed": 26,
+            "residential": 34
+          },
+          "maxH": 35
+        },
+        {
+          "s0": 3000,
+          "land": {
+            "farm": 15,
+            "grass": 33,
+            "pave": 7,
+            "lawn": 26,
+            "water": 20
+          },
+          "types": {
+            "yes": 98,
+            "commercial": 104,
+            "residential": 154,
+            "shed": 20,
+            "station": 28,
+            "civic": 338,
+            "industrial": 4,
+            "house": 78
+          },
+          "maxH": 38
+        },
+        {
+          "s0": 4000,
+          "land": {
+            "grass": 5,
+            "lawn": 21,
+            "pave": 55,
+            "lot": 1,
+            "water": 20
+          },
+          "types": {
+            "residential": 430,
+            "civic": 300,
+            "yes": 418,
+            "church": 42,
+            "industrial": 10,
+            "commercial": 30,
+            "shed": 16
+          },
+          "maxH": 44
+        },
+        {
+          "s0": 5000,
+          "land": {
+            "lawn": 26,
+            "water": 24,
+            "grass": 1,
+            "pave": 43,
+            "farm": 8
+          },
+          "types": {
+            "yes": 94,
+            "residential": 570,
+            "civic": 98,
+            "house": 66,
+            "commercial": 72
+          },
+          "maxH": 46
+        },
+        {
+          "s0": 6000,
+          "land": {
+            "lawn": 38,
+            "pave": 59,
+            "grass": 3,
+            "farm": 1
+          },
+          "types": {
+            "residential": 1088,
+            "civic": 302,
+            "house": 136,
+            "industrial": 10,
+            "yes": 20,
+            "shed": 38,
+            "commercial": 42
+          },
+          "maxH": 34
+        },
+        {
+          "s0": 7000,
+          "land": {
+            "farm": 23,
+            "lawn": 53,
+            "pave": 7,
+            "grass": 18,
+            "forest": 1
+          },
+          "types": {
+            "yes": 62,
+            "residential": 44,
+            "commercial": 90,
+            "civic": 140,
+            "church": 22
+          },
+          "maxH": 83
+        }
+      ]
+    }
+  ],
+  "credits": [
+    "Map data © OpenStreetMap contributors (ODbL), openstreetmap.org/copyright",
+    "Route: OSRM (https://router.project-osrm.org, driving)",
+    "Elevation: Terrain Tiles (Mapzen/Tilezen on AWS Open Data; SRTM, GMTED, ETOPO1 and others)",
+    "Landmarks: Wikidata (CC0)"
+  ]
+}

@@ -1,0 +1,795 @@
+{
+  "themes": [
+    {
+      "id": "praha",
+      "from": 0,
+      "name": "historic Prague, Czech Republic: baroque palaces, pastel Art Nouveau apartment blocks and red-tiled roofs"
+    }
+  ],
+  "pictures": {
+    "praha-apartment-1": {
+      "file": "art/praha-apartment-1.png",
+      "role": "apartment",
+      "theme": "praha",
+      "kind": "facade",
+      "w": 126,
+      "h": 186,
+      "hm": 18,
+      "avg": [
+        180,
+        173,
+        160
+      ],
+      "placeholder": false,
+      "drop": false,
+      "flags": [
+        "holes filled (589 px)"
+      ]
+    },
+    "praha-apartment-2": {
+      "file": "art/praha-apartment-2.png",
+      "role": "apartment",
+      "theme": "praha",
+      "kind": "facade",
+      "w": 128,
+      "h": 192,
+      "hm": 18,
+      "avg": [
+        179,
+        147,
+        107
+      ],
+      "placeholder": false,
+      "drop": false,
+      "flags": []
+    },
+    "praha-apartment-3": {
+      "file": "art/praha-apartment-3.png",
+      "role": "apartment",
+      "theme": "praha",
+      "kind": "facade",
+      "w": 116,
+      "h": 178,
+      "hm": 18,
+      "avg": [
+        176,
+        151,
+        120
+      ],
+      "placeholder": false,
+      "drop": false,
+      "flags": []
+    },
+    "praha-house-1": {
+      "file": "art/praha-house-1.png",
+      "role": "house",
+      "theme": "praha",
+      "kind": "facade",
+      "w": 160,
+      "h": 128,
+      "hm": 8,
+      "avg": [
+        134,
+        100,
+        78
+      ],
+      "placeholder": false,
+      "drop": true,
+      "flags": [
+        "cut"
+      ]
+    },
+    "praha-house-2": {
+      "file": "art/praha-house-2.png",
+      "role": "house",
+      "theme": "praha",
+      "kind": "facade",
+      "w": 140,
+      "h": 116,
+      "hm": 8,
+      "avg": [
+        155,
+        114,
+        90
+      ],
+      "placeholder": false,
+      "drop": false,
+      "flags": []
+    },
+    "praha-shop-1": {
+      "file": "art/praha-shop-1.png",
+      "role": "shop",
+      "theme": "praha",
+      "kind": "facade",
+      "w": 154,
+      "h": 158,
+      "hm": 10,
+      "avg": [
+        139,
+        102,
+        73
+      ],
+      "placeholder": false,
+      "drop": false,
+      "flags": [
+        "holes filled (744 px)"
+      ]
+    },
+    "praha-shop-2": {
+      "file": "art/praha-shop-2.png",
+      "role": "shop",
+      "theme": "praha",
+      "kind": "facade",
+      "w": 158,
+      "h": 159,
+      "hm": 10,
+      "avg": [
+        107,
+        90,
+        80
+      ],
+      "placeholder": false,
+      "drop": false,
+      "flags": [
+        "holes filled (2607 px)"
+      ]
+    },
+    "praha-civic-1": {
+      "file": "art/praha-civic-1.png",
+      "role": "civic",
+      "theme": "praha",
+      "kind": "facade",
+      "w": 190,
+      "h": 142,
+      "hm": 14,
+      "avg": [
+        135,
+        111,
+        91
+      ],
+      "placeholder": false,
+      "drop": false,
+      "flags": [
+        "holes filled (2471 px)"
+      ]
+    },
+    "praha-civic-2": {
+      "file": "art/praha-civic-2.png",
+      "role": "civic",
+      "theme": "praha",
+      "kind": "facade",
+      "w": 192,
+      "h": 160,
+      "hm": 14,
+      "avg": [
+        178,
+        157,
+        125
+      ],
+      "placeholder": false,
+      "drop": true,
+      "flags": [
+        "cut"
+      ]
+    },
+    "praha-tower-1": {
+      "file": "art/praha-tower-1.png",
+      "role": "tower",
+      "theme": "praha",
+      "kind": "facade",
+      "w": 98,
+      "h": 237,
+      "hm": 60,
+      "avg": [
+        155,
+        151,
+        150
+      ],
+      "placeholder": false,
+      "drop": false,
+      "flags": [
+        "holes filled (2924 px)"
+      ]
+    },
+    "praha-tree-1": {
+      "file": "art/praha-tree-1.png",
+      "role": "tree",
+      "theme": "praha",
+      "kind": "sprite",
+      "w": 128,
+      "h": 160,
+      "hm": 9,
+      "avg": [
+        80,
+        96,
+        64
+      ],
+      "placeholder": false,
+      "drop": true,
+      "flags": [
+        "cut",
+        "boxed"
+      ]
+    },
+    "praha-tree-2": {
+      "file": "art/praha-tree-2.png",
+      "role": "tree",
+      "theme": "praha",
+      "kind": "sprite",
+      "w": 84,
+      "h": 148,
+      "hm": 9,
+      "avg": [
+        80,
+        77,
+        54
+      ],
+      "placeholder": false,
+      "drop": false,
+      "flags": []
+    },
+    "praha-bush-1": {
+      "file": "art/praha-bush-1.png",
+      "role": "bush",
+      "theme": "praha",
+      "kind": "sprite",
+      "w": 70,
+      "h": 69,
+      "hm": 1.6,
+      "avg": [
+        165,
+        164,
+        100
+      ],
+      "placeholder": false,
+      "drop": false,
+      "flags": []
+    },
+    "praha-street-1": {
+      "file": "art/praha-street-1.png",
+      "role": "street",
+      "theme": "praha",
+      "kind": "sprite",
+      "w": 58,
+      "h": 78,
+      "hm": 1.4,
+      "avg": [
+        79,
+        72,
+        67
+      ],
+      "placeholder": false,
+      "drop": false,
+      "flags": []
+    },
+    "lm-Q616334": {
+      "file": "art/lm-Q616334.png",
+      "role": "landmark",
+      "theme": "praha",
+      "kind": "landmark",
+      "w": 222,
+      "h": 157,
+      "hm": 25,
+      "avg": [
+        89,
+        76,
+        61
+      ],
+      "label": "Vyšehrad",
+      "qid": "Q616334",
+      "placeholder": false,
+      "drop": false,
+      "flags": []
+    },
+    "lm-Q193369": {
+      "file": "art/lm-Q193369.png",
+      "role": "landmark",
+      "theme": "praha",
+      "kind": "landmark",
+      "w": 222,
+      "h": 141,
+      "hm": 25,
+      "avg": [
+        162,
+        145,
+        121
+      ],
+      "label": "Pražský Hrad",
+      "qid": "Q193369",
+      "placeholder": false,
+      "drop": false,
+      "flags": []
+    },
+    "lm-Q204871": {
+      "file": "art/lm-Q204871.png",
+      "role": "landmark",
+      "theme": "praha",
+      "kind": "landmark",
+      "w": 230,
+      "h": 140,
+      "hm": 30,
+      "avg": [
+        86,
+        76,
+        73
+      ],
+      "label": "Karlův most",
+      "qid": "Q204871",
+      "placeholder": false,
+      "drop": false,
+      "flags": []
+    },
+    "lm-Q5949": {
+      "file": "art/lm-Q5949.png",
+      "role": "landmark",
+      "theme": "praha",
+      "kind": "landmark",
+      "w": 128,
+      "h": 200,
+      "hm": 15,
+      "avg": [
+        75,
+        69,
+        67
+      ],
+      "label": "Katedrála svatého Víta, Václava a Vojtěcha",
+      "qid": "Q5949",
+      "placeholder": false,
+      "drop": false,
+      "flags": []
+    },
+    "praha-apartment-4": {
+      "file": "art/praha-apartment-4.png",
+      "role": "apartment",
+      "theme": "praha",
+      "kind": "facade",
+      "w": 126,
+      "h": 188,
+      "hm": 18,
+      "avg": [
+        175,
+        174,
+        164
+      ],
+      "placeholder": false,
+      "drop": false,
+      "flags": [
+        "holes filled (807 px)"
+      ]
+    },
+    "praha-apartment-5": {
+      "file": "art/praha-apartment-5.png",
+      "role": "apartment",
+      "theme": "praha",
+      "kind": "facade",
+      "w": 117,
+      "h": 187,
+      "hm": 18,
+      "avg": [
+        122,
+        115,
+        113
+      ],
+      "placeholder": false,
+      "drop": false,
+      "flags": [
+        "holes filled (794 px)"
+      ]
+    },
+    "praha-apartment-6": {
+      "file": "art/praha-apartment-6.png",
+      "role": "apartment",
+      "theme": "praha",
+      "kind": "facade",
+      "w": 112,
+      "h": 173,
+      "hm": 18,
+      "avg": [
+        160,
+        174,
+        180
+      ],
+      "placeholder": false,
+      "drop": false,
+      "flags": []
+    },
+    "praha-house-3": {
+      "file": "art/praha-house-3.png",
+      "role": "house",
+      "theme": "praha",
+      "kind": "facade",
+      "w": 120,
+      "h": 128,
+      "hm": 8,
+      "avg": [
+        167,
+        144,
+        113
+      ],
+      "placeholder": false,
+      "drop": true,
+      "flags": [
+        "cut"
+      ]
+    },
+    "praha-house-4": {
+      "file": "art/praha-house-4.png",
+      "role": "house",
+      "theme": "praha",
+      "kind": "facade",
+      "w": 160,
+      "h": 128,
+      "hm": 8,
+      "avg": [
+        137,
+        127,
+        117
+      ],
+      "placeholder": false,
+      "drop": true,
+      "flags": [
+        "cut"
+      ]
+    },
+    "praha-house-5": {
+      "file": "art/praha-house-5.png",
+      "role": "house",
+      "theme": "praha",
+      "kind": "facade",
+      "w": 159,
+      "h": 128,
+      "hm": 8,
+      "avg": [
+        145,
+        127,
+        114
+      ],
+      "placeholder": false,
+      "drop": true,
+      "flags": [
+        "cut"
+      ]
+    },
+    "praha-house-6": {
+      "file": "art/praha-house-6.png",
+      "role": "house",
+      "theme": "praha",
+      "kind": "facade",
+      "w": 152,
+      "h": 128,
+      "hm": 8,
+      "avg": [
+        164,
+        116,
+        86
+      ],
+      "placeholder": false,
+      "drop": true,
+      "flags": [
+        "cut"
+      ]
+    },
+    "praha-shop-3": {
+      "file": "art/praha-shop-3.png",
+      "role": "shop",
+      "theme": "praha",
+      "kind": "facade",
+      "w": 106,
+      "h": 156,
+      "hm": 10,
+      "avg": [
+        109,
+        84,
+        62
+      ],
+      "placeholder": false,
+      "drop": false,
+      "flags": []
+    },
+    "praha-shop-4": {
+      "file": "art/praha-shop-4.png",
+      "role": "shop",
+      "theme": "praha",
+      "kind": "facade",
+      "w": 154,
+      "h": 128,
+      "hm": 10,
+      "avg": [
+        157,
+        123,
+        82
+      ],
+      "placeholder": false,
+      "drop": false,
+      "flags": []
+    },
+    "praha-shop-5": {
+      "file": "art/praha-shop-5.png",
+      "role": "shop",
+      "theme": "praha",
+      "kind": "facade",
+      "w": 160,
+      "h": 158,
+      "hm": 10,
+      "avg": [
+        139,
+        112,
+        85
+      ],
+      "placeholder": false,
+      "drop": false,
+      "flags": [
+        "holes filled (875 px)"
+      ]
+    },
+    "praha-shop-6": {
+      "file": "art/praha-shop-6.png",
+      "role": "shop",
+      "theme": "praha",
+      "kind": "facade",
+      "w": 145,
+      "h": 147,
+      "hm": 10,
+      "avg": [
+        187,
+        159,
+        124
+      ],
+      "placeholder": false,
+      "drop": false,
+      "flags": [
+        "holes filled (866 px)"
+      ]
+    },
+    "praha-civic-3": {
+      "file": "art/praha-civic-3.png",
+      "role": "civic",
+      "theme": "praha",
+      "kind": "facade",
+      "w": 192,
+      "h": 138,
+      "hm": 14,
+      "avg": [
+        172,
+        147,
+        118
+      ],
+      "placeholder": false,
+      "drop": false,
+      "flags": [
+        "holes filled (1273 px)"
+      ]
+    },
+    "praha-civic-4": {
+      "file": "art/praha-civic-4.png",
+      "role": "civic",
+      "theme": "praha",
+      "kind": "facade",
+      "w": 188,
+      "h": 159,
+      "hm": 14,
+      "avg": [
+        110,
+        93,
+        72
+      ],
+      "placeholder": false,
+      "drop": false,
+      "flags": []
+    },
+    "praha-tower-2": {
+      "file": "art/praha-tower-2.png",
+      "role": "tower",
+      "theme": "praha",
+      "kind": "facade",
+      "w": 118,
+      "h": 232,
+      "hm": 60,
+      "avg": [
+        114,
+        107,
+        103
+      ],
+      "placeholder": false,
+      "drop": false,
+      "flags": []
+    },
+    "praha-tree-3": {
+      "file": "art/praha-tree-3.png",
+      "role": "tree",
+      "theme": "praha",
+      "kind": "sprite",
+      "w": 69,
+      "h": 140,
+      "hm": 9,
+      "avg": [
+        124,
+        164,
+        143
+      ],
+      "placeholder": false,
+      "drop": false,
+      "flags": []
+    },
+    "praha-bush-2": {
+      "file": "art/praha-bush-2.png",
+      "role": "bush",
+      "theme": "praha",
+      "kind": "sprite",
+      "w": 82,
+      "h": 74,
+      "hm": 1.6,
+      "avg": [
+        91,
+        89,
+        106
+      ],
+      "placeholder": false,
+      "drop": false,
+      "flags": []
+    },
+    "praha-street-2": {
+      "file": "art/praha-street-2.png",
+      "role": "street",
+      "theme": "praha",
+      "kind": "sprite",
+      "w": 43,
+      "h": 89,
+      "hm": 1.4,
+      "avg": [
+        141,
+        89,
+        76
+      ],
+      "placeholder": false,
+      "drop": false,
+      "flags": []
+    },
+    "praha-street-3": {
+      "file": "art/praha-street-3.png",
+      "role": "street",
+      "theme": "praha",
+      "kind": "sprite",
+      "w": 80,
+      "h": 65,
+      "hm": 1.4,
+      "avg": [
+        52,
+        76,
+        53
+      ],
+      "placeholder": false,
+      "drop": false,
+      "flags": []
+    },
+    "lm-Q969482": {
+      "file": "art/lm-Q969482.png",
+      "role": "landmark",
+      "theme": "praha",
+      "kind": "landmark",
+      "w": 180,
+      "h": 176,
+      "hm": 15,
+      "avg": [
+        166,
+        136,
+        108
+      ],
+      "label": "Strahovský klášter",
+      "qid": "Q969482",
+      "placeholder": false,
+      "drop": false,
+      "flags": []
+    },
+    "lm-Q729370": {
+      "file": "art/lm-Q729370.png",
+      "role": "landmark",
+      "theme": "praha",
+      "kind": "landmark",
+      "w": 170,
+      "h": 192,
+      "hm": 15,
+      "avg": [
+        108,
+        89,
+        75
+      ],
+      "label": "Staroměstský orloj",
+      "qid": "Q729370",
+      "placeholder": false,
+      "drop": true,
+      "flags": [
+        "cut"
+      ]
+    },
+    "lm-Q2643308": {
+      "file": "art/lm-Q2643308.png",
+      "role": "landmark",
+      "theme": "praha",
+      "kind": "landmark",
+      "w": 256,
+      "h": 135,
+      "hm": 15,
+      "avg": [
+        162,
+        144,
+        127
+      ],
+      "label": "Malostranská",
+      "qid": "Q2643308",
+      "placeholder": false,
+      "drop": false,
+      "flags": []
+    },
+    "lm-Q2424070": {
+      "file": "art/lm-Q2424070.png",
+      "role": "landmark",
+      "theme": "praha",
+      "kind": "landmark",
+      "w": 186,
+      "h": 134,
+      "hm": 9,
+      "avg": [
+        119,
+        106,
+        86
+      ],
+      "label": "Letohrádek královny Anny",
+      "qid": "Q2424070",
+      "placeholder": false,
+      "drop": false,
+      "flags": []
+    },
+    "lm-Q1419555": {
+      "file": "art/lm-Q1419555.png",
+      "role": "landmark",
+      "theme": "praha",
+      "kind": "landmark",
+      "w": 182,
+      "h": 177,
+      "hm": 20,
+      "avg": [
+        193,
+        172,
+        154
+      ],
+      "label": "Národní galerie v Praze - Palác Kinských",
+      "qid": "Q1419555",
+      "placeholder": false,
+      "drop": false,
+      "flags": []
+    },
+    "lm-Q956163": {
+      "file": "art/lm-Q956163.png",
+      "role": "landmark",
+      "theme": "praha",
+      "kind": "landmark",
+      "w": 116,
+      "h": 181,
+      "hm": 35,
+      "avg": [
+        196,
+        185,
+        171
+      ],
+      "label": "svatý Cyril a Metoděj",
+      "qid": "Q956163",
+      "placeholder": false,
+      "drop": false,
+      "flags": []
+    }
+  },
+  "landmarks": {
+    "Q616334": "lm-Q616334",
+    "Q193369": "lm-Q193369",
+    "Q204871": "lm-Q204871",
+    "Q5949": "lm-Q5949",
+    "Q969482": "lm-Q969482",
+    "Q729370": "lm-Q729370",
+    "Q2643308": "lm-Q2643308",
+    "Q2424070": "lm-Q2424070",
+    "Q1419555": "lm-Q1419555",
+    "Q956163": "lm-Q956163"
+  },
+  "detail": "detailed"
+}
