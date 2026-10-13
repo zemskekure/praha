@@ -1,0 +1,170 @@
+[
+ {
+  "name": "man",
+  "style": "rd_animation__four_angle_walking",
+  "w": 48,
+  "h": 48,
+  "seed": 1301,
+  "prompt": "a slim man in his thirties wearing a plain black wool turtleneck sweater with a high rolled neck (no jacket, no collar, no zipper), beige chino trousers, brown boots, short dark brown hair"
+ },
+ {
+  "name": "dog-a",
+  "style": "rd_animation__four_angle_walking",
+  "w": 48,
+  "h": 48,
+  "seed": 51,
+  "prompt": "a slim pure white whippet dog, short smooth white coat, small grey patch on one ear, long thin legs, deep chest, thin tail, walking on four legs"
+ },
+ {
+  "name": "dog-b",
+  "style": "rd_animation__four_angle_walking",
+  "w": 48,
+  "h": 48,
+  "seed": 52,
+  "prompt": "a slender white whippet sighthound dog, white short fur, long thin legs and narrow head, trotting on four legs"
+ },
+ {
+  "name": "boat",
+  "style": "rd_animation__8_dir_rotation",
+  "w": 80,
+  "h": 80,
+  "seed": 9,
+  "prompt": "a small empty wooden rowing boat with two oars resting on it, varnished brown planks, seen from above"
+ },
+ {
+  "name": "tiles-land",
+  "style": "rd_tile__tileset",
+  "w": 32,
+  "h": 32,
+  "seed": 21,
+  "prompt": "arctic tundra: mossy green-grey grass with yellow lichen, grey rocks and patches of old snow"
+ },
+ {
+  "name": "tiles-shore",
+  "style": "rd_tile__tileset",
+  "w": 32,
+  "h": 32,
+  "seed": 22,
+  "prompt": "grey pebble shingle beach meeting dark cold slate-blue sea water with white foam"
+ },
+ {
+  "name": "house-a",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 31,
+  "prompt": "a small wooden house on stilts with a dark red painted wall and a corrugated metal roof, arctic village, one lit window"
+ },
+ {
+  "name": "house-b",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 32,
+  "prompt": "a small wooden house on stilts painted faded blue-grey with a corrugated metal roof, arctic village"
+ },
+ {
+  "name": "house-c",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 33,
+  "prompt": "a small weathered plywood cabin on stilts with a green roof, oil drum beside it, arctic village"
+ },
+ {
+  "name": "school",
+  "style": "rd_plus__topdown_asset",
+  "w": 96,
+  "h": 64,
+  "seed": 34,
+  "prompt": "a long single-storey arctic village school building, red walls, flat grey roof, row of windows"
+ },
+ {
+  "name": "rack",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 35,
+  "prompt": "a wooden fish drying rack with split fish hanging on it"
+ },
+ {
+  "name": "umiak",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 36,
+  "prompt": "a traditional walrus-skin boat (umiak) lying upside down on the beach, pale hide over a wooden frame"
+ },
+ {
+  "name": "station",
+  "style": "rd_plus__topdown_asset",
+  "w": 96,
+  "h": 64,
+  "seed": 37,
+  "prompt": "an old abandoned soviet weather station hut, pale concrete walls, grey roof, rusty door"
+ },
+ {
+  "name": "dome",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 38,
+  "prompt": "a white radar dome on a concrete base"
+ },
+ {
+  "name": "mast",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 39,
+  "prompt": "a tall thin steel radio mast with guy wires and a red tip"
+ },
+ {
+  "name": "tank",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 40,
+  "prompt": "a rusty cylindrical fuel tank on a concrete pad"
+ },
+ {
+  "name": "rock-a",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 41,
+  "prompt": "a grey granite boulder with yellow lichen"
+ },
+ {
+  "name": "rock-b",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 42,
+  "prompt": "a cluster of small dark grey rocks with moss"
+ },
+ {
+  "name": "buoy",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 43,
+  "prompt": "an orange navigation buoy floating in dark water"
+ },
+ {
+  "name": "dogrun-a",
+  "style": "rd_plus__default",
+  "w": 256,
+  "h": 64,
+  "seed": 71,
+  "prompt": "pixel art sprite sheet, exactly 4 animation frames in one horizontal row, side view facing right, a slim white whippet dog running (gallop cycle), cream white short fur, wearing a tan brown dog coat on its back, thin long legs, far-side legs shaded grey-green, ears flying back, long thin tail, bold dark outlines, plain white background"
+ },
+ {
+  "name": "dogrun-b",
+  "style": "rd_plus__default",
+  "w": 256,
+  "h": 64,
+  "seed": 72,
+  "prompt": "pixel art sprite sheet, exactly 4 animation frames in one horizontal row, side view facing right, a slim white whippet dog running (gallop cycle), cream white short fur, wearing a tan brown dog coat on its back, thin long legs, far-side legs shaded grey-green, ears flying back, long thin tail, bold dark outlines, plain white background"
+ }
+]

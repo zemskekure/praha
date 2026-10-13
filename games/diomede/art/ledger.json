@@ -1,0 +1,90 @@
+{
+ "spent": 1.81,
+ "done": {
+  "dog-a": {
+   "file": "art/raw/dog-a.gif",
+   "cost": 0.07
+  },
+  "man": {
+   "file": "art/raw/man.gif",
+   "cost": 0.07
+  },
+  "dog-b": {
+   "file": "art/raw/dog-b.gif",
+   "cost": 0.07
+  },
+  "house-b": {
+   "file": "art/raw/house-b.png",
+   "cost": 0.06
+  },
+  "house-a": {
+   "file": "art/raw/house-a.png",
+   "cost": 0.06
+  },
+  "tiles-land": {
+   "file": "art/raw/tiles-land.png",
+   "cost": 0.1
+  },
+  "tiles-shore": {
+   "file": "art/raw/tiles-shore.png",
+   "cost": 0.1
+  },
+  "house-c": {
+   "file": "art/raw/house-c.png",
+   "cost": 0.06
+  },
+  "school": {
+   "file": "art/raw/school.png",
+   "cost": 0.06
+  },
+  "dome": {
+   "file": "art/raw/dome.png",
+   "cost": 0.06
+  },
+  "station": {
+   "file": "art/raw/station.png",
+   "cost": 0.06
+  },
+  "umiak": {
+   "file": "art/raw/umiak.png",
+   "cost": 0.06
+  },
+  "rack": {
+   "file": "art/raw/rack.png",
+   "cost": 0.06
+  },
+  "mast": {
+   "file": "art/raw/mast.png",
+   "cost": 0.06
+  },
+  "buoy": {
+   "file": "art/raw/buoy.png",
+   "cost": 0.06
+  },
+  "rock-b": {
+   "file": "art/raw/rock-b.png",
+   "cost": 0.06
+  },
+  "rock-a": {
+   "file": "art/raw/rock-a.png",
+   "cost": 0.06
+  },
+  "tank": {
+   "file": "art/raw/tank.png",
+   "cost": 0.06
+  },
+  "boat": {
+   "file": "art/raw/boat.gif",
+   "cost": 0.25
+  },
+  "dogrun-a": {
+   "file": "art/raw/dogrun-a.png",
+   "cost": 0.06
+  },
+  "dogrun-b": {
+   "file": "art/raw/dogrun-b.png",
+   "cost": 0.06
+  }
+ },
+ "note": "includes a $0.25 size probe for the 8-direction style"
+}

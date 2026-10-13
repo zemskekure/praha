@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Diomede</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen&family=VT323&display=swap">
+<!--
+  Diomede: two islands in the Bering Strait, 3.8 km apart, with the International Date Line between them.
+  Little Diomede (east, USA) lives a day behind Big Diomede (west, Russia). A man in a turtleneck and his white
+  whippet walk the islands and row between them. Top-down pixel art; game.js holds the world and the rules.
+  Controls: WASD or arrows to walk or row, E to board or leave the boat, M for the map.
+-->
+<style>
+  /* One deliberate look: the arctic night around a warm frame, paper text, signal orange for the date line. */
+  :root { --ink: #10161c; --panel: rgba(16, 22, 28, 0.78); --paper: #efe9dc; --muted: #a9b2b6; --accent: #e0703a;
+          --display: 'Silkscreen', ui-monospace, Menlo, Consolas, monospace; --body: 'VT323', ui-monospace, Menlo, Consolas, monospace; color-scheme: dark; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; height: 100%; background: var(--ink); color: var(--paper); overflow: hidden; touch-action: none; }
+  #c { position: fixed; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; image-rendering: crisp-edges; }
+  .panel { position: fixed; background: var(--panel); padding: 6px 10px; font: 20px/1.05 var(--body); }
+  #clocks { left: 12px; top: calc(12px + env(safe-area-inset-top, 0px)); display: grid; gap: 2px; font-variant-numeric: tabular-nums; }
+  #clocks .here { color: var(--paper); } #clocks .there { color: var(--muted); }
+  #where { left: 50%; transform: translateX(-50%); top: calc(12px + env(safe-area-inset-top, 0px)); font: 12px/1.2 var(--display); letter-spacing: .08em; text-transform: uppercase; }
+  #where.line { background: var(--accent); }
+  #hint { left: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); color: var(--muted); font-size: 18px; }
+  #pad { position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); display: none; gap: 8px; }
+  #pad button { font: 12px/1 var(--display); color: var(--paper); background: var(--panel); border: 2px solid var(--muted); padding: 14px; }
+  @media (pointer: coarse) { #pad { display: flex; } #hint { display: none; } }
+</style>
+</head>
+<body>
+<canvas id="c" aria-label="Top-down view of the Diomede Islands. Walk with WASD or the arrow keys."></canvas>
+<div id="clocks" class="panel"><div id="clock-little" class="here">Little Diomede · —</div><div id="clock-big" class="there">Big Diomede · —</div></div>
+<div id="where" class="panel">Little Diomede</div>
+<div id="hint" class="panel">WASD / arrows: walk or row · E: boat · M: map</div>
+<div id="pad"><button type="button" id="btn-e">Boat</button><button type="button" id="btn-m">Map</button></div>
+<script src="game.js"></script>
+</body>
+</html>
