@@ -393,7 +393,7 @@
       let best = null;
       for (let r = 8; r <= 48 && !best; r += 4) for (let a = 0; a < 6.28; a += 0.4) { const x = boat.x + Math.cos(a) * r, y = boat.y + Math.sin(a) * r; if (walkable(x, y)) { best = [x, y]; break; } }
       if (!best) { say('Too far from a pier or a beach to step ashore.'); return; }
-      man.inBoat = false; boat.manned = false; boat.v = 0; [man.x, man.y] = best; dog.mode = 'follow'; dog.x = best[0] + 10; dog.y = best[1] + 4;
+      man.inBoat = false; boat.manned = false; boat.v = 0; [man.x, man.y] = best; dog.mode = 'follow'; dog.t = 0; dog.x = best[0] + 10; dog.y = best[1] + 4;
     }
   }
   let msg = '', msgT = 0; const say = s => { msg = s; msgT = 3.5; };
@@ -671,16 +671,28 @@
         man.dir = dirOf(vx, vy); man.step += dt * 10; idle = 0;
       } else idle += dt;
       // The whippet: trots after him, and when he stands still for a while it runs a few happy laps around him.
-      if (idle > 4 && dog.mode === 'follow') { dog.mode = 'zoom'; dog.t = 0; dog.ang = Math.atan2(dog.y - man.y, dog.x - man.x); }
-      if (dog.mode === 'zoom' && (man.moving || dog.t > 5)) dog.mode = 'follow';
-      let tx, ty, speed;
-      if (dog.mode === 'zoom') { dog.t += dt; dog.ang += dt * 3.2; const R = 26 + Math.sin(dog.t * 2) * 6; tx = man.x + Math.cos(dog.ang) * R; ty = man.y + Math.sin(dog.ang) * R * 0.7; speed = 120; }
-      else { const bx = man.x - Math.cos(dirAngle(man.dir)) * 16 + 10, by = man.y - Math.sin(dirAngle(man.dir)) * 16 + 4; tx = bx; ty = by; speed = 90; }
+      // The whippet keeps its own company: it trots off to sniff at things, stands about, and only runs back to him
+      // when he gets far away. Now and then, when he stops for a while, it does happy laps around him.
+      const far = Math.hypot(man.x - dog.x, man.y - dog.y);
+      dog.t -= dt;
+      if (far > 190 && dog.mode !== 'follow') { dog.mode = 'follow'; dog.t = 0; }
+      if (idle > 4 && dog.mode !== 'zoom' && !dog.zoomed && far < 90 && Math.random() < dt * 0.15) { dog.mode = 'zoom'; dog.t = 5; dog.zoomed = true; dog.ang = Math.atan2(dog.y - man.y, dog.x - man.x); }
+      if (man.moving) dog.zoomed = false;
+      if (dog.mode === 'zoom' && (man.moving || dog.t <= 0)) { dog.mode = 'rest'; dog.t = 2; }
+      if (dog.mode === 'follow' && far < 40 && dog.t <= 0) { const r = Math.random(); dog.mode = r < 0.6 ? 'roam' : r < 0.85 ? 'rest' : 'follow'; dog.t = dog.mode === 'follow' ? 4 : 4 + Math.random() * 5; dog.target = null; }
+      if (dog.mode === 'rest' && dog.t <= 0) { dog.mode = Math.random() < 0.65 ? 'roam' : 'follow'; dog.t = 3; dog.target = null; }
+      if (dog.mode === 'roam' && !dog.target) { for (let k = 0; k < 12; k++) { const a = Math.random() * 6.283, r = 40 + Math.random() * 75, x = man.x + Math.cos(a) * r, y = man.y + Math.sin(a) * r; if (walkable(x, y)) { dog.target = [x, y]; break; } } if (!dog.target) dog.mode = 'follow'; dog.sniff = 0; }
+      let tx = dog.x, ty = dog.y, speed = 0;
+      if (dog.mode === 'zoom') { dog.ang += dt * 3.2; const R = 26 + Math.sin(dog.t * 2) * 6; tx = man.x + Math.cos(dog.ang) * R; ty = man.y + Math.sin(dog.ang) * R * 0.7; speed = 120; }
+      else if (dog.mode === 'follow') { tx = man.x - Math.cos(dirAngle(man.dir)) * 16 + 10; ty = man.y - Math.sin(dirAngle(man.dir)) * 16 + 4; speed = far > 120 ? 150 : 90; }
+      else if (dog.mode === 'roam') { [tx, ty] = dog.target;
+        if (Math.hypot(tx - dog.x, ty - dog.y) < 6) { dog.sniff += dt; if (dog.sniff > 2 + (dog.target[0] % 3)) { dog.target = null; if (Math.random() < 0.3) { dog.mode = 'rest'; dog.t = 3 + Math.random() * 5; } } }
+        speed = 55; }
       const dx = tx - dog.x, dy = ty - dog.y, d = Math.hypot(dx, dy);
-      dog.moving = d > (dog.mode === 'zoom' ? 2 : 10);
+      dog.moving = speed > 0 && d > (dog.mode === 'zoom' ? 2 : dog.mode === 'roam' ? 5 : 10);
       if (dog.moving) { const v = Math.min(speed, d * 4) * dt, nx = dog.x + dx / d * v, ny = dog.y + dy / d * v;
-        if (walkable(nx, ny)) { dog.x = nx; dog.y = ny; } else if (d > 60) { dog.x = man.x + 8; dog.y = man.y + 4; }
-        dog.dir = dirOf(dx, dy); if (Math.abs(dx) > 2) dog.face = dx < 0 ? 'left' : 'right'; dog.step += dt * (dog.mode === 'zoom' ? 18 : 12); }
+        if (walkable(nx, ny)) { dog.x = nx; dog.y = ny; } else if (dog.mode === "roam") dog.target = null; else if (d > 60) { dog.x = man.x + 8; dog.y = man.y + 4; }
+        dog.dir = dirOf(dx, dy); if (Math.abs(dx) > 2) dog.face = dx < 0 ? 'left' : 'right'; dog.step += dt * (dog.mode === 'zoom' ? 18 : speed > 100 ? 16 : speed < 60 ? 8 : 12); }
     }
   }
   const dirOf = (x, y) => Math.abs(x) > Math.abs(y) ? (x > 0 ? 1 : 3) : (y > 0 ? 0 : 2);   // 0 down, 1 right, 2 up, 3 left
