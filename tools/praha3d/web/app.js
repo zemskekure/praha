@@ -774,13 +774,29 @@
   let kmh = P.has('paused') ? 0 : +(P.get('speed') || 30), paused = P.has('paused');
   const drive = { on: false, x: 0, z: 0, y: 0, h: 0, v: 0, pitch: 0 };
   const fly = { on: false, x: 0, y: 0, z: 0, h: 0, pitch: 0, bank: 0, v: 15, flap: 0 };
-  // The bird: a swift-like body with wings that beat when it climbs or cruises and stay spread when it glides.
-  const birdMat = mat({ vertexColors: true, flatShading: true }, 'bird', { roughness: 0.6 });
-  const bird = new THREE.Group(), birdBody = new THREE.Mesh(model([[0.26, 0.22, 0.62, 0, 0, 0, '#3b3a3d'], [0.2, 0.19, 0.2, 0, 0.04, 0.38, '#3b3a3d'], [0.08, 0.06, 0.12, 0, 0.02, 0.52, '#d9902e'],
-    [0.04, 0.04, 0.02, 0.07, 0.08, 0.47, '#f2f2f2'], [0.04, 0.04, 0.02, -0.07, 0.08, 0.47, '#f2f2f2'], [0.22, 0.03, 0.3, 0, 0.02, -0.42, '#2f2e31'], [0.18, 0.12, 0.3, 0, -0.06, 0.05, '#d8d4cc']]), birdMat);
-  const wingGeo = model([[0.9, 0.035, 0.32, 0.45, 0, 0, '#2f2e31'], [0.5, 0.03, 0.2, 1.05, 0, -0.04, '#262528']]);
-  const wingL = new THREE.Mesh(wingGeo, birdMat), wingR = new THREE.Mesh(wingGeo, birdMat); wingR.scale.x = -1; wingL.position.set(0.1, 0.04, 0.02); wingR.position.set(-0.1, 0.04, 0.02);
-  bird.add(birdBody, wingL, wingR); bird.scale.setScalar(2.4); bird.visible = false; bird.traverse(o => { o.castShadow = true; }); scene.add(bird);
+  // The bird: a barn swallow (dark blue back, white belly, rusty throat, forked tail) at about 3x life size so it
+  // reads from the chase camera. Each wing is two tapered panels: the inner one beats, the outer one follows and folds.
+  const birdMat = mat({ vertexColors: true, flatShading: true, side: THREE.DoubleSide }, 'bird', { roughness: 0.55, side: THREE.DoubleSide });
+  function triGeo(tris) {   // [[x,y,z], [x,y,z], [x,y,z], colour]...
+    const pos = [], col = [];
+    for (const [a, b, c, hexc] of tris) { const cc = new THREE.Color(hexc); for (const v of [a, b, c]) { pos.push(...v); col.push(cc.r, cc.g, cc.b); } }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); return g;
+  }
+  const BACK = '#1f2b4a', BELLY = '#efe9df', THROAT = '#b5552e', DARK = '#16203a';
+  const bodyG = new THREE.SphereGeometry(1, 10, 8); bodyG.scale(0.15, 0.12, 0.42);
+  { const c = []; const P0 = bodyG.attributes.position; for (let i = 0; i < P0.count; i++) { const y = P0.getY(i), z = P0.getZ(i); const k = new THREE.Color(y > -0.02 ? BACK : z > 0.3 ? THROAT : BELLY); c.push(k.r, k.g, k.b); } bodyG.setAttribute('color', new THREE.Float32BufferAttribute(c, 3)); }
+  const headG = new THREE.SphereGeometry(1, 8, 6); headG.scale(0.1, 0.09, 0.11); headG.translate(0, 0.03, 0.42);
+  { const c = []; const P0 = headG.attributes.position; for (let i = 0; i < P0.count; i++) { const k = new THREE.Color(P0.getY(i) > 0.02 ? BACK : THROAT); c.push(k.r, k.g, k.b); } headG.setAttribute('color', new THREE.Float32BufferAttribute(c, 3)); }
+  const beakG = triGeo([[[0.025, 0.03, 0.5], [-0.025, 0.03, 0.5], [0, 0.02, 0.58], '#222'], [[0.025, 0.03, 0.5], [0, 0.0, 0.5], [0, 0.02, 0.58], '#222'], [[-0.025, 0.03, 0.5], [0, 0.0, 0.5], [0, 0.02, 0.58], '#222']]);
+  const tailG = triGeo([[[0.05, 0, -0.32], [-0.05, 0, -0.32], [0.16, 0, -0.78], DARK], [[0.05, 0, -0.32], [-0.05, 0, -0.32], [-0.16, 0, -0.78], DARK],
+    [[0.03, 0, -0.32], [0.16, 0, -0.78], [0.1, 0, -0.5], DARK], [[-0.03, 0, -0.32], [-0.16, 0, -0.78], [-0.1, 0, -0.5], DARK]]);
+  const innerG = triGeo([[[0, 0, 0.16], [0.42, 0, 0.11], [0.42, 0, -0.1], BACK], [[0, 0, 0.16], [0.42, 0, -0.1], [0, 0, -0.16], BACK]]);
+  const outerG = triGeo([[[0, 0, 0.11], [0.62, 0, -0.06], [0, 0, -0.1], DARK], [[0, 0, -0.1], [0.62, 0, -0.06], [0.5, 0, -0.17], DARK]]);
+  const bird = new THREE.Group(), birdBody = new THREE.Group();
+  birdBody.add(new THREE.Mesh(bodyG, birdMat), new THREE.Mesh(headG, birdMat), new THREE.Mesh(beakG, birdMat), new THREE.Mesh(tailG, birdMat));
+  const wing = side => { const root = new THREE.Group(), tip = new THREE.Group(); root.add(new THREE.Mesh(innerG, birdMat)); tip.position.x = 0.42; tip.add(new THREE.Mesh(outerG, birdMat)); root.add(tip); root.position.set(0.08 * side, 0.04, 0.05); root.scale.x = side; root.userData.tip = tip; return root; };
+  const wingL = wing(1), wingR = wing(-1);
+  bird.add(birdBody, wingL, wingR); bird.scale.setScalar(3.2); bird.visible = false; bird.traverse(o => { o.castShadow = true; }); scene.add(bird);
   let lookYaw = 0;
   const keys = new Set();
 
@@ -795,7 +811,7 @@
     if (on && !fly.on) {   // take off from where you are, 25 m up
       if (drive.on) setDrive(false);
       const p = at(s), p2 = at(s + 4);
-      Object.assign(fly, { on: true, x: p.x, z: p.z, y: Math.max(p.y, roofAt(p.x, p.z)) + 25, h: Math.atan2(p2.x - p.x, p2.z - p.z), pitch: 0, bank: 0, v: 15 });
+      setView(1); Object.assign(fly, { on: true, x: p.x, z: p.z, y: Math.max(p.y, roofAt(p.x, p.z)) + 25, h: Math.atan2(p2.x - p.x, p2.z - p.z), pitch: 0, bank: 0, v: 15 });
       if (view === 0) setView(1);
     } else if (!on) fly.on = false;
     flyBtn.setAttribute('aria-pressed', fly.on); hud.help.textContent = helpText();
@@ -879,8 +895,8 @@
     if (F.y < floor) { F.y += (floor - F.y) * Math.min(1, dt * 8); if (F.pitch < 0) F.pitch *= 0.8; }
     F.y = Math.min(F.y, 700);
     F.flap += dt * (F.pitch > -0.15 ? 9 + climb * 4 : 0);
-    const beat = F.pitch > -0.15 ? Math.sin(F.flap) * 0.55 : 0.05;
-    wingL.rotation.z = beat; wingR.rotation.z = -beat;
+    const flapping = F.pitch > -0.15, beat = flapping ? Math.sin(F.flap) * 0.6 : 0.06, fold = flapping ? Math.max(0, Math.sin(F.flap - 0.9)) * 0.5 + Math.sin(F.flap - 0.5) * 0.25 : -0.05;
+    wingL.rotation.z = beat; wingR.rotation.z = -beat; wingL.userData.tip.rotation.z = fold; wingR.userData.tip.rotation.z = fold;
     bird.position.set(F.x, F.y, F.z); bird.rotation.set(0, 0, 0); bird.rotation.order = 'YXZ'; bird.rotation.y = F.h; bird.rotation.x = -F.pitch; bird.rotation.z = -F.bank;
   }
   function driveStep(dt) {
@@ -918,13 +934,13 @@
     myCar.position.set(px, py + 0.22, pz); myCar.rotation.set(0, 0, 0); myCar.rotation.order = 'YXZ'; myCar.rotation.y = carRot; myCar.rotation.x = carPitch;
     myCar.visible = view !== 0 && !fly.on; bird.visible = fly.on && view !== 0;
     // The camera, as offsets from the car, eased so that switching views glides.
-    const V = VIEWS[view], ahead = !drive.on ? at(s + (view === 2 ? 150 : view === 3 ? 620 : 26)) : null;
+    const V = VIEWS[view], ahead = !drive.on ? at(s + (view === 2 ? 150 : view === 3 ? 300 : 26)) : null;
     let co, lo;   // camera offset and look offset in world space, relative to the car
     const [rfx, rfz] = rotY(fx, fz, lookYaw);
     if (V === 'street') { co = [fx * 0.3, 1.45, fz * 0.3]; lo = [rfx * 30, 1.2 + (fly.on ? Math.sin(fly.pitch) * 30 - 3 : 0), rfz * 30]; }
     else if (V === 'car') { co = fly.on ? [-rfx * 7, 2.6, -rfz * 7] : [-rfx * 8.5, 3.1, -rfz * 8.5]; lo = fly.on ? [fx * 12, 1.4 + Math.sin(fly.pitch) * 12, fz * 12] : [fx * 10, 1.2, fz * 10]; }
     else if (V === 'drone') { co = [-rfx * 30, 42, -rfz * 30]; lo = [rfx * 140, 4, rfz * 140]; }
-    else { co = [-rfx * 160, 260, -rfz * 160]; lo = [rfx * 520, 0, rfz * 520]; }
+    else { co = [-rfx * 110, 100, -rfz * 110]; lo = [rfx * 260, 0, rfz * 260]; }
     // Street view on the route: aim at the road ahead (smoother on bends than the car's own heading).
     if (V === 'street' && ahead && Math.abs(lookYaw) < 0.02) lo = [ahead.x - fz * 1.8 - px, ahead.y + 1.2 - py, ahead.z + fx * 1.8 - pz];
     anchor.set(px, py, pz);
@@ -941,7 +957,7 @@
     sky.position.copy(camera.position); sky.material.uniforms.time.value = now / 1000; if (window.__water) window.__water.material.uniforms.time.value = now / 1000;
 
     // Traffic, trams and people near the camera.
-    const cx = camera.position.x, cz = camera.position.z, range = V === 'bird' ? 1100 : 650;
+    const cx = camera.position.x, cz = camera.position.z, range = V === 'bird' ? 800 : 650;
     carAgents.forEach((ag, k2) => {
       if (!ag.w || Math.hypot(ag.x - cx, ag.z - cz) > range * 1.3) { if (!spawn('car', ag, cx, cz, range)) return; }
       if (!advance('car', ag, ag.v * dt)) { ag.w = null; return; }
@@ -968,7 +984,7 @@
     }
 
     // The sun's shadow box follows the camera, snapped to its texels so shadows do not shimmer.
-    const R = V === 'street' ? 320 : V === 'car' ? 360 : V === 'drone' ? 650 : 1500, focus = new THREE.Vector3().lerpVectors(camera.position, look, 0.5), texel = 2 * R / SMAP;
+    const R = V === 'street' ? 320 : V === 'car' ? 360 : V === 'drone' ? 650 : 900, focus = new THREE.Vector3().lerpVectors(camera.position, look, 0.5), texel = 2 * R / SMAP;
     focus.x = Math.round(focus.x / texel) * texel; focus.z = Math.round(focus.z / texel) * texel;
     const sc = sun.shadow.camera; if (sc.right !== R) { sc.left = -R; sc.right = R; sc.top = R; sc.bottom = -R; sc.near = 1; sc.far = 6000; sc.updateProjectionMatrix(); }
     sun.target.position.copy(focus); sun.position.copy(focus).addScaledVector(SUN, 2500);
