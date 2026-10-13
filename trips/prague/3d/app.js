@@ -99,9 +99,8 @@
             float along = vRd.x, ac = vRd.y, hw = vRd.z, t = vRd.w; vec3 paint = vec3(0.86, 0.85, 0.8);
             if (t > 0.5 && t < 1.5) { float dash = step(0.55, fract(along / 9.0)); diffuseColor.rgb = mix(diffuseColor.rgb, paint, dash * step(abs(ac), 0.09)); }
             if (t > 0.5 && t < 2.5) diffuseColor.rgb = mix(diffuseColor.rgb, paint * 0.95, step(hw - 0.45, abs(ac)) * step(abs(ac), hw - 0.3));
-            if (t > 2.5 && t < 3.5) { float a = abs(ac); float rail = step(abs(a - 0.72), 0.06); diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.32, 0.31, 0.3), rail); }
-            if (t > 3.5) { float a = abs(ac); diffuseColor.rgb *= 1.0 - 0.25 * step(0.5, fract(along / 0.7)) * step(a, 1.2); diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.42, 0.4, 0.38), step(abs(a - 0.72), 0.06)); }
-            if (t > 4.5) diffuseColor.rgb *= 0.95 + 0.05 * step(0.5, fract(along * 4.0 + floor(ac * 4.0) * 0.5));
+            if (t > 2.5 && t < 3.5) { float a = abs(ac); diffuseColor.rgb *= 1.0 - 0.18 * step(0.55, fract(along / 0.65)) * step(a, 1.25); float rail = step(abs(a - 0.72), 0.06); diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.32, 0.31, 0.3), rail); }
+            if (t > 3.5 && t < 4.5) { float a = abs(ac); diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.42, 0.4, 0.38), step(abs(a - 0.72), 0.06)); }
           }`);
       }
       sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + PIX)
@@ -360,7 +359,7 @@
   // ---------------------------------------------------------------- roads, bridges, rails
   say('Laying the streets…');
   const RG = new Geo('rd'), rMat = flatMat('road');
-  const ROADCOL = ['#545459', '#56565a', '#5a595c', '#5f5e60', '#6b6966', '#b5a78e', '#cfc3a8', '#6d655c', '#5f5e60'];
+  const ROADCOL = ['#545459', '#56565a', '#5a595c', '#5f5e60', '#6b6966', '#b5a78e', '#cfc3a8', '#6d655c', '#58575a'];
   const DECK = [140, 132, 120];
   const lift = [0.32, 0.3, 0.28, 0.26, 0.24, 0.22, 0.2, 0.18, 0.36];   // bigger roads sit a hair higher where they meet
   for (const r of roads) {
@@ -381,7 +380,7 @@
       if (prevL >= 0) { RG.tri(prevL, prevR, R, 0, 1, 0); RG.tri(prevL, R, L, 0, 1, 0); }
       prevL = L; prevR = R;
       // Bridges: a deck edge and, over low ground, piers every 30 m.
-      if (r.bridge && r.cls !== 8 && q > 0) {
+      if (r.bridge && r.cls <= 4 && q > 0) {
         const pa = pts[q - 1], ya = ys[q - 1], dcol = r.cls === 5 || r.cls === 6 ? [150, 136, 112] : DECK;
         for (const side of [1, -1]) {
           const ax = pa[0] + nx * hw * side, az = pa[1] + nz * hw * side, bx = p[0] + nx * hw * side, bz = p[1] + nz * hw * side;
@@ -458,7 +457,9 @@
     for (let q = 2; q < pts.length - 2; q += 6) {
       if (pts[q][2]) continue;
       const a = pts[q - 1], b = pts[q + 1], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1;
-      for (const side of [1, -1]) lamps.push([pts[q][0] - dz / l * 7.5 * side, pts[q][1] + dx / l * 7.5 * side, Math.atan2(dx, dz) + (side > 0 ? Math.PI / 2 : -Math.PI / 2)]);
+      for (const side of [1, -1]) { const lx = pts[q][0] - dz / l * 7.5 * side, lz = pts[q][1] + dx / l * 7.5 * side, gi = Math.round((lx - N.x0) / N.cell), gj = Math.round((lz - N.z0) / N.cell);
+        if (gi >= 0 && gj >= 0 && gi < GN.w && gj < GN.h && wmask[(gj * GN.w + gi) * 4 + 3] > 100) continue;   // not in the river
+        lamps.push([pts[q][0] - dz / l * 7.5 * side, pts[q][1] + dx / l * 7.5 * side, Math.atan2(dx, dz) + (side > 0 ? Math.PI / 2 : -Math.PI / 2)]); }
     }
     const post = new THREE.BoxGeometry(0.22, 7, 0.22); post.translate(0, 3.5, 0);
     const arm = new THREE.BoxGeometry(0.16, 0.16, 1.6); arm.translate(0, 6.9, 0.7);

@@ -1,5 +1,23 @@
 # Praha: Pixel Path
 
+## Praha 3D (the recognisable one)
+
+`trips/prague/3d/` is a pixel-art **3D** drive along the same route, built from the real city: 23 000 OpenStreetMap
+buildings with their real heights, roof shapes, domes and spires; real terrain (castle hill, Petřín, Vyšehrad) and a
+32 km horizon; the Vltava, parks, roads, tram tracks, bridges and 45 000 trees. No generated art. Street, drone and bird
+views (V or 1/2/3), scroll or drag for speed, M for a map.
+
+```
+node tools/praha3d/terrain.mjs   # heights from Terrain Tiles
+NODE_USE_ENV_PROXY=1 node tools/praha3d/osm.mjs   # OpenStreetMap via Overpass (slow; resumes)
+node tools/praha3d/pack.mjs      # -> trips/prague/3d/*.bin, path.json
+cp tools/praha3d/web/* trips/prague/3d/ && (cd trips/prague/3d && python3 -m http.server 8080)
+```
+
+![Praha 3D](trips/prague/3d-preview.png)
+
+## The 2D pixel-path version
+
 A pixel-art fly-through of a real road in Prague, made with
 [jonwheatley/pixel-path](https://github.com/jonwheatley/pixel-path) (MIT). The skill is copied into
 `.claude/skills/pixel-path/` (upstream commit `74341a9`), so Claude Code picks it up in this repo.
