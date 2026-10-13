@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Praha 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen&family=VT323&display=swap">
+<!--
+  Praha 3D: a pixel-art drive from Prague Castle to Vyšehrad through the real city, built from OpenStreetMap and
+  real terrain. Scroll (or drag on a touch screen) to go faster or slower, keep going to reverse; arrow keys too.
+  Space pauses, V (or 1/2/3) switches Street, Drone and Bird views, M shows a small map.
+  Built by tools/praha3d (terrain.mjs, osm.mjs, pack.mjs) from the pixel-path route in trips/prague.
+-->
+<style>
+  /* A deliberately single, night-dashboard look over the game frame: ink panels, paper text, tram-red accent. */
+  :root {
+    --ink: #121417; --panel: rgba(18, 20, 23, 0.72); --paper: #f1ead8; --muted: #b9b2a2; --accent: #d2402d;
+    --display: 'Silkscreen', ui-monospace, Menlo, Consolas, monospace; --body: 'VT323', ui-monospace, Menlo, Consolas, monospace;
+    color-scheme: dark;
+  }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; height: 100%; background: var(--ink); color: var(--paper); overflow: hidden; overscroll-behavior: none; touch-action: none; }
+  #c { position: fixed; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+  .panel { position: fixed; background: var(--panel); padding: 6px 10px; font: 20px/1 var(--body); }
+  #hud { left: 12px; top: calc(12px + env(safe-area-inset-top, 0px)); display: grid; gap: 4px; max-width: calc(100vw - 24px); }
+  #street { font: 14px/1.2 var(--display); text-transform: uppercase; letter-spacing: 0.06em; }
+  #place { color: var(--muted); }
+  #row { display: flex; gap: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  #lm { position: fixed; left: 50%; transform: translateX(-50%); top: calc(14px + env(safe-area-inset-top, 0px)); font: 13px/1.2 var(--display); text-transform: uppercase;
+        letter-spacing: 0.06em; background: var(--accent); color: var(--paper); padding: 6px 10px; white-space: nowrap; max-width: calc(100vw - 24px); overflow: hidden; text-overflow: ellipsis; }
+  #lm:empty { display: none; }
+  @media (max-width: 640px) { #lm { top: auto; bottom: calc(92px + env(safe-area-inset-bottom, 0px)); } }
+  #views { position: fixed; right: 12px; bottom: calc(30px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 0; }
+  #views button { font: 12px/1 var(--display); text-transform: uppercase; letter-spacing: 0.06em; color: var(--paper); background: var(--panel); border: 2px solid var(--panel);
+                  padding: 8px 10px; cursor: pointer; }
+  #views button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); }
+  #views button:focus-visible { outline: 2px solid var(--paper); outline-offset: 1px; }
+  #map { position: fixed; right: 12px; top: calc(12px + env(safe-area-inset-top, 0px)); width: 150px; height: 180px; image-rendering: pixelated; border: 2px solid var(--panel); }
+  #help { left: 12px; bottom: calc(30px + env(safe-area-inset-bottom, 0px)); color: var(--muted); font-size: 18px; }
+  @media (max-width: 640px) { #help { display: none; } #map { width: 110px; height: 132px; } }
+  #credits { position: fixed; left: 8px; right: 8px; bottom: calc(6px + env(safe-area-inset-bottom, 0px)); font: 15px/1.1 var(--body); color: rgba(241, 234, 216, 0.7);
+             text-shadow: 0 1px 1px #000; pointer-events: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #credits a { color: inherit; pointer-events: auto; }
+  #load { position: fixed; inset: 0; display: grid; place-items: center; font: 14px/1.4 var(--display); text-transform: uppercase; letter-spacing: 0.06em;
+          background: var(--ink); color: var(--paper); padding: 0 16px; text-align: center; }
+</style>
+</head>
+<body>
+<canvas id="c" aria-label="A pixel-art drive through Prague. Scroll or drag to change speed."></canvas>
+<div id="hud" class="panel" aria-live="polite">
+  <div id="street">Pražský hrad</div>
+  <div id="place">Hradčany</div>
+  <div id="row"><span id="km">0.00 km</span><span id="speed">32 km/h</span></div>
+</div>
+<div id="lm"></div>
+<canvas id="map" width="150" height="180" hidden></canvas>
+<div id="views" role="group" aria-label="View">
+  <button type="button" id="v-street" aria-pressed="true">Street</button>
+  <button type="button" id="v-drone" aria-pressed="false">Drone</button>
+  <button type="button" id="v-bird" aria-pressed="false">Bird</button>
+</div>
+<div id="help" class="panel">Scroll or drag: speed · Space: pause · V: view · M: map</div>
+<div id="credits">Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a> (ODbL) · Terrain: Terrain Tiles (Mapzen, AWS Open Data) · Route: OSRM · Landmarks: Wikidata</div>
+<div id="load">Loading…</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
