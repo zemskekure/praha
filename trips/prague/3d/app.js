@@ -926,7 +926,7 @@
       if (!mapCv.hidden) drawMap(px, pz);
     }
     window.__frames = frames;
-    requestAnimationFrame(frame);
+    if (!(P.has('still') && frames > 3)) requestAnimationFrame(frame);   // ?still: stop after a few frames (for screenshots)
   }
   $('load').hidden = true;
   window.__ready = true; window.__stats = { buildings: nBuild, roads: roads.length, trees: nT, tiles: tiles.size, cars: NCARS, trams: NTRAMS, parked: parked.length, people: people.length };
