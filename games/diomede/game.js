@@ -214,13 +214,13 @@
     }
   }
   // Walk sheets (rows up, left, down, right; 4 steps): which frame, and drawing it with its feet at (x, y).
-  function sheetFrame(name, dir, step, moving) { const M = META[name]; if (!M || !SPR[name]) return null; const row = [2, 3, 0, 1][dir], f = moving ? Math.floor(step * 0.55) % 4 : 1; return [(row * 4 + f) * M.fw, 0, M.fw, M.fh]; }
+  function sheetFrame(name, dir, step, moving) { const M = META[name]; if (!M || !SPR[name]) return null; const row = [2, 1, 0, 3][dir], f = moving ? Math.floor(step * 0.55) % 4 : 1; return [(row * 4 + f) * M.fw, 0, M.fw, M.fh]; }
   function drawSheet(name, x, y, dir, step, moving) { const F = sheetFrame(name, dir, step, moving); if (!F) return; g.drawImage(SPR[name], F[0], 0, F[2], F[3], Math.round(x - F[2] / 2), Math.round(y - 44), F[2], F[3]); }
   // The man: dark turtleneck, sand trousers, short brown hair; seen from above and a little in front.
   function drawMan(c, x, y, dir, step, sitting) {
     x = Math.round(x); y = Math.round(y);
     if (SPR.man) {   // RetroDiffusion walk sheet: rows up, left, down, right; 4 steps each
-      const row = [2, 3, 0, 1][dir], f = sitting ? 1 : (man.moving ? Math.floor(step * 0.55) % 4 : 1), M = META.man;
+      const row = [2, 1, 0, 3][dir], f = sitting ? 1 : (man.moving ? Math.floor(step * 0.55) % 4 : 1), M = META.man;
       c.drawImage(SPR.man, (row * 4 + f) * M.fw, 0, M.fw, sitting ? 30 : M.fh, x - M.fw / 2, y - 44, M.fw, sitting ? 30 : M.fh);
       return;
     }
@@ -360,7 +360,7 @@
   const lightLevel = () => { const G = grade(); return 1 - (G.mul[0] + G.mul[1] + G.mul[2]) / 765; };   // 0 at noon, ~0.7 at night
   // Weather: snow comes and goes in waves; the wind veers slowly and gusts.
   const weather = () => { const t = clock / 60 + 115.5;   // phase picked so the first day has dawn flurries, a clear golden evening, snow at night
-    const n = fbm(t * 0.35, 3.1, 99); return { snow: Math.max(0, Math.min(1, (n - 0.5) * 3.4)), fog: Math.max(0, Math.min(1, (fbm(t * 0.25, 8.3, 7) - 0.5) * 3)) }; };
+    const n = fbm(t * 0.35, 3.1, 99); return { snow: Math.max(0, Math.min(1, (n - 0.6) * 3.5)), fog: Math.max(0, Math.min(1, (fbm(t * 0.25, 8.3, 7) - 0.5) * 3)) }; };
   const wind = { x: 10, y: 3 };
   function windStep() { const a = 0.25 + 0.6 * (fbm(clock * 0.004, 1.7, 3) - 0.5) * 2, gust = 1 + 0.6 * Math.max(0, Math.sin(now * 0.7) * Math.sin(now * 0.23)); const sp = (8 + 10 * weather().snow) * gust; wind.x = Math.cos(a) * sp; wind.y = Math.sin(a) * sp; }
 
@@ -395,7 +395,7 @@
   // Villagers walk between the houses, the racks and the pier, and stop to talk to nobody in particular.
   const homes = props.filter(p => p.kind === 'house' || p.kind === 'rack' || p.kind === 'school').map(p => [p.x, p.y + 14]);
   homes.push([(piers.little.x0 + 1) * T, piers.little.y * T + 8]);
-  const villagers = ['villager-a', 'villager-b', 'villager-a'].map((sp, i) => { const h = homes[i % homes.length]; return { sp, x: h[0], y: h[1], to: 1 + i, wait: i * 2, dir: 0, step: 0, moving: false }; });
+  const villagers = [].map((sp, i) => { const h = homes[i % homes.length]; return { sp, x: h[0], y: h[1], to: 1 + i, wait: i * 2, dir: 0, step: 0, moving: false }; });
   // Footprints in snow and on the shingle; a wake behind the boat.
   const prints = [], wakes = [];
   let printT = 0;
