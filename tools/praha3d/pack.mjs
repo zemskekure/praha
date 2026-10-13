@@ -90,7 +90,16 @@ const pick = (list, id) => hex(list[Math.floor(hash(id) * list.length)]);
 const WALLS = ['#eadcc0', '#e4c98f', '#efe3b9', '#dbb68c', '#f1ebd9', '#d2c8b4', '#e7cab6', '#d9d1a9', '#cbb99b', '#ebd8a9', '#ded8ca', '#e3bb90', '#c9d1c0', '#e8d0c8'];
 const MODERN = ['#c7c3ba', '#b3b1aa', '#d6d2c8', '#a9aca8'];
 const TILES = ['#a5492f', '#96412a', '#b0583a', '#8c3c28', '#9e5a3c', '#a84f36'];
-const KIND = { other: 0, house: 1, church: 2, industrial: 3, tower: 4, modern: 5 };
+const KIND = { other: 0, house: 1, church: 2, industrial: 3, tower: 4, modern: 5, old: 6 };
+// The historic towns, drawn by hand (lon, lat): inside them, buildings get the old look (baroque and gothic plaster,
+// tall red roofs, small framed windows). Staré Město and Josefov inside the ring of Národní, Na Příkopě and Revoluční;
+// Malá Strana and Hradčany between the river, Petřín and the castle walls; the Vyšehrad fortress.
+const OLD_ZONES = [
+  [[14.4128, 50.0912], [14.4199, 50.0930], [14.4262, 50.0925], [14.4302, 50.0897], [14.4287, 50.0862], [14.4268, 50.0843], [14.4205, 50.0815], [14.4166, 50.0813], [14.4135, 50.0820], [14.4130, 50.0860]],
+  [[14.3895, 50.0905], [14.3960, 50.0935], [14.4040, 50.0938], [14.4110, 50.0925], [14.4128, 50.0880], [14.4115, 50.0835], [14.4085, 50.0805], [14.4035, 50.0800], [14.3990, 50.0840], [14.3905, 50.0860]],
+  [[14.4150, 50.0665], [14.4215, 50.0668], [14.4235, 50.0640], [14.4200, 50.0617], [14.4150, 50.0625], [14.4135, 50.0645]],
+].map(z => z.map(([lon, lat]) => toXZ(lon, lat)));
+const OLD_WALLS = ['#ead6a6', '#e3bd82', '#f1e3c0', '#d9a383', '#f0ebdf', '#e0b893', '#cdb48a', '#f3d9ad', '#d6c19c', '#edcd9c', '#e6c6b4', '#c9b9a0', '#f2e6cf', '#dcc7a2'];
 const ROOF = { flat: 0, gabled: 1, hipped: 2, pyramidal: 3, dome: 4, onion: 5, band: 6 };
 const num = v => { const m = String(v ?? '').replace(',', '.').match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : NaN; };
 
@@ -125,6 +134,7 @@ function addBuilding(e, isPart) {
       : /industrial|warehouse|garage|shed|hangar|service|transformer|roof|carport|construction/.test(b) ? 'industrial'
       : /house|detached|villa|bungalow|cabin|farm/.test(b) ? 'house'
       : /office|commercial|retail|hotel|hospital|university|school|train_station|transportation|parking/.test(b) ? 'modern' : 'other';
+    if ((kind === 'other' || kind === 'house' || kind === 'modern') && OLD_ZONES.some(z => inside(centroid(outer), z))) kind = 'old';
     const lv = num(t['building:levels']), rl = num(t['roof:levels']), mlv = num(t['building:min_level']);
     let shape = (t['roof:shape'] || '').toLowerCase();
     let h = num(t.height), minH = num(t.min_height);
@@ -133,17 +143,17 @@ function addBuilding(e, isPart) {
     let rh = num(t['roof:height']);
     if (!(rh >= 0)) rh = rl > 0 ? rl * 2.8 : NaN;
     if (!(h > 0)) {
-      const base = lv > 0 ? lv * 3.3 + 0.8 : { house: 8, church: 18, industrial: 6, tower: 25, modern: 16, other: 15 }[kind];
+      const base = lv > 0 ? lv * 3.3 + 0.8 : { house: 8, church: 18, industrial: 6, tower: 25, modern: 16, other: 15, old: 13 }[kind];
       h = minH + base + (rh > 0 ? rh : 0) * (lv > 0 ? 1 : 0);
     }
     if (shape) stats.tagged++;
     // Untagged roofs: Prague's old blocks carry pitched red roofs; big modern boxes and sheds are flat.
     let roof = ROOF[shape] ?? (/(half-hipped|mansard|gambrel|round|saltbox)/.test(shape) ? ROOF.band : /cone|pyramid/.test(shape) ? ROOF.pyramidal : shape === 'skillion' ? ROOF.flat : undefined);
-    if (roof === undefined) roof = kind === 'industrial' || kind === 'modern' || A > 6000 || h > 40 || isPart && !shape ? ROOF.flat : kind === 'house' && A < 400 ? ROOF.hipped : ROOF.band;
+    if (roof === undefined) roof = kind === 'old' && A < 9000 ? ROOF.band : kind === 'industrial' || kind === 'modern' || A > 6000 || h > 40 || isPart && !shape ? ROOF.flat : kind === 'house' && A < 400 ? ROOF.hipped : ROOF.band;
     if (roof === ROOF.flat) rh = 0;
     else if (!(rh > 0)) {
       const d = Math.sqrt(A);
-      rh = roof === ROOF.dome ? Math.min(d * 0.5, 14) : roof === ROOF.onion ? Math.min(d * 0.8, 12) : roof === ROOF.pyramidal ? Math.min(d * (kind === 'church' || kind === 'tower' ? 1.4 : 0.5), 40) : Math.max(2.5, Math.min(5.5, d * 0.22));
+      rh = kind === 'old' && roof !== ROOF.dome && roof !== ROOF.onion && roof !== ROOF.pyramidal ? Math.max(4.5, Math.min(8, d * 0.32)) : roof === ROOF.dome ? Math.min(d * 0.5, 14) : roof === ROOF.onion ? Math.min(d * 0.8, 12) : roof === ROOF.pyramidal ? Math.min(d * (kind === 'church' || kind === 'tower' ? 1.4 : 0.5), 40) : Math.max(2.5, Math.min(5.5, d * 0.22));
     }
     rh = Math.min(rh, Math.max(1, h - minH - 1));
     let wall = colour(t['building:colour'] || t['colour']);
@@ -152,7 +162,7 @@ function addBuilding(e, isPart) {
     if (!rc) rc = /copper/.test(mat) ? hex('#6fa58a') : /slate/.test(mat) ? hex('#4d5560') : /metal|tin|zinc/.test(mat) ? hex('#7c8288') : /glass/.test(mat) ? hex('#8fb2c4')
       : roof === ROOF.flat ? hex(['#807e79', '#8a8781', '#76746f'][Math.floor(hash(e.id) * 3)]) : (roof === ROOF.dome || roof === ROOF.onion) ? hex('#6fa58a')
       : kind === 'church' && roof === ROOF.pyramidal ? hex(hash(e.id + 7) < 0.5 ? '#4d5560' : '#6fa58a') : pick(TILES, e.id + 3);
-    if (!wall) wall = kind === 'church' ? pick(['#e9e3d3', '#cfc4ab', '#b9ae97', '#efe7d2'], e.id) : kind === 'industrial' ? pick(['#a8a297', '#b7a99a', '#9a8f84'], e.id) : kind === 'modern' ? pick(MODERN, e.id) : pick(WALLS, e.id);
+    if (!wall) wall = kind === 'church' ? pick(['#e9e3d3', '#cfc4ab', '#b9ae97', '#efe7d2'], e.id) : kind === 'industrial' ? pick(['#a8a297', '#b7a99a', '#9a8f84'], e.id) : kind === 'modern' ? pick(MODERN, e.id) : kind === 'old' ? pick(OLD_WALLS, e.id) : pick(WALLS, e.id);
     stats.roof[roof] = (stats.roof[roof] || 0) + 1; stats.kind[kind] = (stats.kind[kind] || 0) + 1;
     B.u8(KIND[kind]); B.u8(roof); B.u16(h * 10); B.u16(minH * 10); B.u16(rh * 10);
     for (const c of wall) B.u8(c); for (const c of rc) B.u8(c);
@@ -216,6 +226,7 @@ function roadClass(t) {
   return null;
 }
 const WIDTH = { major: 15, secondary: 12, tertiary: 10, minor: 7.5, service: 4.5, pedestrian: 6, path: 2.5, rail: 4, tram: 2.6 };
+const roadNames = new Map();
 const Rw = new W(); let nR = 0; Rw.u32(0x52443350); Rw.u32(0);
 for (const e of els.values()) {
   if (e.type !== 'way' || !e.geometry) continue;
@@ -225,7 +236,8 @@ for (const e of els.values()) {
   let w = num(t.width); if (!(w > 1.5 && w < 40) || c === 'tram' || c === 'rail') w = WIDTH[c];
   if (c !== 'tram' && c !== 'rail' && c !== 'path' && +t.lanes > 0) w = Math.max(w, Math.min(+t.lanes * 3.3, 24));
   const sett = /sett|cobblestone|paving_stones|unhewn/.test(t.surface || '') ? 2 : 0;
-  Rw.u8(RC[c]); Rw.u8((t.bridge && t.bridge !== 'no' ? 1 : 0) | sett | (t.oneway === 'yes' ? 4 : 0)); Rw.u8(w * 4); Rw.i8(+t.layer || 0); Rw.pts(r); nR++;
+  const nm = t.name ? (roadNames.has(t.name) ? roadNames.get(t.name) : (roadNames.set(t.name, roadNames.size), roadNames.size - 1)) : 65535;
+  Rw.u8(RC[c]); Rw.u8((t.bridge && t.bridge !== 'no' ? 1 : 0) | sett | (t.oneway === 'yes' ? 4 : 0)); Rw.u8(w * 4); Rw.i8(+t.layer || 0); Rw.u16(nm); Rw.pts(r); nR++;
 }
 Rw.b.writeUInt32LE(nR, 4);
 
@@ -265,7 +277,7 @@ for (let s = 0; s <= total; s += 5) {
 // The best-known landmarks near the road, shown as a caption as you pass (the LDS record is a mis-tagged building).
 const shown = lms.filter(l => l.qid !== 'Q42504' && Math.abs(l.side) < 700 && l.links >= 15).sort((a, b) => b.links - a.links).slice(0, 30)
   .map(l => ({ name: l.name, s: l.s, side: l.side }));
-const path = { total: Math.round(total), step: 5, points: pts, names, places: chunk.places.filter(p => Math.abs(p[3]) < 900).map(p => [p[0], p[1]]), landmarks: shown,
+const path = { roadNames: [...roadNames.keys()], total: Math.round(total), step: 5, points: pts, names, places: chunk.places.filter(p => Math.abs(p[3]) < 900).map(p => [p[0], p[1]]), landmarks: shown,
   near: NEAR, far: { x0: -16000, z0: -16000, x1: 16000, z1: 16000, cell: 160 }, origin: [LON0, LAT0], from: 'Pražský hrad', to: 'Vyšehrad' };
 
 writeFileSync(join(OUT, 'buildings.bin'), B.out());
