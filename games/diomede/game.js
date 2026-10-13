@@ -77,12 +77,8 @@
   const HOUSE_COL = ['#7d4b3a', '#4d6b78', '#8a7b5a', '#5e6e4f', '#a0553c', '#6b6f75'];
   for (let i = 0; i < 6; i++) { const tx = L.cx - 19 + (i % 3) * 8 + (Math.floor(i / 3) % 2) * 3, ty = L.cy - 10 + Math.floor(i / 3) * 9 + rnd() * 0.6; if (WALK.has(at(tx | 0, ty | 0))) place('house', tx, ty, { col: HOUSE_COL[i % HOUSE_COL.length], w: 2 + (rnd() < 0.4 ? 1 : 0), v: i }); }
   place('school', L.cx + 6, L.cy - 12);
-  // Two fish racks with room between them; two skin boats pulled up and left lying where they were dragged.
-  const rk = [rnd(), rnd(), rnd(), rnd()];
-  place('rack', L.cx - 20, L.cy + 9.5 + rk[0]); place('rack', L.cx - 13, L.cy + 10.5 + rk[1]);
-  place('umiak', L.cx - 23, L.cy + 4.5, { rot: 1.25 }); place('umiak', L.cx - 16.5, L.cy + 5.2, { rot: 1.95 });
+  for (let i = 0; i < 4; i++) rnd();   // keep the seeded layout below unchanged
   for (const [dx, dy] of [[-14, -2], [-6, -3], [2, -4], [-18, 3]]) place('lamp', L.cx + dx, L.cy + dy);
-  place('seal', L.cx - 27, L.cy + 11); place('walrus', B.cx + 31, B.cy + 6); place('walrus', B.cx + 30, B.cy + 10); place('seal', B.cx + 29, B.cy - 6);
   // Big Diomede: the weather station, its mast, a radar dome and a fuel tank, all old and quiet.
   place('station', B.cx + 6, B.cy - 22); place('mast', B.cx + 14, B.cy - 26); place('dome', B.cx - 4, B.cy - 30); place('tank', B.cx + 14, B.cy - 16);
   // Boulders and lichen-covered rocks everywhere on the plateaus.
