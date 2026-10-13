@@ -166,5 +166,158 @@
   "h": 64,
   "seed": 72,
   "prompt": "pixel art sprite sheet, exactly 4 animation frames in one horizontal row, side view facing right, a slim white whippet dog running (gallop cycle), cream white short fur, wearing a tan brown dog coat on its back, thin long legs, far-side legs shaded grey-green, ears flying back, long thin tail, bold dark outlines, plain white background"
+ },
+ {
+  "name": "house-a2",
+  "style": "rd_plus__topdown_asset",
+  "w": 128,
+  "h": 128,
+  "seed": 131,
+  "prompt": "a small wooden house on stilts with a dark red painted plank wall and a corrugated grey metal roof, arctic village, one lit window, wooden steps",
+  "remove_bg": true
+ },
+ {
+  "name": "house-b2",
+  "style": "rd_plus__topdown_asset",
+  "w": 128,
+  "h": 128,
+  "seed": 132,
+  "prompt": "a small wooden house on stilts painted faded blue-grey with a corrugated metal roof, arctic village, porch with steps",
+  "remove_bg": true
+ },
+ {
+  "name": "house-c2",
+  "style": "rd_plus__topdown_asset",
+  "w": 128,
+  "h": 128,
+  "seed": 133,
+  "prompt": "a small weathered plywood cabin on stilts with a green metal roof, an oil drum and firewood beside it",
+  "remove_bg": true
+ },
+ {
+  "name": "house-d2",
+  "style": "rd_plus__topdown_asset",
+  "w": 128,
+  "h": 128,
+  "seed": 134,
+  "prompt": "a small mustard yellow wooden house on stilts with a dark roof and a stovepipe chimney, arctic village",
+  "remove_bg": true
+ },
+ {
+  "name": "school2",
+  "style": "rd_plus__topdown_asset",
+  "w": 192,
+  "h": 128,
+  "seed": 135,
+  "prompt": "a long single-storey arctic village school building on stilts, red walls, grey metal roof, row of windows, flagpole",
+  "remove_bg": true
+ },
+ {
+  "name": "station2",
+  "style": "rd_plus__topdown_asset",
+  "w": 128,
+  "h": 128,
+  "seed": 137,
+  "prompt": "an old abandoned soviet weather station building, pale concrete walls, flat grey roof, rusty door, antenna on roof",
+  "remove_bg": true
+ },
+ {
+  "name": "dome2",
+  "style": "rd_plus__topdown_asset",
+  "w": 128,
+  "h": 128,
+  "seed": 138,
+  "prompt": "a white radar dome on a concrete base, arctic",
+  "remove_bg": true
+ },
+ {
+  "name": "rack2",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 235,
+  "prompt": "a wooden fish drying rack with split fish hanging on it",
+  "remove_bg": true
+ },
+ {
+  "name": "umiak2",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 236,
+  "prompt": "an upside down traditional skin boat on wooden supports, pale hide over a wooden frame",
+  "remove_bg": true
+ },
+ {
+  "name": "tank2",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 240,
+  "prompt": "a rusty cylindrical fuel tank on legs",
+  "remove_bg": true
+ },
+ {
+  "name": "mast2",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 239,
+  "prompt": "a tall thin steel lattice radio mast with a red tip",
+  "remove_bg": true
+ },
+ {
+  "name": "buoy2",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 243,
+  "prompt": "an orange navigation buoy",
+  "remove_bg": true
+ },
+ {
+  "name": "rock-b2",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 242,
+  "prompt": "a cluster of small grey boulders with green moss",
+  "remove_bg": true
+ },
+ {
+  "name": "walrus",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 251,
+  "prompt": "a large brown walrus lying on a rock, white tusks",
+  "remove_bg": true
+ },
+ {
+  "name": "seal",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 252,
+  "prompt": "a grey spotted seal lying on its belly",
+  "remove_bg": true
+ },
+ {
+  "name": "villager-a",
+  "style": "rd_animation__four_angle_walking",
+  "w": 48,
+  "h": 48,
+  "seed": 261,
+  "prompt": "an old woman wearing a long blue parka with a fur-trimmed hood, dark trousers, boots",
+  "remove_bg": false
+ },
+ {
+  "name": "villager-b",
+  "style": "rd_animation__four_angle_walking",
+  "w": 48,
+  "h": 48,
+  "seed": 262,
+  "prompt": "a child wearing a bright red winter jacket and a knitted hat, jeans, boots",
+  "remove_bg": false
  }
 ]

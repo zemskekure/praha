@@ -60,5 +60,13 @@ water = lambda p: p[2] > p[0] + 25
 for name, path, test in [('tex-grass', 'art/raw/tiles-land.png', green), ('tex-rock', 'art/raw/tiles-land.png', grey),
                          ('tex-water', 'art/raw/tiles-shore.png', water), ('tex-shingle', 'art/raw/tiles-shore.png', grey)]:
     best = max(cells(path), key=lambda c: score(c, test)); best.save(f'art/{name}.png'); meta[name] = {'purity': round(score(best, test), 2)}
+# Second batch: generated with transparent backgrounds already; just trim. Bigger buildings for the right proportions.
+for n in ['house-a2', 'house-b2', 'house-c2', 'house-d2', 'school2', 'station2', 'dome2', 'rack2', 'umiak2', 'tank2', 'mast2', 'buoy2', 'rock-b2', 'walrus', 'seal']:
+    if not os.path.exists(f'art/raw/{n}.png'): continue
+    im = Image.open(f'art/raw/{n}.png').convert('RGBA'); im = im.crop(im.getbbox()); im.save(f'art/{n}.png'); meta[n] = {'w': im.width, 'h': im.height}
+for n in ['villager-a', 'villager-b']:
+    if os.path.exists(f'art/raw/{n}.gif'):
+        fr = [key_out(f, flood=False, tol=20) for f in frames(f'art/raw/{n}.gif')]
+        meta[n] = {**sheet(fr, n), 'rows': {'up': 0, 'left': 1, 'down': 2, 'right': 3}}
 json.dump(meta, open('art/sprites.json', 'w'), indent=1)
 print(json.dumps({k: v for k, v in meta.items()}, indent=None)[:900])

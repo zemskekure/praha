@@ -1,5 +1,5 @@
 {
- "spent": 1.81,
+ "spent": 2.8500000000000005,
  "done": {
   "dog-a": {
    "file": "art/raw/dog-a.gif",
@@ -84,6 +84,74 @@
   "dogrun-b": {
    "file": "art/raw/dogrun-b.png",
    "cost": 0.06
+  },
+  "house-a2": {
+   "file": "art/raw/house-a2.png",
+   "cost": 0.06
+  },
+  "house-c2": {
+   "file": "art/raw/house-c2.png",
+   "cost": 0.06
+  },
+  "house-d2": {
+   "file": "art/raw/house-d2.png",
+   "cost": 0.06
+  },
+  "house-b2": {
+   "file": "art/raw/house-b2.png",
+   "cost": 0.06
+  },
+  "station2": {
+   "file": "art/raw/station2.png",
+   "cost": 0.06
+  },
+  "rack2": {
+   "file": "art/raw/rack2.png",
+   "cost": 0.06
+  },
+  "school2": {
+   "file": "art/raw/school2.png",
+   "cost": 0.06
+  },
+  "dome2": {
+   "file": "art/raw/dome2.png",
+   "cost": 0.06
+  },
+  "umiak2": {
+   "file": "art/raw/umiak2.png",
+   "cost": 0.06
+  },
+  "mast2": {
+   "file": "art/raw/mast2.png",
+   "cost": 0.06
+  },
+  "buoy2": {
+   "file": "art/raw/buoy2.png",
+   "cost": 0.06
+  },
+  "tank2": {
+   "file": "art/raw/tank2.png",
+   "cost": 0.06
+  },
+  "walrus": {
+   "file": "art/raw/walrus.png",
+   "cost": 0.06
+  },
+  "rock-b2": {
+   "file": "art/raw/rock-b2.png",
+   "cost": 0.06
+  },
+  "seal": {
+   "file": "art/raw/seal.png",
+   "cost": 0.06
+  },
+  "villager-a": {
+   "file": "art/raw/villager-a.gif",
+   "cost": 0.07
+  },
+  "villager-b": {
+   "file": "art/raw/villager-b.gif",
+   "cost": 0.07
   }
  },
  "note": "includes a $0.25 size probe for the 8-direction style"

@@ -7,7 +7,7 @@
   const $ = id => document.getElementById(id);
   const canvas = $('c'), g = canvas.getContext('2d');
   const T = 16;                                   // pixels per tile
-  const MW = 170, MH = 130;                       // map size in tiles
+  const MW = 236, MH = 176;                       // map size in tiles
 
   // ------------------------------------------------------------------ seeded randomness (the world is the same every visit)
   const mulberry = s => () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
@@ -20,10 +20,10 @@
   // Big Diomede (west, Russia) is long and lies north-south; Little Diomede (east, USA) is small and round-shouldered.
   // Both are steep plateaus ringed by cliffs; you can only land where there is a beach.
   const ISLANDS = [
-    { id: 'big', name: 'Big Diomede', country: 'Russia', nick: 'Tomorrow Island', cx: 44, cy: 64, rx: 25, ry: 52, seed: 3, beach: { ang: 0.05, width: 0.42 } },
-    { id: 'little', name: 'Little Diomede', country: 'USA', nick: 'Yesterday Island', cx: 124, cy: 68, rx: 17, ry: 14, seed: 11, beach: { ang: Math.PI, width: 0.55 } },
+    { id: 'big', name: 'Big Diomede', country: 'Russia', nick: 'Tomorrow Island', cx: 62, cy: 88, rx: 36, ry: 72, seed: 3, beach: { ang: 0.05, width: 0.42 } },
+    { id: 'little', name: 'Little Diomede', country: 'USA', nick: 'Yesterday Island', cx: 178, cy: 90, rx: 28, ry: 22, seed: 11, beach: { ang: Math.PI, width: 0.55 } },
   ];
-  const DATE_LINE = 86;                           // tile column of the International Date Line (in the strait)
+  const DATE_LINE = 121;                           // tile column of the International Date Line (in the strait)
   const radius = (I, a) => 1 + 0.13 * Math.sin(a * 3 + I.seed) + 0.08 * Math.sin(a * 5 + I.seed * 2) + 0.05 * Math.sin(a * 9 + I.seed * 3) + 0.06 * (fbm(Math.cos(a) * 2 + I.seed, Math.sin(a) * 2, I.seed) - 0.5);
   function islandAt(x, y) {   // which island a tile belongs to, and how deep inside it is (0 at the shore, 1 at the centre)
     for (const I of ISLANDS) { const dx = (x - I.cx) / I.rx, dy = (y - I.cy) / I.ry, r = Math.hypot(dx, dy), a = Math.atan2(dy, dx), R = radius(I, a);
@@ -57,15 +57,15 @@
   function pier(I, dir) {
     const y = Math.round(I.cy + 1); let x = Math.round(I.cx);
     while (at(x, y) !== K.DEEP && at(x, y) !== K.SHALLOW && x > 0 && x < MW - 1) x += dir;   // walk out to the waterline
-    const start = x; for (let i = 0; i < 6; i++) { map[y * MW + x] = K.DOCK; map[(y + 1) * MW + x] = K.DOCK; x += dir; }
-    return { x0: start, x1: x - dir, y, end: { x: (x + dir * 1.5) * T + T / 2, y: (y + 1) * T } };
+    const start = x; for (let i = 0; i < 7; i++) { for (const r of [-1, 0, 1]) map[(y + r) * MW + x] = K.DOCK; x += dir; }
+    return { x0: start, x1: x - dir, y, dir, end: { x: (x - dir * 2) * T + T / 2, y: (y + 2) * T + 10 } };
   }
   const piers = { big: pier(ISLANDS[0], 1), little: pier(ISLANDS[1], -1) };
   // Paths: from each pier up into the island (to the village on Little Diomede, to the weather station on Big).
   function path(x0, y0, x1, y1) { const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)); for (let i = 0; i <= n; i++) { const x = Math.round(x0 + (x1 - x0) * i / n + Math.sin(i * 0.4) * 1.2), y = Math.round(y0 + (y1 - y0) * i / n); for (const [dx, dy] of [[0, 0], [1, 0]]) { const k = (y + dy) * MW + x + dx; if (WALK.has(map[k]) && map[k] !== K.DOCK) map[k] = K.PATH; } } }
   const L = ISLANDS[1], B = ISLANDS[0];
-  path(piers.little.x0 + 1, piers.little.y, L.cx - 3, L.cy - 6);
-  path(piers.big.x0 - 1, piers.big.y, B.cx + 4, B.cy - 18);
+  path(piers.little.x0 + 1, piers.little.y, L.cx - 6, L.cy - 6); path(L.cx - 20, L.cy - 1, L.cx + 6, L.cy - 4);
+  path(piers.big.x0 - 1, piers.big.y, B.cx + 8, B.cy - 18);
   // The cliffs must still let you up from the beach: carve the path through any cliff tile it meets.
   for (let k = 0; k < map.length; k++) if (map[k] === K.CLIFF) { const x = k % MW, y = (k / MW) | 0; if (at(x - 1, y) === K.PATH && at(x + 1, y) === K.PATH) map[k] = K.PATH; }
 
@@ -75,14 +75,18 @@
   const place = (kind, tx, ty, extra = {}) => props.push({ kind, x: tx * T, y: ty * T, ...extra });
   // Little Diomede: houses climbing the slope above the beach, drying racks, upturned skin boats, the school.
   const HOUSE_COL = ['#7d4b3a', '#4d6b78', '#8a7b5a', '#5e6e4f', '#a0553c', '#6b6f75'];
-  for (let i = 0; i < 7; i++) { const tx = L.cx - 12 + (i % 3) * 5.6 + (Math.floor(i / 3) % 2) * 2.4 + rnd() * 0.6, ty = L.cy - 9 + Math.floor(i / 3) * 5.2 + rnd() * 0.5; if (WALK.has(at(tx | 0, ty | 0))) place('house', tx, ty, { col: HOUSE_COL[i % HOUSE_COL.length], w: 2 + (rnd() < 0.4 ? 1 : 0), v: i }); }
-  place('school', L.cx - 4, L.cy - 10);
-  for (let i = 0; i < 4; i++) place('rack', L.cx - 14 + i * 2.2, L.cy + 4 + rnd());
-  for (let i = 0; i < 3; i++) place('umiak', L.cx - 15 + i * 2.5, L.cy + 7.5);
+  for (let i = 0; i < 6; i++) { const tx = L.cx - 19 + (i % 3) * 8 + (Math.floor(i / 3) % 2) * 3, ty = L.cy - 10 + Math.floor(i / 3) * 9 + rnd() * 0.6; if (WALK.has(at(tx | 0, ty | 0))) place('house', tx, ty, { col: HOUSE_COL[i % HOUSE_COL.length], w: 2 + (rnd() < 0.4 ? 1 : 0), v: i }); }
+  place('school', L.cx + 6, L.cy - 12);
+  // Two fish racks with room between them; two skin boats pulled up and left lying where they were dragged.
+  const rk = [rnd(), rnd(), rnd(), rnd()];
+  place('rack', L.cx - 20, L.cy + 9.5 + rk[0]); place('rack', L.cx - 13, L.cy + 10.5 + rk[1]);
+  place('umiak', L.cx - 23, L.cy + 4.5, { rot: 1.25 }); place('umiak', L.cx - 16.5, L.cy + 5.2, { rot: 1.95 });
+  for (const [dx, dy] of [[-14, -2], [-6, -3], [2, -4], [-18, 3]]) place('lamp', L.cx + dx, L.cy + dy);
+  place('seal', L.cx - 27, L.cy + 11); place('walrus', B.cx + 31, B.cy + 6); place('walrus', B.cx + 30, B.cy + 10); place('seal', B.cx + 29, B.cy - 6);
   // Big Diomede: the weather station, its mast, a radar dome and a fuel tank, all old and quiet.
-  place('station', B.cx + 3, B.cy - 20); place('mast', B.cx + 7, B.cy - 22); place('dome', B.cx - 1, B.cy - 24); place('tank', B.cx + 6, B.cy - 16);
+  place('station', B.cx + 6, B.cy - 22); place('mast', B.cx + 14, B.cy - 26); place('dome', B.cx - 4, B.cy - 30); place('tank', B.cx + 14, B.cy - 16);
   // Boulders and lichen-covered rocks everywhere on the plateaus.
-  for (let i = 0; i < 160; i++) { const tx = 4 + rnd() * (MW - 8), ty = 4 + rnd() * (MH - 8), t = at(tx | 0, ty | 0); if (t === K.TUNDRA || t === K.SCREE) place('rock', tx, ty, { s: 0.6 + rnd() * 0.8 }); }
+  for (let i = 0; i < 320; i++) { const tx = 4 + rnd() * (MW - 8), ty = 4 + rnd() * (MH - 8), t = at(tx | 0, ty | 0); if (t === K.TUNDRA || t === K.SCREE) place('rock', tx, ty, { s: 0.6 + rnd() * 0.8 }); }
   // Date-line buoys in the strait.
   for (let ty = 6; ty < MH - 6; ty += 9) if (at(DATE_LINE, ty) === K.DEEP) place('buoy', DATE_LINE + 0.5, ty);
 
@@ -110,8 +114,32 @@
     // Surf: pale foam where water touches land.
     if (FLOAT.has(t)) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const n = at(tx + dx, ty + dy); if (!FLOAT.has(n) && n !== K.DOCK) { w.fillStyle = 'rgba(232,238,240,0.55)'; for (let i = 0; i < 6; i++) { const r = hash2(tx + i, ty - i, 9); const px = dx ? (dx > 0 ? T - 2 : 0) : (r * T) | 0, py = dy ? (dy > 0 ? T - 2 : 0) : (r * T) | 0; w.fillRect(X + px, Y + py, 2, 2); } } }
   }
-  // The date line: an orange dashed line painted on the water.
-  w.fillStyle = '#e0703a'; for (let y = 0; y < MH * T; y += 12) w.fillRect(DATE_LINE * T + T / 2 - 1, y, 2, 6);
+  }
+  // Organic edges: the tile painting is resampled through a smooth noise field, so shores, beaches, snow and grass
+  // meet in curves instead of 16 px steps. Piers stay straight. The curved shoreline is kept for the surf.
+  const surf = [], waterMask = document.createElement('canvas'), reflTmp = document.createElement('canvas');   // per tile row: [x, y, nx, ny] water pixels touching land, nx/ny pointing out to sea
+  function warpWorld() {
+    const W = world.width, H = world.height, src = w.getImageData(0, 0, W, H).data, out = new Uint8ClampedArray(src.length), kind = new Uint8Array(W * H);
+    const G = 4, gw = Math.ceil(W / G) + 1, gh = Math.ceil(H / G) + 1, ofx = new Float32Array(gw * gh), ofy = new Float32Array(gw * gh), A = 7;
+    for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) { const x = i * G, y = j * G; ofx[j * gw + i] = (fbm(x / 38, y / 38, 41) - 0.5) * 2 * A; ofy[j * gw + i] = (fbm(x / 38, y / 38, 57) - 0.5) * 2 * A; }
+    for (let y = 0; y < H; y++) { const j = Math.min(gh - 2, (y / G) | 0), fy = y / G - j;
+      for (let x = 0; x < W; x++) { const i = Math.min(gw - 2, (x / G) | 0), fx = x / G - i, k0 = j * gw + i;
+        const dx = (ofx[k0] * (1 - fx) + ofx[k0 + 1] * fx) * (1 - fy) + (ofx[k0 + gw] * (1 - fx) + ofx[k0 + gw + 1] * fx) * fy;
+        const dy = (ofy[k0] * (1 - fx) + ofy[k0 + 1] * fx) * (1 - fy) + (ofy[k0 + gw] * (1 - fx) + ofy[k0 + gw + 1] * fx) * fy;
+        let sx = Math.max(0, Math.min(W - 1, Math.round(x + dx))), sy = Math.max(0, Math.min(H - 1, Math.round(y + dy)));
+        const own = at((x / T) | 0, (y / T) | 0); let t = at((sx / T) | 0, (sy / T) | 0);
+        if (own === K.DOCK || t === K.DOCK) { sx = x; sy = y; t = own; }
+        const si = (sy * W + sx) * 4, di = (y * W + x) * 4; out[di] = src[si]; out[di + 1] = src[si + 1]; out[di + 2] = src[si + 2]; out[di + 3] = 255; kind[y * W + x] = t; } }
+    w.putImageData(new ImageData(out, W, H), 0, 0);
+    { const m = new Uint8ClampedArray(W * H * 4); for (let i = 0; i < W * H; i++) if (kind[i] === K.DEEP || kind[i] === K.SHALLOW) m[i * 4 + 3] = 255;
+      waterMask.width = W; waterMask.height = H; waterMask.getContext('2d').putImageData(new ImageData(m, W, H), 0, 0); }
+    for (let ty = 0; ty < MH; ty++) surf.push([]);
+    const wet = k => k === K.DEEP || k === K.SHALLOW;
+    for (let y = 1; y < H - 1; y += 2) for (let x = 1; x < W - 1; x += 2) { if (!wet(kind[y * W + x])) continue;
+      let nx = 0, ny = 0; for (const [dx, dy] of [[3, 0], [-3, 0], [0, 3], [0, -3]]) { const k = kind[Math.min(H - 1, Math.max(0, y + dy)) * W + Math.min(W - 1, Math.max(0, x + dx))]; if (!wet(k) && k !== K.DOCK) { nx -= dx; ny -= dy; } }
+      if (nx || ny) { const l = Math.hypot(nx, ny); surf[(y / T) | 0].push([x, y, nx / l, ny / l]); } }
+    // The date line: an orange dashed line painted on the water.
+    w.fillStyle = '#e0703a'; for (let y = 0; y < MH * T; y += 12) w.fillRect(DATE_LINE * T + T / 2 - 1, y, 2, 6);
   }
 
   // ------------------------------------------------------------------ sprites: code-drawn stand-ins
@@ -161,11 +189,20 @@
     return out;
   })();
   function px(c, x, y, w2 = 1, h2 = 1, col) { c.fillStyle = col; c.fillRect(Math.round(x), Math.round(y), w2, h2); }
-  const PROP_SPR = { school: 'school', station: 'station', dome: 'dome' };
+  const PROP_SPR = { school: ['school2', 'school'], station: ['station2', 'station'], dome: ['dome2', 'dome'], rack: ['rack2'], umiak: ['umiak2'], tank: ['tank2'], mast: ['mast2'], buoy: ['buoy2'], walrus: ['walrus'], seal: ['seal'] };
+  const pick = list => list && list.find(n => SPR[n]);
+  function propSprite(p) {
+    if (p.kind === 'house') return pick([['house-a2', 'house-b2', 'house-c2', 'house-d2'][p.v % 4], ['house-a', 'house-b', 'house-c'][p.v % 3]]);
+    if (p.kind === 'rock') return p.s > 1.25 ? pick(['rock-a']) : p.s > 1.0 ? pick(['rock-b2']) : null;
+    return pick(PROP_SPR[p.kind]);
+  }
   function drawProp(c, p, ox, oy) {
     const x = p.x - ox, y = p.y - oy;
-    const sn = p.kind === 'house' ? ['house-a', 'house-b', 'house-c'][p.v % 3] : p.kind === 'rock' && p.s > 1.15 ? 'rock-a' : PROP_SPR[p.kind];
-    if (sn && SPR[sn]) { const im = SPR[sn]; c.fillStyle = 'rgba(0,0,0,0.22)'; c.fillRect(Math.round(x - im.width / 2 + 3), Math.round(y + 6), im.width - 6, 3); c.drawImage(im, Math.round(x - im.width / 2), Math.round(y + 8 - im.height)); return; }
+    const sn = propSprite(p);
+    if (sn && p.rot) { const im = SPR[sn]; c.save(); c.translate(Math.round(x), Math.round(y)); c.rotate(p.rot);
+      c.globalAlpha = 0.28; c.drawImage(sil(im), -im.width / 2 + 3, -im.height / 2 + 3); c.globalAlpha = 1;   // lying flat: a soft drop shadow
+      c.drawImage(im, -im.width / 2, -im.height / 2); c.restore(); return; }
+    if (sn) { const im = SPR[sn], k = p.kind === 'mast' ? 2 : 1, bob = p.kind === 'buoy' ? Math.round(Math.sin(now * 2 + p.y) * 1.5) : 0; c.drawImage(im, Math.round(x - im.width * k / 2), Math.round(y + 8 - im.height * k + bob), im.width * k, im.height * k); return; }
     switch (p.kind) {
       case 'house': { const wd = p.w * T; px(c, x - 1, y + 9, wd + 2, 3, 'rgba(0,0,0,0.25)'); px(c, x, y - 4, wd, 13, p.col); px(c, x - 1, y - 9, wd + 2, 6, '#3d3432'); px(c, x + 3, y, 4, 5, '#f2d48a'); px(c, x + wd - 7, y + 1, 3, 8, '#2a2522'); for (let i = 0; i < wd; i += 3) px(c, x + i, y + 9, 1, 3, '#2f2a28'); break; }   // on stilts
       case 'school': px(c, x - 1, y + 10, 42, 3, 'rgba(0,0,0,0.25)'); px(c, x, y - 4, 40, 14, '#9c3d2e'); px(c, x - 1, y - 9, 42, 6, '#3d3432'); for (let i = 4; i < 38; i += 7) px(c, x + i, y, 4, 4, '#f2d48a'); break;
@@ -176,15 +213,18 @@
       case 'dome': px(c, x - 2, y + 8, 26, 3, 'rgba(0,0,0,0.25)'); for (let r = 0; r < 11; r++) px(c, x + 11 - Math.sqrt(121 - r * r), y - r + 6, 2 * Math.sqrt(121 - r * r), 1, r > 7 ? '#f1f1ee' : '#dcdcd8'); break;
       case 'tank': px(c, x, y, 14, 9, '#8c7a66'); px(c, x, y - 2, 14, 3, '#a3927d'); px(c, x, y + 9, 14, 2, 'rgba(0,0,0,0.3)'); break;
       case 'rock': { const s = p.s * 7; px(c, x - s / 2, y - s / 3, s, s * 0.7, '#6f6b64'); px(c, x - s / 2, y - s / 3, s * 0.6, s * 0.3, '#8a857d'); px(c, x - s / 2 + 1, y + s * 0.37, s, 1, 'rgba(0,0,0,0.35)'); break; }
+      case 'lamp': px(c, x, y - 16, 2, 24, '#2c2a28'); px(c, x - 2, y - 19, 6, 4, '#3a3630'); px(c, x - 1, y - 18, 4, 2, lightLevel() > 0.25 ? '#ffe2a0' : '#8a8578'); break;
       case 'buoy': { const bob = Math.sin(now * 2 + p.y) * 1; px(c, x - 3, y - 3 + bob, 6, 6, '#e0703a'); px(c, x - 1, y - 7 + bob, 2, 4, '#2b2b2b'); px(c, x - 4, y + 3 + bob, 8, 1, 'rgba(232,238,240,0.6)'); break; }
     }
   }
+  // Walk sheets (rows up, left, down, right; 4 steps): which frame, and drawing it with its feet at (x, y).
+  function sheetFrame(name, dir, step, moving) { const M = META[name]; if (!M || !SPR[name]) return null; const row = [2, 3, 0, 1][dir], f = moving ? Math.floor(step * 0.55) % 4 : 1; return [(row * 4 + f) * M.fw, 0, M.fw, M.fh]; }
+  function drawSheet(name, x, y, dir, step, moving) { const F = sheetFrame(name, dir, step, moving); if (!F) return; g.drawImage(SPR[name], F[0], 0, F[2], F[3], Math.round(x - F[2] / 2), Math.round(y - 44), F[2], F[3]); }
   // The man: dark turtleneck, sand trousers, short brown hair; seen from above and a little in front.
   function drawMan(c, x, y, dir, step, sitting) {
     x = Math.round(x); y = Math.round(y);
     if (SPR.man) {   // RetroDiffusion walk sheet: rows up, left, down, right; 4 steps each
       const row = [2, 3, 0, 1][dir], f = sitting ? 1 : (man.moving ? Math.floor(step * 0.55) % 4 : 1), M = META.man;
-      if (!sitting) px(c, x - 6, y - 1, 12, 3, 'rgba(0,0,0,0.22)');
       c.drawImage(SPR.man, (row * 4 + f) * M.fw, 0, M.fw, sitting ? 30 : M.fh, x - M.fw / 2, y - 44, M.fw, sitting ? 30 : M.fh);
       return;
     }
@@ -204,7 +244,6 @@
     if (DOG) {
       const face = dir === 3 || (dir !== 1 && dog.face === 'left') ? 'left' : 'right';
       const fr = sitting ? DOG.stand : DOG['run' + (Math.floor(step * 0.9) % 4)];
-      px(c, x - 9, y - 1, 18, 2, 'rgba(0,0,0,0.22)');
       c.drawImage(fr[face], x - 17, y - 20);
       return;
     }
@@ -246,10 +285,10 @@
   }
 
   // ------------------------------------------------------------------ the characters
-  const startX = (piers.little.x0 + 2) * T, startY = (piers.little.y - 1) * T;
+  const startX = (piers.little.x0 + piers.little.dir * 1) * T + T / 2, startY = piers.little.y * T + T / 2;   // on the pier, by the shore
   const man = { x: startX, y: startY, dir: 3, step: 0, moving: false, inBoat: false };
-  const dog = { x: startX + 22, y: startY + 6, dir: 3, step: 0, moving: false, mode: 'follow', t: 0, ang: 0 };
-  const boat = { x: piers.little.end.x, y: piers.little.end.y + 4, a: -Math.PI / 2, v: 0, stroke: 0, manned: false };
+  const dog = { x: startX + 14, y: startY + 10, dir: 3, step: 0, moving: false, mode: 'follow', t: 0, ang: 0 };
+  const boat = { x: piers.little.end.x, y: piers.little.end.y, a: piers.little.dir > 0 ? 0 : Math.PI, v: 0, stroke: 0, manned: false };   // moored alongside the pier's end
   const walkable = (x, y) => WALK.has(at(Math.floor(x / T), Math.floor(y / T)));
   const floats = (x, y) => FLOAT.has(at(Math.floor(x / T), Math.floor(y / T)));
 
@@ -274,12 +313,12 @@
   }
   function toggleBoat() {
     if (!man.inBoat) {
-      if (Math.hypot(man.x - boat.x, man.y - boat.y) < 30) { man.inBoat = true; boat.manned = true; dog.mode = 'boat'; say('You climb in. The whippet jumps in after you.'); }
+      if (Math.hypot(man.x - boat.x, man.y - boat.y) < 56) { man.inBoat = true; boat.manned = true; dog.mode = 'boat'; say('You climb in. The whippet jumps in after you.'); }
       else say('The boat is moored at the end of the pier.');
     } else {
       // Step off onto the nearest walkable tile within reach (a pier or a beach).
       let best = null;
-      for (let r = 8; r <= 30 && !best; r += 4) for (let a = 0; a < 6.28; a += 0.4) { const x = boat.x + Math.cos(a) * r, y = boat.y + Math.sin(a) * r; if (walkable(x, y)) { best = [x, y]; break; } }
+      for (let r = 8; r <= 48 && !best; r += 4) for (let a = 0; a < 6.28; a += 0.4) { const x = boat.x + Math.cos(a) * r, y = boat.y + Math.sin(a) * r; if (walkable(x, y)) { best = [x, y]; break; } }
       if (!best) { say('Too far from a pier or a beach to step ashore.'); return; }
       man.inBoat = false; boat.manned = false; boat.v = 0; [man.x, man.y] = best; dog.mode = 'follow'; dog.x = best[0] + 10; dog.y = best[1] + 4;
     }
@@ -290,13 +329,248 @@
   // Game clock: one real second is one minute. Little Diomede (Alaska time) starts on a Tuesday at 08:00;
   // Big Diomede (Russian time across the date line) is 21 hours ahead: Wednesday 05:00.
   const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  let clock = 2 * 1440 + 8 * 60;   // minutes since Sunday 00:00, Little Diomede
+  let clock = 2 * 1440 + 5 * 60 + 20;   // minutes since Sunday 00:00, Little Diomede: Tuesday 05:20, just before dawn
   const fmt = m => { m = ((m % 10080) + 10080) % 10080; const d = Math.floor(m / 1440), h = Math.floor(m % 1440 / 60), mi = Math.floor(m % 60); return `${DAYS[d]} ${String(h).padStart(2, '0')}:${String(mi).padStart(2, '0')}`; };
+
+  // ================================================================== ATMOSPHERE
+  // Light, time, weather and life. Everything is driven by the Little Diomede clock and a slow, seeded weather.
+  const hourNow = () => (((clock % 1440) + 1440) % 1440) / 60;
+  // The sun: rises 06:10 in the east, a low arctic arc through the south (at most ~24 degrees), sets 18:40 in the west.
+  function sunState(h = hourNow()) {
+    const rise = 6.15, set = 18.65, day = (h - rise) / (set - rise);
+    const elev = day > 0 && day < 1 ? Math.sin(day * Math.PI) * 0.42 : -0.25;
+    const az = Math.PI / 2 + Math.max(0, Math.min(1, day)) * Math.PI;   // east (pi/2) through south (pi) to west (3pi/2), clockwise from north
+    return { elev, az, up: elev > 0 };
+  }
+  // The colour of each hour: what the world is multiplied by, and a warm or cool glow screened over it.
+  const GRADE = [   // hour, multiply rgb, glow rgb, glow strength
+    [0, [62, 78, 128], [40, 70, 120], 0.05], [4.8, [66, 80, 132], [60, 80, 140], 0.05], [5.7, [140, 130, 176], [210, 140, 170], 0.10],
+    [6.3, [255, 208, 190], [255, 150, 110], 0.14], [7.4, [255, 234, 216], [255, 200, 150], 0.08], [9.5, [255, 252, 246], [255, 255, 255], 0.0],
+    [14.5, [255, 248, 236], [255, 230, 200], 0.04], [16.8, [255, 222, 186], [255, 160, 80], 0.13], [18.2, [248, 186, 160], [255, 120, 80], 0.16],
+    [18.9, [172, 150, 192], [190, 120, 170], 0.12], [19.8, [98, 106, 152], [70, 90, 150], 0.06], [24, [62, 78, 128], [40, 70, 120], 0.05],
+  ];
+
+  const SKYREF = [[0, [40, 60, 110], 0.15], [5.7, [150, 120, 190], 0.25], [6.3, [255, 140, 120], 0.20], [7.4, [255, 210, 170], 0.22], [10, [170, 210, 235], 0.25],
+    [15, [190, 215, 230], 0.22], [16.8, [255, 150, 70], 0.16], [18.2, [255, 100, 80], 0.20], [18.9, [190, 120, 180], 0.30], [19.8, [80, 100, 160], 0.20], [24, [40, 60, 110], 0.15]];
+  function skyRef(h = hourNow()) { let i = 0; while (i < SKYREF.length - 2 && SKYREF[i + 1][0] <= h) i++; const a = SKYREF[i], b = SKYREF[i + 1], t = (h - a[0]) / (b[0] - a[0]), o = overcast() * 0.7, c = a[1].map((v, k) => v + (b[1][k] - v) * t), l = (c[0] + c[1] + c[2]) / 3; return { c: c.map(v => Math.round(v + (l - v) * o)), a: a[2] + (b[2] - a[2]) * t }; }
+  // Under heavy snow the sun is gone: the colour drains toward a cold, even grey and the warm glow fades.
+  const overcast = () => { const W = weather(); return Math.min(1, W.snow * 0.8 + W.fog * 0.4); };
+  function grade(h = hourNow()) {
+    let i = 0; while (i < GRADE.length - 2 && GRADE[i + 1][0] <= h) i++;
+    const a = GRADE[i], b = GRADE[i + 1], t = (h - a[0]) / (b[0] - a[0]), m = (x, y) => x + (y - x) * t;
+    const mul = a[1].map((v, k) => m(v, b[1][k])), o = overcast() * 0.7, lum = (mul[0] + mul[1] + mul[2]) / 3 * 0.92, cool = [lum * 0.94, lum * 0.98, lum * 1.06].map(v => Math.min(255, v));
+    return { mul: mul.map((v, k) => v + (cool[k] - v) * o), glow: a[2].map((v, k) => m(v, b[2][k])), gs: m(a[3], b[3]) * (1 - o) };
+  }
+  const lightLevel = () => { const G = grade(); return 1 - (G.mul[0] + G.mul[1] + G.mul[2]) / 765; };   // 0 at noon, ~0.7 at night
+  // Weather: snow comes and goes in waves; the wind veers slowly and gusts.
+  const weather = () => { const t = clock / 60 + 115.5;   // phase picked so the first day has dawn flurries, a clear golden evening, snow at night
+    const n = fbm(t * 0.35, 3.1, 99); return { snow: Math.max(0, Math.min(1, (n - 0.5) * 3.4)), fog: Math.max(0, Math.min(1, (fbm(t * 0.25, 8.3, 7) - 0.5) * 3)) }; };
+  const wind = { x: 10, y: 3 };
+  function windStep() { const a = 0.25 + 0.6 * (fbm(clock * 0.004, 1.7, 3) - 0.5) * 2, gust = 1 + 0.6 * Math.max(0, Math.sin(now * 0.7) * Math.sin(now * 0.23)); const sp = (8 + 10 * weather().snow) * gust; wind.x = Math.cos(a) * sp; wind.y = Math.sin(a) * sp; }
+
+  // Silhouettes for shadows, cached per image.
+  const silCache = new Map();
+  function sil(img) { if (silCache.has(img)) return silCache.get(img); const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const x = c.getContext('2d'); x.drawImage(img, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = '#000'; x.fillRect(0, 0, c.width, c.height); silCache.set(img, c); return c; }
+  // A shadow is the silhouette laid on the ground away from the sun (or the moon), longer when the light is low.
+  let SH = { dx: 0, dy: 0.5, a: 0.3 };
+  function shadowSetup() {
+    const S = sunState(), h = hourNow();
+    if (S.up) { const len = Math.min(3.2, 0.5 / Math.tan(Math.max(0.12, S.elev))); SH = { dx: -Math.sin(S.az) * len, dy: Math.cos(S.az) * len, a: 0.34 * Math.min(1, S.elev / 0.1) }; }
+    else { const mAz = Math.PI / 2 + ((h + 12) % 24 - 6.15) / 12.5 * Math.PI; SH = { dx: -Math.sin(mAz) * 0.9, dy: Math.cos(mAz) * 0.9, a: 0.14 }; }   // moon shadows
+  }
+  function drawShadow(img, sx, sy, sw, sh, fx, fy, k = 1) {
+    if (SH.a < 0.02) return;
+    const DX = SH.dx * sh * k, DY = SH.dy * sh * k;
+    g.save(); g.globalAlpha = SH.a; g.setTransform(1, 0, -DX / sh, -DY / sh, Math.round(fx), Math.round(fy));
+    g.drawImage(sil(img), sx, sy, sw, sh, -sw * k / 2, -sh, sw * k, sh); g.restore();
+  }
+
+  // ------------------------------------------------------------------ life: birds, ice, seals, villagers, smoke, prints
+  const R2 = mulberry(777);
+  const gulls = Array.from({ length: 22 }, (_, i) => ({ cx: (20 + R2() * (MW - 40)) * T, cy: (20 + R2() * (MH - 40)) * T, R: 60 + R2() * 160, w: (R2() < 0.5 ? -1 : 1) * (0.15 + R2() * 0.25), ph: R2() * 6.28, alt: 20 + R2() * 40 }));
+  // Auklet clouds swirl off the cliffs of both islands.
+  const cliffs = []; for (let k = 0; k < map.length; k += 7) if (map[k] === K.CLIFF && cliffs.length < 400) cliffs.push(k);
+  const swarms = Array.from({ length: 5 }, (_, i) => { const k = cliffs[Math.floor(R2() * cliffs.length)] || 0; return { x: (k % MW) * T, y: ((k / MW) | 0) * T, n: 26, seed: i * 31 }; });
+  // Ice floes drift south through the strait and wrap round.
+  const floes = Array.from({ length: 18 }, () => ({ x: (DATE_LINE - 22 + R2() * 44) * T, y: R2() * MH * T, r: 7 + R2() * 16, sp: 3 + R2() * 4, rot: R2() * 6, pts: Array.from({ length: 8 }, () => 0.7 + R2() * 0.35) }));
+  // Seals surface here and there near the shores, look around, and dive.
+  const shallows = []; for (let k = 0; k < map.length; k += 3) if (map[k] === K.SHALLOW) shallows.push(k);
+  const seals = Array.from({ length: 10 }, (_, i) => { const k = shallows[Math.floor(R2() * shallows.length)] || 0; return { x: (k % MW) * T + 8, y: ((k / MW) | 0) * T + 8, ph: R2() * 20 }; });
+  // Villagers walk between the houses, the racks and the pier, and stop to talk to nobody in particular.
+  const homes = props.filter(p => p.kind === 'house' || p.kind === 'rack' || p.kind === 'school').map(p => [p.x, p.y + 14]);
+  homes.push([(piers.little.x0 + 1) * T, piers.little.y * T + 8]);
+  const villagers = ['villager-a', 'villager-b', 'villager-a'].map((sp, i) => { const h = homes[i % homes.length]; return { sp, x: h[0], y: h[1], to: 1 + i, wait: i * 2, dir: 0, step: 0, moving: false }; });
+  // Footprints in snow and on the shingle; a wake behind the boat.
+  const prints = [], wakes = [];
+  let printT = 0;
+
+  function lifeStep(dt) {
+    windStep();
+    for (const f of floes) { f.y += f.sp * dt; f.x += wind.x * 0.05 * dt; if (f.y > MH * T + 30) { f.y = -30; } f.rot += dt * 0.02;
+      if (man.inBoat) { const d = Math.hypot(boat.x - f.x, boat.y - f.y); if (d < f.r + 12) { const nx = (boat.x - f.x) / d, ny = (boat.y - f.y) / d; boat.x = f.x + nx * (f.r + 12); boat.y = f.y + ny * (f.r + 12); boat.v *= 0.6; } } }
+    for (const v of villagers) {
+      if (v.wait > 0) { v.wait -= dt; v.moving = false; continue; }
+      const [tx, ty] = homes[v.to % homes.length], dx = tx - v.x, dy = ty - v.y, d = Math.hypot(dx, dy);
+      if (d < 3) { v.wait = 3 + hash2(v.to, 1, 2) * 6; v.to = (v.to + 1 + Math.floor(hash2(v.to, 3, 4) * 3)) % homes.length; continue; }
+      const sp = 22 * dt, nx = v.x + dx / d * sp, ny = v.y + dy / d * sp;
+      if (walkable(nx, ny)) { v.x = nx; v.y = ny; } else { v.to = (v.to + 1) % homes.length; }
+      v.dir = dirOf(dx, dy); v.step += dt * 7; v.moving = true;
+    }
+    printT -= dt;
+    if (printT <= 0) { printT = 0.32;
+      const soft = (x, y) => { const t = at(Math.floor(x / T), Math.floor(y / T)); return t === K.SNOW || t === K.SHINGLE; };
+      if (!man.inBoat && man.moving && soft(man.x, man.y)) prints.push({ x: man.x + (prints.length % 2 ? 2 : -2), y: man.y, t: now, k: 0 });
+      if (!man.inBoat && dog.moving && soft(dog.x, dog.y)) prints.push({ x: dog.x, y: dog.y, t: now, k: 1 });
+      if (man.inBoat && Math.abs(boat.v) > 6) wakes.push({ x: boat.x - Math.cos(boat.a) * 16, y: boat.y - Math.sin(boat.a) * 16, t: now });
+      while (prints.length > 400) prints.shift(); while (wakes.length > 40) wakes.shift();
+    }
+  }
+
+  // ------------------------------------------------------------------ the layers
+  // A road of glitter on the water toward a low light: the sun at either end of the day, the moon at night.
+  function lightRoad(ox, oy, az, col, a, n) {
+    const dx = Math.sin(az), dy = -Math.cos(az), cx = VW / 2, cy = VH / 2;
+    for (let i = 0; i < n; i++) { const t = hash2(i, 41, 1) * Math.max(VW, VH), w = 18 + t * 0.12, off = (hash2(i, 42, 1) - 0.5) * w, wob = Math.sin(now * 2.2 + i * 1.7) * 3;
+      const sx = cx + dx * t - dy * (off + wob), sy = cy + dy * t + dx * (off + wob); if (sx < 0 || sy < 0 || sx >= VW || sy >= VH || !floats(sx + ox, sy + oy)) continue;
+      const tw = Math.max(0, Math.sin(now * 4 + i * 2.3)); px(g, sx, sy, 2 + (i % 3 === 0 ? 1 : 0), 1, `rgba(${col},${a * tw * (1 - Math.abs(off) / (w * 0.6))})`); }
+  }
+  function drawWater(ox, oy) {
+    const G = grade(), h = hourNow(), night = lightLevel(), golden = (h > 16 && h < 19.2) || (h > 5.6 && h < 7.6);
+    // Long swell lines that move with the wind.
+    g.lineWidth = 1;
+    for (let gy = -(oy % 18); gy < VH; gy += 18) for (let gx = -(ox % 30) - 30; gx < VW + 30; gx += 30) {
+      const wx = gx + ox, wy = gy + oy; if (!floats(wx, wy)) continue;
+      const ph = now * 0.9 + wx * 0.02 + wy * 0.05 + hash2(wx / 30 | 0, wy / 18 | 0, 2) * 6, a = (Math.sin(ph) + 1) / 2;
+      const sx = gx + Math.sin(now * 0.4 + wy * 0.03) * 6 + wind.x * 0.3, sy = gy + 0.5;
+      px(g, sx, sy, 7 + a * 5, 1, `rgba(${golden ? '255,214,170' : '210,226,232'},${0.10 + a * 0.16})`);
+    }
+    // Surf breathing along the curved shoreline.
+    for (let ty = Math.max(0, Math.floor(oy / T) - 1); ty < Math.min(MH, (oy + VH) / T + 1); ty++) for (const [x, y, nx, ny] of surf[ty]) {
+      const X = x - ox; if (X < -4 || X > VW + 4) continue; const ph = Math.sin(now * 1.2 + hash2(x >> 3, y >> 3, 6) * 6.28 - (x + y) * 0.01), reach = 1 + (ph + 1) * 2.2;
+      px(g, X + nx * reach, y - oy + ny * reach, 2, 1, `rgba(238,244,246,${0.25 + 0.4 * (ph + 1) / 2})`); }
+    // Glints: warm in low sun, silver under the moon.
+    const n = golden ? 160 : night > 0.45 ? 120 : 70, col = golden ? '255,200,140' : night > 0.45 ? '200,215,255' : '230,240,244';
+    for (let i = 0; i < n; i++) { const gx = (hash2(i, 1, 4) * (VW + 40) + now * 6 * (0.5 + hash2(i, 2, 4))) % (VW + 40) - 20, gy = hash2(i, 3, 4) * VH;
+      if (floats(gx + ox, gy + oy) && Math.sin(now * 2.2 + i * 1.7) > 0.55) px(g, gx, gy, golden ? 3 : 2, 1, `rgba(${col},0.7)`); }
+    // Ice floes.
+    for (const f of floes) { const X = f.x - ox, Y = f.y - oy; if (X < -40 || Y < -40 || X > VW + 40 || Y > VH + 40) continue;
+      const poly = (dx, dy, k, col) => { g.beginPath(); f.pts.forEach((r, i) => { const a = f.rot + i / f.pts.length * 6.283; const x = X + dx + Math.cos(a) * f.r * r * k, y = Y + dy + Math.sin(a) * f.r * r * 0.8 * k; i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.closePath(); g.fillStyle = col; g.fill(); };
+      poly(1, 3, 1, 'rgba(20,40,60,0.35)'); poly(0, 0, 1, '#cfe0e8'); poly(-1, -1, 0.82, '#eef5f7'); }
+    // Seals: a head breaks the surface, ripples, looks around, dives.
+    for (const s of seals) { const c = (now + s.ph) % 16; if (c > 6) continue; const X = s.x - ox, Y = s.y - oy; if (X < -10 || Y < -10 || X > VW + 10 || Y > VH + 10) continue;
+      const up = Math.min(1, c / 0.6, (6 - c) / 0.6); g.strokeStyle = `rgba(220,232,236,${0.4 * up})`; g.beginPath(); g.ellipse(X, Y + 2, 5 + c, 2 + c * 0.4, 0, 0, 6.283); g.stroke();
+      px(g, X - 2, Y - 2 * up, 5, 4 * up, '#3b3f44'); px(g, X - 1, Y - 2 * up, 3, 1, '#565b60'); if (up > 0.8) px(g, X + 1, Y - 1, 1, 1, '#111'); }
+    // Wakes behind the boat.
+    for (const w2 of wakes) { const age = now - w2.t; if (age > 2) continue; g.strokeStyle = `rgba(230,238,240,${0.4 * (1 - age / 2)})`; g.beginPath(); g.ellipse(w2.x - ox, w2.y - oy, 3 + age * 8, 1.5 + age * 3, boat.a, 0, 6.283); g.stroke(); }
+  }
+  function drawGround(ox, oy) {
+    // Tufts of tundra grass lean and shiver with the wind.
+    { const wl = Math.hypot(wind.x, wind.y) || 1, tx0 = Math.floor(ox / T), ty0 = Math.floor(oy / T);
+      for (let ty = ty0; ty <= ty0 + Math.ceil(VH / T) + 1; ty++) for (let tx = tx0; tx <= tx0 + Math.ceil(VW / T) + 1; tx++) {
+        if (at(tx, ty) !== K.TUNDRA) continue;
+        for (let j = 0; j < 3; j++) { if (hash2(tx, ty, 50 + j) > 0.45) continue;
+          const X = tx * T + hash2(tx, ty, 60 + j) * T, Y = ty * T + hash2(tx, ty, 70 + j) * T; if (!walkable(X, Y)) continue;
+          const sway = (Math.sin(now * 2.4 + X * 0.07 + Y * 0.03) * 0.5 + 0.7) * Math.min(1.6, wl / 10), x = Math.round(X - ox), y = Math.round(Y - oy);
+          const lx = Math.round(wind.x / wl * 2 * sway), ly = Math.round(wind.y / wl * sway);
+          const c = hash2(tx, ty, 80 + j) < 0.5 ? '#9aa36a' : '#b9b47c';
+          px(g, x, y, 1, 1, '#5f6a44'); px(g, x + Math.round(lx * 0.5), y - 1, 1, 1, c); px(g, x + lx, y - 2 + ly, 1, 1, c);
+          px(g, x + 2, y, 1, 1, '#5f6a44'); px(g, x + 2 + lx, y - 2 + ly, 1, 1, '#d6cf98'); }
+      } }
+    // Footprints fade over a minute.
+    for (const p of prints) { const age = now - p.t; if (age > 60) continue; const a = 0.28 * (1 - age / 60), X = p.x - ox, Y = p.y - oy; if (p.k) { px(g, X - 3, Y - 1, 1, 1, `rgba(70,80,96,${a})`); px(g, X + 2, Y, 1, 1, `rgba(70,80,96,${a})`); } else px(g, X - 1, Y - 1, 2, 2, `rgba(70,80,96,${a})`); }
+    // Spindrift: wind-blown snow streaking across the land.
+    const W = weather(), n = 30 + W.snow * 70, wl = Math.hypot(wind.x, wind.y) || 1;
+    for (let i = 0; i < n; i++) { const span = VW + 80; const x0 = (hash2(i, 9, 1) * span + now * wind.x * (1.6 + hash2(i, 8, 1))) % span - 40, y0 = (hash2(i, 7, 1) * (VH + 40) + now * wind.y * 1.6) % (VH + 40) - 20;
+      if (!walkable(x0 + ox, y0 + oy)) continue; const L2 = 6 + hash2(i, 6, 1) * 12; g.strokeStyle = 'rgba(244,248,250,0.32)'; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x0 - wind.x / wl * L2, y0 - wind.y / wl * L2); g.stroke(); }
+  }
+  function drawSky(ox, oy) {   // things above the ground: smoke, birds (with their shadows), cloud shadows
+    for (const p of props) if (p.kind === 'house' || p.kind === 'school') {   // chimney smoke bends with the wind
+      const sn = propSprite(p), im = sn && SPR[sn]; const cx = p.x - ox + (im ? -im.width * 0.22 : 0), cy = p.y + 8 - oy - (im ? im.height * 0.86 : 20);
+      if (cx < -60 || cx > VW + 60 || cy < -80 || cy > VH + 60) continue;
+      for (let k = 0; k < 7; k++) { const age = (now * 0.35 + k / 7 + hash2(p.x, p.y, 3)) % 1; const X = cx + wind.x * age * 5 + Math.sin(now + k) * 2, Y = cy - age * 26 + wind.y * age * 3, r = 2 + age * 6;
+        g.fillStyle = `rgba(214,216,220,${0.4 * (1 - age)})`; g.beginPath(); g.arc(X, Y, r, 0, 6.283); g.fill(); }
+    }
+    for (const b of gulls) {   // gulls glide in wide loops; their shadows slide on the ground
+      const a = b.ph + now * b.w, X = b.cx + Math.cos(a) * b.R - ox + wind.x * 0.5, Y = b.cy + Math.sin(a) * b.R * 0.7 - oy;
+      if (X < -40 || Y < -40 || X > VW + 40 || Y > VH + 60) continue;
+      const flap = Math.sin(now * 7 + b.ph * 9) > 0.2 ? -2 : 0;
+      px(g, X + b.alt * 0.4, Y + b.alt, 5, 1, 'rgba(0,0,0,0.12)');
+      g.strokeStyle = '#f1efea'; g.lineWidth = 1; g.beginPath(); g.moveTo(X - 4, Y + flap); g.lineTo(X, Y); g.lineTo(X + 4, Y + flap); g.stroke(); px(g, X - 4, Y + flap, 1, 1, '#4a4c50'); px(g, X + 3, Y + flap, 1, 1, '#4a4c50');
+    }
+    for (const sw of swarms) { const X0 = sw.x - ox, Y0 = sw.y - oy; if (X0 < -80 || Y0 < -80 || X0 > VW + 80 || Y0 > VH + 80) continue;   // auklet clouds
+      for (let j = 0; j < sw.n; j++) { const hh = hash2(j, sw.seed, 5), a = now * (0.9 + hh) + hh * 40, r = 14 + 30 * hash2(j, sw.seed, 6) + 8 * Math.sin(now * 1.4 + j);
+        px(g, X0 + Math.cos(a) * r, Y0 + Math.sin(a * 1.3) * r * 0.6 - 10, 2, 1, (j + Math.floor(now * 8)) % 3 ? '#26282c' : '#3a3d42'); } }
+    // Cloud shadows drift across land and sea in daylight.
+    const S = sunState(); if (S.up) for (let i = 0; i < 7; i++) {
+      const span = MW * T + 600, X = ((hash2(i, 1, 9) * span + clock * 2.2 * wind.x) % span) - 300 - ox, Y = ((hash2(i, 2, 9) * MH * T + clock * 2.2 * wind.y) % (MH * T)) - oy;
+      if (X < -260 || X > VW + 260 || Y < -200 || Y > VH + 200) continue;
+      g.fillStyle = 'rgba(20,32,48,0.11)'; for (let k = 0; k < 6; k++) { g.beginPath(); g.arc(X + Math.cos(k * 1.7 + i) * 60, Y + Math.sin(k * 2.3 + i) * 30, 50 + hash2(i, k, 3) * 40, 0, 6.283); g.fill(); }
+    }
+  }
+  // Colour of the hour, then lights, stars, aurora, snow and fog on top.
+  function drawLight(ox, oy) {
+    const G = grade(), night = lightLevel(), h = hourNow();
+    g.save();
+    // Land and sea take the light differently: warm light gilds the land but the sea keeps a deep violet-blue under it.
+    if (reflTmp.width !== VW || reflTmp.height !== VH) { reflTmp.width = VW; reflTmp.height = VH; } const rc = reflTmp.getContext('2d');
+    { const m = G.mul, warm = Math.max(0, Math.min(1, (m[0] - m[2]) / 60)), wm = [m[0] * 0.5, m[1] * 0.62, Math.min(255, m[0] * 0.86)].map((v, k) => Math.round(m[k] + (v - m[k]) * warm));
+      rc.globalCompositeOperation = 'copy'; rc.drawImage(waterMask, ox, oy, VW, VH, 0, 0, VW, VH); rc.globalCompositeOperation = 'source-in'; rc.fillStyle = `rgb(${wm.join(',')})`; rc.fillRect(0, 0, VW, VH);
+      rc.globalCompositeOperation = 'destination-over'; rc.fillStyle = `rgb(${m.map(Math.round).join(',')})`; rc.fillRect(0, 0, VW, VH);
+      g.globalCompositeOperation = 'multiply'; g.drawImage(reflTmp, 0, 0); }
+    // The sea mirrors the sky: peach at dawn, molten orange at golden hour, violet at dusk.
+    { const R = skyRef();
+      rc.globalCompositeOperation = 'copy'; rc.drawImage(waterMask, ox, oy, VW, VH, 0, 0, VW, VH); rc.globalCompositeOperation = 'source-in'; rc.fillStyle = `rgb(${R.c.join(',')})`; rc.fillRect(0, 0, VW, VH);
+      g.globalCompositeOperation = 'screen'; g.globalAlpha = R.a; g.drawImage(reflTmp, 0, 0); g.globalAlpha = 1; }
+    if (G.gs > 0) { g.globalCompositeOperation = 'screen'; g.fillStyle = `rgba(${G.glow.map(Math.round).join(',')},${G.gs})`; g.fillRect(0, 0, VW, VH); }
+    g.globalCompositeOperation = 'lighter';
+    // The northern lights: green and teal curtains rippling across the snow and the sea on clear nights.
+    const aur = Math.max(0, night - 0.35) * 2 * (0.4 + 0.6 * fbm(clock * 0.01, 4.2, 5)) * (1 - weather().snow * 0.8);
+    if (aur > 0.02) for (let band = 0; band < 3; band++) for (let x = 0; x < VW; x += 3) {
+      const wx = x + ox, base = VH * (0.2 + band * 0.25) + Math.sin(wx * 0.006 + now * 0.12 + band * 2) * 50 + Math.sin(wx * 0.021 - now * 0.35 + band) * 14;
+      const hgt = 40 + 30 * Math.sin(wx * 0.013 + now * 0.5 + band), shimmer = 0.5 + 0.5 * Math.sin(wx * 0.05 + now * 1.6 + band * 3);
+      const gr = g.createLinearGradient(0, base - hgt, 0, base + 10); gr.addColorStop(0, 'rgba(60,255,170,0)'); gr.addColorStop(0.7, `rgba(70,255,160,${0.10 * aur * shimmer})`); gr.addColorStop(1, `rgba(120,140,255,${0.05 * aur})`);
+      g.fillStyle = gr; g.fillRect(x, base - hgt, 3, hgt + 10);
+    }
+    if (night > 0.3) {
+      const k = Math.min(1, (night - 0.3) * 2.5);
+      // Stars mirrored in still water.
+      for (let i = 0; i < 140; i++) { const sx = hash2(i, 11, 1) * VW, sy = hash2(i, 12, 1) * VH; if (!floats(sx + ox, sy + oy)) continue; const tw = 0.5 + 0.5 * Math.sin(now * 3 + i); px(g, sx, sy, 1, 1, `rgba(200,215,255,${0.5 * k * tw})`); }
+      // The moon lays a trembling silver road across the sea, pointing to where it hangs.
+      lightRoad(ox, oy, Math.PI / 2 + ((h + 12) % 24 - 6.15) / 12.5 * Math.PI, '220,230,255', 0.55 * k, 520);
+      const glow = (x, y, r, col, a) => { const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, `rgba(${col},${a})`); gr.addColorStop(1, `rgba(${col},0)`); g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2); };
+      // Warm windows and lamps; the light spills on the snow in front.
+      for (const p of props) {
+        const X = p.x - ox, Y = p.y + 8 - oy; if (X < -80 || X > VW + 80 || Y < -80 || Y > VH + 120) continue;
+        if (p.kind === 'house' || p.kind === 'school') { const im = SPR[propSprite(p)], hh = im ? im.height : 30; const fl = 0.9 + 0.1 * Math.sin(now * 5 + p.x);
+          glow(X, Y - hh * 0.4, 34, '255,186,104', 0.48 * k * fl); glow(X, Y + 10, 48, '255,166,86', 0.30 * k * fl); glow(X, Y - hh * 0.4, 8, '255,236,190', 0.7 * k * fl); }
+        if (p.kind === 'lamp') { glow(X + 1, Y - 18, 56, '255,200,120', 0.40 * k); glow(X + 1, Y - 18, 6, '255,245,210', 0.9 * k); }
+        if (p.kind === 'station') glow(X, Y - 30, 30, '170,210,255', 0.10 * k);
+        if (p.kind === 'mast') { const blink = Math.sin(now * 3) > 0.6; if (blink) glow(X, Y - 112, 12, '255,60,40', 0.8 * k); }
+      }
+      // His lantern.
+      const lx = (man.inBoat ? boat.x : man.x) - ox + 6, ly = (man.inBoat ? boat.y : man.y) - oy - 12, fl = 0.92 + 0.08 * Math.sin(now * 9) * Math.sin(now * 3.7);
+      glow(lx, ly, 60, '255,190,120', 0.36 * k * fl); glow(lx, ly, 10, '255,230,180', 0.6 * k * fl);
+    }
+    // Low sun: a warm wash rising from the side the sun is on, and a molten road on the sea toward it.
+    const S = sunState(); const clear = 1 - overcast(); if (S.up && S.elev < 0.3 && clear > 0.1) lightRoad(ox, oy, S.az, '255,196,110', 0.9 * clear * (1 - S.elev / 0.3), 900); if (S.up && S.elev < 0.2) { const sx = VW / 2 + Math.sin(S.az) * VW * 0.7, sy = VH / 2 - Math.cos(S.az) * VH * 0.7, gr = g.createRadialGradient(sx, sy, 0, sx, sy, VW * 0.9); gr.addColorStop(0, `rgba(255,150,80,${0.07 * (1 - S.elev / 0.2)})`); gr.addColorStop(1, 'rgba(255,150,80,0)'); g.fillStyle = gr; g.fillRect(0, 0, VW, VH); }
+    g.restore();
+    // Snow falling in three depths, carried by the wind.
+    const W = weather(), flakes = Math.round(W.snow * 420);
+    for (let i = 0; i < flakes; i++) { const layer = i % 3, sp = 0.5 + layer * 0.45, span = VW + 20;
+      const x = ((hash2(i, 21, 1) * span + now * wind.x * sp * 1.6 + Math.sin(now * 0.8 + i) * 6 - ox * 0.15 * sp) % span + span) % span - 10, y = ((hash2(i, 22, 1) * (VH + 20) + now * (14 + wind.y) * sp - oy * 0.15 * sp) % (VH + 20) + VH + 20) % (VH + 20) - 10;
+      px(g, x, y, layer === 2 ? 2 : 1, layer === 2 ? 2 : 1, `rgba(${night > 0.4 ? '200,210,230' : '250,252,255'},${0.45 + layer * 0.2})`); }
+    // Fog banks rolling through the strait.
+    if (W.fog > 0.02) for (let i = 0; i < 6; i++) { const span = MW * T, X = ((hash2(i, 31, 1) * span + now * wind.x * 1.5) % span) - ox, Y = hash2(i, 32, 1) * MH * T - oy;
+      if (X < -300 || X > VW + 300 || Y < -200 || Y > VH + 200) continue; const gr = g.createRadialGradient(X, Y, 0, X, Y, 220); const c = night > 0.4 ? '150,165,200' : '235,238,240'; gr.addColorStop(0, `rgba(${c},${0.16 * W.fog})`); gr.addColorStop(1, `rgba(${c},0)`); g.fillStyle = gr; g.fillRect(X - 220, Y - 220, 440, 440); }
+    // A soft vignette keeps the eye on the man.
+    const vg = g.createRadialGradient(VW / 2, VH / 2, Math.min(VW, VH) * 0.35, VW / 2, VH / 2, Math.max(VW, VH) * 0.75); vg.addColorStop(0, 'rgba(10,14,22,0)'); vg.addColorStop(1, `rgba(10,14,22,${0.28 + night * 0.25})`); g.fillStyle = vg; g.fillRect(0, 0, VW, VH);
+  }
 
   // ------------------------------------------------------------------ update
   let now = 0, last = performance.now(), showMap = false, idle = 0;
   function update(dt) {
-    now += dt; clock += dt; if (msgT > 0) msgT -= dt;
+    now += dt; clock += dt * (keys.has('t') ? 60 : 1); if (msgT > 0) msgT -= dt;
+    lifeStep(dt);
     const [ax, ay] = axis();
     if (man.inBoat) {
       // Row: up/down pull forward and back, left/right turn. The boat glides and slows in the water.
@@ -334,7 +608,7 @@
 
   // ------------------------------------------------------------------ draw
   let VW = 320, VH = 180, SCALE = 3;
-  function resize() { SCALE = Math.max(2, Math.round(Math.min(innerWidth / 300, innerHeight / 190))); VW = Math.ceil(innerWidth / SCALE); VH = Math.ceil(innerHeight / SCALE); canvas.width = VW; canvas.height = VH; g.imageSmoothingEnabled = false; }
+  function resize() { SCALE = Math.max(2, Math.round(Math.min(innerWidth / 520, innerHeight / 300))); VW = Math.ceil(innerWidth / SCALE); VH = Math.ceil(innerHeight / SCALE); canvas.width = VW; canvas.height = VH; g.imageSmoothingEnabled = false; }
   addEventListener('resize', resize); resize();
   const cam = { x: man.x, y: man.y };
   function draw() {
@@ -342,9 +616,12 @@
     cam.x += (fx - cam.x) * 0.12; cam.y += (fy - cam.y) * 0.12;
     const ox = Math.round(Math.max(0, Math.min(MW * T - VW, cam.x - VW / 2))), oy = Math.round(Math.max(0, Math.min(MH * T - VH, cam.y - VH / 2)));
     g.drawImage(world, ox, oy, VW, VH, 0, 0, VW, VH);
-    // Water glints drift with the current.
-    for (let i = 0; i < 90; i++) { const gx = (hash2(i, 1, 4) * (VW + 40) + now * 6 * (0.5 + hash2(i, 2, 4))) % (VW + 40) - 20, gy = hash2(i, 3, 4) * VH;
-      if (floats(gx + ox, gy + oy) && Math.sin(now * 2 + i) > 0.6) px(g, gx, gy, 2, 1, 'rgba(220,232,236,0.5)'); }
+    drawWater(ox, oy); drawGround(ox, oy);
+    // Shadows first, all laid the same way by the sun (or the moon).
+    shadowSetup();
+    for (const p of props) { const sn = propSprite(p); if (!sn || p.rot) continue; const im = SPR[sn], X = p.x - ox, Y = p.y + 8 - oy; if (X < -200 || X > VW + 200 || Y < -60 || Y > VH + 300) continue; drawShadow(im, 0, 0, im.width, im.height, X, Y, p.kind === 'mast' ? 2 : 1); }
+    if (!man.inBoat) { const F = sheetFrame('man', man.dir, man.step, man.moving); if (F) drawShadow(SPR.man, F[0], 0, F[2], 44, man.x - ox, man.y - oy); const D = DOG[dog.moving ? 'run' + (Math.floor(dog.step * 0.9) % 4) : 'stand'][dog.face === 'left' ? 'left' : 'right']; drawShadow(D, 0, 0, D.width, 20, dog.x - ox, dog.y - oy); }
+    for (const v of villagers) { const F = sheetFrame(v.sp, v.dir, v.step, v.moving); if (F) drawShadow(SPR[v.sp], F[0], 0, F[2], 44, v.x - ox, v.y - oy); }
     // Everything that stands is drawn from back to front by its foot.
     const items = props.map(p => ({ y: p.y + 8, d: () => drawProp(g, p, ox, oy) }));
     items.push({ y: boat.y, d: () => drawBoat(g, boat, ox, oy) });
@@ -355,8 +632,12 @@
       items.push({ y: man.y, d: () => drawMan(g, man.x - ox, man.y - oy, man.dir, man.step, false) });
       items.push({ y: dog.y, d: () => drawDog(g, dog.x - ox, dog.y - oy, dog.dir, dog.step, !dog.moving) });
     }
+    for (const v of villagers) items.push({ y: v.y, d: () => drawSheet(v.sp, v.x - ox, v.y - oy, v.dir, v.step, v.moving) });
     items.sort((a, b) => a.y - b.y).forEach(i => i.d());
+    drawSky(ox, oy); drawLight(ox, oy);
     // Message line, bottom centre of the picture.
+    if (!man.inBoat && Math.hypot(man.x - boat.x, man.y - boat.y) < 56) { const X = boat.x - ox, Y = boat.y - oy - 26; g.font = '8px monospace'; px(g, X - 24, Y - 8, 48, 11, 'rgba(16,22,28,0.85)'); g.fillStyle = '#efe9dc'; g.fillText('E: board', X - 18, Y); }
+    if (man.inBoat && Math.hypot(boat.v) < 8) { let near = false; for (let a = 0; a < 6.28 && !near; a += 0.5) for (let r = 12; r <= 48 && !near; r += 6) near = walkable(boat.x + Math.cos(a) * r, boat.y + Math.sin(a) * r); if (near) { const X = boat.x - ox, Y = boat.y - oy - 30; g.font = '8px monospace'; px(g, X - 32, Y - 8, 64, 11, 'rgba(16,22,28,0.85)'); g.fillStyle = '#efe9dc'; g.fillText('E: step ashore', X - 28, Y); } }
     if (msgT > 0) { g.font = '8px monospace'; const wdt = g.measureText(msg).width + 10; g.globalAlpha = Math.min(1, msgT); px(g, (VW - wdt) / 2, VH - 26, wdt, 13, 'rgba(16,22,28,0.85)'); g.fillStyle = '#efe9dc'; g.fillText(msg, (VW - wdt) / 2 + 5, VH - 16); g.globalAlpha = 1; }
     if (showMap) drawMiniMap();
     hud(fx, fy);
@@ -373,11 +654,12 @@
     const tx = x / T, ty = y / T, k = at(tx | 0, ty | 0), own = owner[(ty | 0) * MW + (tx | 0)];
     const near = Math.abs(tx - DATE_LINE - 0.5) < 1.2 && FLOAT.has(k);
     const side = tx < DATE_LINE + 0.5 ? 'big' : 'little';
-    const where = near ? 'International Date Line' : own >= 0 ? `${ISLANDS[own].name} · ${ISLANDS[own].nick}` : `Bering Strait · ${side === 'big' ? 'Russian side' : 'American side'}`;
-    const key = where + side + Math.floor(clock);
+    const where = near ? 'International Date Line' : k === K.DOCK ? `${tx < DATE_LINE ? 'Big' : 'Little'} Diomede · the pier` : own >= 0 ? `${ISLANDS[own].name} · ${ISLANDS[own].nick}` : `Bering Strait · ${side === 'big' ? 'Russian side' : 'American side'}`;
+    const key = where + side + Math.floor(clock) + (keys.has('t') ? 't' : '');
     if (key === lastHud) return; lastHud = key;
     hudEl.where.textContent = where; hudEl.where.classList.toggle('line', near);
-    hudEl.little.textContent = `Little Diomede · ${fmt(clock)}`; hudEl.big.textContent = `Big Diomede · ${fmt(clock + 21 * 60)}`;
+    const hh = hourNow(), part = hh < 5.6 || hh >= 20 ? 'night' : hh < 7.4 ? 'dawn' : hh < 16.6 ? 'day' : hh < 18.9 ? 'golden hour' : 'dusk';
+    hudEl.little.textContent = `Little Diomede · ${fmt(clock)} · ${part}`; hudEl.big.textContent = `Big Diomede · ${fmt(clock + 21 * 60)}`;
     hudEl.little.className = side === 'little' ? 'here' : 'there'; hudEl.big.className = side === 'big' ? 'here' : 'there';
   }
 
@@ -387,9 +669,9 @@
     window.__frames = (window.__frames || 0) + 1;
     requestAnimationFrame(frame);
   }
-  say('Little Diomede. The boat is at the end of the pier.');
-  await loadArt(); paintWorld();
+  say('Little Diomede, before dawn. The boat waits at the end of the pier.');
+  await loadArt(); paintWorld(); warpWorld();
   window.__ready = true;
-  window.__game = { man, dog, boat, toggleBoat, keys };   // for the self-check
+  window.__game = { man, dog, boat, toggleBoat, keys, setHour: h => { clock = 2 * 1440 + h * 60; }, weather, grade, skyRef };   // for the self-check
   requestAnimationFrame(frame);
 })();
