@@ -59,8 +59,8 @@
   scene.fog = new THREE.FogExp2(HORIZON, STUDIO ? 1 / 12000 : 1 / 8200);
   const camera = new THREE.PerspectiveCamera(68, 16 / 9, 0.4, 45000);
   const SUN = new THREE.Vector3(-0.55, 0.62, 0.56).normalize();   // late afternoon, from the south-west
-  scene.add(new THREE.HemisphereLight(0xdfe9f2, 0x8a7d66, STUDIO ? 0.42 : 0.62));
-  const sun = new THREE.DirectionalLight(0xfff1d8, STUDIO ? 0.95 : 0.78);
+  scene.add(new THREE.HemisphereLight(0xdfe9f2, 0x8a7d66, STUDIO ? 0.6 : 0.62));
+  const sun = new THREE.DirectionalLight(0xfff1d8, STUDIO ? 1.1 : 0.78);
   const LITE = Math.min(innerWidth, innerHeight) < 700 || (navigator.hardwareConcurrency || 8) <= 4;   // phones: smaller shadows, chunkier pixels
   const SMAP = STUDIO ? (LITE ? 2048 : 4096) : LITE ? 1024 : 2048;
   if (STUDIO) { sun.shadow.radius = 3; sun.shadow.bias = -0.0003; sun.shadow.normalBias = 0.4; }
@@ -276,22 +276,11 @@
     geo.setIndex(new THREE.BufferAttribute(idx, 1)); geo.computeVertexNormals();
     return geo;
   }
-  const nearMesh = new THREE.Mesh(terrainGeo(GN, drawn, true, false), (STUDIO ? patch(new THREE.MeshStandardMaterial({ map: groundTex, roughness: 0.96, metalness: 0 }), 'ground') : patch(new THREE.MeshLambertMaterial({ map: groundTex }), 'ground')));
+  const nearMesh = new THREE.Mesh(terrainGeo(GN, drawn, true, false), (STUDIO ? patch(new THREE.MeshStandardMaterial({ map: groundTex, color: 0xd2d0cc, roughness: 0.96, metalness: 0 }), 'ground') : patch(new THREE.MeshLambertMaterial({ map: groundTex }), 'ground')));
   nearMesh.receiveShadow = true; scene.add(nearMesh);
   const farMesh = new THREE.Mesh(terrainGeo(GF, GF.d, false, true), (STUDIO ? patch(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0 }), 'far') : patch(new THREE.MeshLambertMaterial({ vertexColors: true }), 'far')));
   farMesh.receiveShadow = false; scene.add(farMesh);
   if (STUDIO) {
-    // The sky as an environment: every material reflects a soft blue dome with a warm sun patch and a pale horizon.
-    const envScene = new THREE.Scene();
-    envScene.add(new THREE.Mesh(new THREE.SphereGeometry(100, 32, 16), new THREE.ShaderMaterial({ side: THREE.BackSide, uniforms: { sunDir: { value: SUN } },
-      vertexShader: 'varying vec3 vD; void main() { vD = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-      fragmentShader: `varying vec3 vD; uniform vec3 sunDir; void main() { vec3 d = normalize(vD);
-        vec3 c = mix(vec3(0.83, 0.87, 0.89), vec3(0.3, 0.52, 0.8), pow(clamp(d.y, 0.0, 1.0), 0.5));
-        if (d.y < 0.0) c = mix(vec3(0.83, 0.87, 0.89), vec3(0.42, 0.4, 0.36), clamp(-d.y * 4.0, 0.0, 1.0));
-        c += vec3(1.0, 0.85, 0.6) * pow(max(dot(d, sunDir), 0.0), 40.0) * 2.5;
-        gl_FragColor = vec4(c, 1.0); }` })));
-    const pm = new THREE.PMREMGenerator(renderer);
-    scene.environment = pm.fromScene(envScene, 0.02).texture; pm.dispose();
     // The river: a still, glassy surface over the riverbed, drawn on the cells that are water.
     const wpos = [], widx = [], wid = new Map();
     const wet = (i, j) => i >= 0 && j >= 0 && i < GN.w && j < GN.h && wmask[(j * GN.w + i) * 4 + 3] > 100;
@@ -309,7 +298,26 @@
       for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const m = wid.get((j + dj) * GN.w + i + di); if (m !== undefined) { sum += wpos[m * 3 + 1]; cnt++; } }
       if (cnt) wpos[n * 3 + 1] = (wpos[n * 3 + 1] + sum) / (cnt + 1); }
     const wg = new THREE.BufferGeometry(); wg.setAttribute('position', new THREE.Float32BufferAttribute(wpos, 3)); wg.setIndex(widx.length / 3 > 65535 ? new THREE.Uint32BufferAttribute(widx, 1) : new THREE.Uint16BufferAttribute(widx, 1)); wg.computeVertexNormals();
-    const water = new THREE.Mesh(wg, patch(new THREE.MeshStandardMaterial({ color: 0x2f5a74, roughness: 0.07, metalness: 0.0, envMapIntensity: 1.6, transparent: true, opacity: 0.93 }), 'water'));
+    // Water: Fresnel between the river's own colour and a reflection of the sky dome, a sun glint, gentle ripples.
+    const water = new THREE.Mesh(wg, new THREE.ShaderMaterial({ fog: true, transparent: true,
+      uniforms: { ...THREE.UniformsLib.fog, sunDir: { value: SUN }, horizon: { value: HORIZON }, zenith: { value: ZENITH }, time: { value: 0 } },
+      vertexShader: `varying vec3 vW; ${THREE.ShaderChunk.fog_pars_vertex}
+        void main() { vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vec4 mvPosition = viewMatrix * w; gl_Position = projectionMatrix * mvPosition; ${THREE.ShaderChunk.fog_vertex} }`,
+      fragmentShader: `varying vec3 vW; uniform vec3 sunDir, horizon, zenith; uniform float time; ${THREE.ShaderChunk.fog_pars_fragment} ${PIX}
+        void main() {
+          vec2 p = vW.xz; float t = time;
+          vec3 n = normalize(vec3(0.03 * sin(p.x * 0.31 + t * 1.3) + 0.02 * sin(p.y * 0.47 - t * 1.1) + 0.012 * sin((p.x + p.y) * 1.3 + t * 2.2), 1.0,
+                                 0.03 * sin(p.y * 0.29 + t * 1.2) + 0.02 * sin(p.x * 0.53 + t * 0.9) + 0.012 * sin((p.x - p.y) * 1.1 - t * 2.0)));
+          vec3 v = normalize(cameraPosition - vW), r = reflect(-v, n);
+          vec3 sky = mix(horizon, zenith, pow(clamp(r.y, 0.0, 1.0), 0.5));
+          float fres = 0.04 + 0.96 * pow(1.0 - max(dot(n, v), 0.0), 5.0);
+          vec3 body = vec3(0.13, 0.26, 0.31);
+          vec3 col = mix(body, sky, clamp(fres * 1.4, 0.0, 0.85)) + vec3(1.0, 0.9, 0.7) * pow(max(dot(r, sunDir), 0.0), 220.0) * 1.6;
+          gl_FragColor = vec4(col, 0.94);
+          ${THREE.ShaderChunk.fog_fragment}
+          gl_FragColor.rgb = pixelate(gl_FragColor.rgb);
+        }` }));
+    window.__water = water;
     water.receiveShadow = true; scene.add(water);
   }
   await yieldUI();
@@ -875,7 +883,7 @@
     look.copy(anchor).add(lookOff); camera.lookAt(look);
     const fov = V === 'street' ? 68 : V === 'car' ? 66 : V === 'drone' ? 62 : 55;
     if (Math.abs(camera.fov - fov) > 0.05) { camera.fov += (fov - camera.fov) * k; camera.updateProjectionMatrix(); }
-    sky.position.copy(camera.position); sky.material.uniforms.time.value = now / 1000;
+    sky.position.copy(camera.position); sky.material.uniforms.time.value = now / 1000; if (window.__water) window.__water.material.uniforms.time.value = now / 1000;
 
     // Traffic, trams and people near the camera.
     const cx = camera.position.x, cz = camera.position.z, range = V === 'bird' ? 1100 : 650;
