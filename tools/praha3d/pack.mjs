@@ -72,14 +72,21 @@ class W { constructor() { this.b = Buffer.alloc(1 << 20); this.n = 0; }
   out() { return this.b.subarray(0, this.n); } }
 
 // ------------------------------------------------------------------ colours
-const NAMED = { white: '#f2f0ea', black: '#2a2a2a', grey: '#8f8f8c', gray: '#8f8f8c', lightgrey: '#c4c2bc', lightgray: '#c4c2bc', darkgrey: '#5b5b59', darkgray: '#5b5b59', silver: '#bdbdbd',
-  red: '#a8432f', darkred: '#7d2c22', maroon: '#6f2a22', brown: '#7a5134', orange: '#d4874a', yellow: '#e6cf7a', beige: '#e3d7b5', ivory: '#efe9d6', cream: '#eee3c3', tan: '#cfb48a',
-  khaki: '#c9bb83', gold: '#d6b052', wheat: '#e7d6ae', sienna: '#9a5536', peru: '#c08552', salmon: '#e09b80', pink: '#e7b7ad', green: '#5f8a55', darkgreen: '#3f5f3a', olive: '#7e7a45',
-  lightgreen: '#9cbf88', teal: '#4f8a87', turquoise: '#6fb1a6', blue: '#5576a0', lightblue: '#9fbad4', navy: '#2f3f63', purple: '#6e5578', copper: '#6fa58a' };
+// Colour names as OSM uses them (CSS names plus a few mapper favourites). Plaster and stone are never as loud as
+// their CSS names, so named colours are softened towards a warm grey before use; hex values are kept as mapped.
+const NAMED = { white: '#f2f0ea', black: '#2a2a2a', grey: '#8f8f8c', gray: '#8f8f8c', lightgrey: '#c4c2bc', lightgray: '#c4c2bc', darkgrey: '#5b5b59', darkgray: '#5b5b59', silver: '#bdbdbd', dimgray: '#696969', dimgrey: '#696969',
+  gainsboro: '#dcdcdc', whitesmoke: '#f5f5f5', snow: '#fffafa', ivory: '#fffff0', linen: '#faf0e6', oldlace: '#fdf5e6', seashell: '#fff5ee', cornsilk: '#fff8dc', lemonchiffon: '#fffacd', lightyellow: '#ffffe0',
+  beige: '#f5f5dc', bisque: '#ffe4c4', wheat: '#f5deb3', moccasin: '#ffe4b5', navajowhite: '#ffdead', peachpuff: '#ffdab9', papayawhip: '#ffefd5', blanchedalmond: '#ffebcd', antiquewhite: '#faebd7', mistyrose: '#ffe4e1',
+  sand: '#d8c49a', cream: '#eee3c3', tan: '#d2b48c', burlywood: '#deb887', khaki: '#f0e68c', darkkhaki: '#bdb76b', palegoldenrod: '#eee8aa', goldenrod: '#daa520', gold: '#d6b052', yellow: '#e6cf7a', orange: '#d4874a',
+  sandybrown: '#f4a460', peru: '#cd853f', chocolate: '#d2691e', sienna: '#a0522d', saddlebrown: '#8b4513', brown: '#7a5134', maroon: '#6f2a22', darkred: '#7d2c22', firebrick: '#a8432f', red: '#a8432f', indianred: '#cd5c5c',
+  salmon: '#e09b80', lightsalmon: '#ffa07a', coral: '#ff7f50', tomato: '#e0664f', terracotta: '#b5583c', rosybrown: '#bc8f8f', pink: '#e7b7ad', lightpink: '#ffb6c1', thistle: '#d8bfd8', lavender: '#e6e6fa', purple: '#6e5578',
+  green: '#5f8a55', darkgreen: '#3f5f3a', olive: '#7e7a45', darkolivegreen: '#556b2f', yellowgreen: '#9acd32', lightgreen: '#9cbf88', palegreen: '#98fb98', honeydew: '#f0fff0', mintcream: '#f5fffa', teal: '#4f8a87', turquoise: '#6fb1a6',
+  blue: '#5576a0', lightblue: '#9fbad4', lightsteelblue: '#b0c4de', steelblue: '#4682b4', navy: '#2f3f63', slategray: '#708090', slategrey: '#708090', lightslategray: '#778899', darkslategray: '#2f4f4f', copper: '#6fa58a' };
+const soften = ([r, g, b], k = 0.28) => [r + (205 - r) * k, g + (198 - g) * k, b + (184 - b) * k].map(Math.round);
 function colour(s) {
   if (!s) return null; s = s.trim().toLowerCase().replace(/[\s_-]/g, '');
-  if (NAMED[s]) s = NAMED[s];
-  let m = s.match(/^#?([0-9a-f]{6})$/); if (m) return [0, 2, 4].map(i => parseInt(m[1].slice(i, i + 2), 16));
+  const named = !!NAMED[s]; if (named) s = NAMED[s];
+  let m = s.match(/^#?([0-9a-f]{6})$/); if (m) { const c = [0, 2, 4].map(i => parseInt(m[1].slice(i, i + 2), 16)); return named ? soften(c) : c; }
   m = s.match(/^#?([0-9a-f]{3})$/); if (m) return [0, 1, 2].map(i => parseInt(m[1][i] + m[1][i], 16));
   return null;
 }
@@ -100,6 +107,14 @@ const OLD_ZONES = [
   [[14.4150, 50.0665], [14.4215, 50.0668], [14.4235, 50.0640], [14.4200, 50.0617], [14.4150, 50.0625], [14.4135, 50.0645]],
 ].map(z => z.map(([lon, lat]) => toXZ(lon, lat)));
 const OLD_WALLS = ['#ead6a6', '#e3bd82', '#f1e3c0', '#d9a383', '#f0ebdf', '#e0b893', '#cdb48a', '#f3d9ad', '#d6c19c', '#edcd9c', '#e6c6b4', '#c9b9a0', '#f2e6cf', '#dcc7a2'];
+const DRESS = [
+  [/Týn|Tyn Church/, '#8a8170', '#3d4045'], [/mostecká věž|Bridge Tower/, '#6b6255', '#3f4246'], [/Prašná brána|Powder Tower/, '#4a3e37', '#3f4246'],
+  [/Katedrála svatého Víta|St\.? Vitus/, '#7d776c', '#6f9c86'], [/Národní divadlo|National Theatre/, null, '#2f4c6b'], [/Obecní dům|Municipal House/, null, '#6f9c86'],
+  [/svatý Mikuláš|St\.? Nicholas/, null, '#6f9c86'], [/Tančící dům|Dancing House/, '#d9d6cf', '#8a8f94'], [/Staroměstská radnice|Radniční věž|Old Town Hall/, '#8b8273', '#3f4246'],
+  [/Petr a Pavel/, '#5a5752', '#3d4045'], [/Jindřišská věž|Henry.s Tower/, '#5e5850', '#3f4246'], [/Rudolfinum/, '#e2d3b0', '#6f9c86'], [/Klementinum/, '#e8dcc0', null],
+  [/Loreta/, '#efe6d0', '#6f9c86'], [/Strahovský klášter/, '#f0ebde', null], [/Bazilika svatého Jiří|St\.? George/, '#d9a77d', '#a8432f'], [/Starý královský palác|Old Royal Palace/, '#e6dfcd', '#4d5560'],
+  [/Pražský hrad|Prague Castle/, '#ebe5d4', '#a8432f'],
+];
 const ROOF = { flat: 0, gabled: 1, hipped: 2, pyramidal: 3, dome: 4, onion: 5, band: 6 };
 const num = v => { const m = String(v ?? '').replace(',', '.').match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : NaN; };
 
@@ -163,6 +178,9 @@ function addBuilding(e, isPart) {
       : roof === ROOF.flat ? hex(['#807e79', '#8a8781', '#76746f'][Math.floor(hash(e.id) * 3)]) : (roof === ROOF.dome || roof === ROOF.onion) ? hex('#6fa58a')
       : kind === 'church' && roof === ROOF.pyramidal ? hex(hash(e.id + 7) < 0.5 ? '#4d5560' : '#6fa58a') : pick(TILES, e.id + 3);
     if (!wall) wall = kind === 'church' ? pick(['#e9e3d3', '#cfc4ab', '#b9ae97', '#efe7d2'], e.id) : kind === 'industrial' ? pick(['#a8a297', '#b7a99a', '#9a8f84'], e.id) : kind === 'modern' ? pick(MODERN, e.id) : kind === 'old' ? pick(OLD_WALLS, e.id) : pick(WALLS, e.id);
+    // The landmarks people recognise by their colour: dark Gothic stone, green copper, the National Theatre's blue roof.
+    const nm = `${t.name || ''} ${t['name:en'] || ''}`;
+    for (const [re, w, r] of DRESS) if (re.test(nm)) { if (w) wall = hex(w); if (r) rc = hex(r); }
     stats.roof[roof] = (stats.roof[roof] || 0) + 1; stats.kind[kind] = (stats.kind[kind] || 0) + 1;
     B.u8(KIND[kind]); B.u8(roof); B.u16(h * 10); B.u16(minH * 10); B.u16(rh * 10);
     for (const c of wall) B.u8(c); for (const c of rc) B.u8(c);

@@ -7,6 +7,9 @@
   const $ = id => document.getElementById(id);
   const say = t => { $('load').textContent = t; };
   const P = new URLSearchParams(location.search);
+  // Two looks share this code: 'pixel' (low resolution, posterised, hard shadows) and 'studio' (full resolution,
+  // anti-aliased, soft shadows, materials that reflect a sky environment, a glassy river). The page picks one.
+  const STUDIO = (window.PRAHA_STYLE || P.get('style')) === 'studio';
   // Binary files are read raw (local server) or, where only text can be hosted, from a base64 copy next to them.
   const b64 = t => { const s = atob(t.trim()), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u.buffer; };
   const get = async (f, bin) => {
@@ -47,18 +50,20 @@
 
   // ---------------------------------------------------------------- renderer, camera, light
   const canvas = $('c');
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, logarithmicDepthBuffer: true, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(1);
-  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.BasicShadowMap;
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: STUDIO, logarithmicDepthBuffer: true, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(STUDIO ? Math.min(devicePixelRatio || 1, 1.5) : 1);
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = STUDIO ? THREE.PCFSoftShadowMap : THREE.BasicShadowMap;
+  if (STUDIO) canvas.style.imageRendering = 'auto';
   const scene = new THREE.Scene();
   const HORIZON = new THREE.Color('#d3dfe4'), ZENITH = new THREE.Color('#3f7fc4');
-  scene.fog = new THREE.FogExp2(HORIZON, 1 / 8200);
+  scene.fog = new THREE.FogExp2(HORIZON, STUDIO ? 1 / 12000 : 1 / 8200);
   const camera = new THREE.PerspectiveCamera(68, 16 / 9, 0.4, 45000);
   const SUN = new THREE.Vector3(-0.55, 0.62, 0.56).normalize();   // late afternoon, from the south-west
-  scene.add(new THREE.HemisphereLight(0xdfe9f2, 0x8a7d66, 0.62));
-  const sun = new THREE.DirectionalLight(0xfff1d8, 0.78);
+  scene.add(new THREE.HemisphereLight(0xdfe9f2, 0x8a7d66, STUDIO ? 0.42 : 0.62));
+  const sun = new THREE.DirectionalLight(0xfff1d8, STUDIO ? 0.95 : 0.78);
   const LITE = Math.min(innerWidth, innerHeight) < 700 || (navigator.hardwareConcurrency || 8) <= 4;   // phones: smaller shadows, chunkier pixels
-  const SMAP = LITE ? 1024 : 2048;
+  const SMAP = STUDIO ? (LITE ? 2048 : 4096) : LITE ? 1024 : 2048;
+  if (STUDIO) { sun.shadow.radius = 3; sun.shadow.bias = -0.0003; sun.shadow.normalBias = 0.4; }
   sun.castShadow = true; sun.shadow.mapSize.set(SMAP, SMAP); sun.shadow.bias = -0.0006;
   scene.add(sun, sun.target);
 
@@ -66,7 +71,7 @@
   const PIX = `
     float bayer2(vec2 a) { a = floor(a); return fract(dot(a, vec2(0.5, a.y * 0.75))); }
     float bayer4(vec2 a) { return bayer2(0.5 * a) * 0.25 + bayer2(a); }
-    vec3 pixelate(vec3 c) { float b = bayer4(gl_FragCoord.xy) - 0.5; return floor(c * 22.0 + 0.5 + b * 0.9) / 22.0; }`;
+    vec3 pixelate(vec3 c) { float b = bayer4(gl_FragCoord.xy) - 0.5; ${STUDIO ? 'return c + b / 255.0;' : 'return floor(c * 22.0 + 0.5 + b * 0.9) / 22.0;'} }`;
   function patch(mat, kind) {
     mat.customProgramCacheKey = () => 'p3d-' + kind;
     mat.onBeforeCompile = sh => {
@@ -136,7 +141,9 @@
     };
     return mat;
   }
-  const flatMat = kind => patch(new THREE.MeshPhongMaterial({ vertexColors: true, flatShading: true, shininess: 0, specular: 0x000000 }), kind);
+  // Studio materials are physically based and pick up the sky environment (set on the scene below).
+  const mat = (opts, kind, std = {}) => patch(STUDIO ? new THREE.MeshStandardMaterial({ roughness: 0.85, metalness: 0, ...opts, ...std }) : new THREE.MeshPhongMaterial({ flatShading: true, shininess: 0, specular: 0x000000, ...opts }), kind);
+  const flatMat = kind => mat({ vertexColors: true, flatShading: true }, kind, kind === 'road' ? { roughness: 0.92 } : { roughness: 0.8 });
 
   // ---------------------------------------------------------------- sky
   const sky = new THREE.Mesh(new THREE.SphereGeometry(30000, 32, 16), new THREE.ShaderMaterial({
@@ -156,7 +163,7 @@
         if (y > 0.015) {
           vec2 uv = d.xz / (y + 0.1) * 1.6 + vec2(time * 0.004, time * 0.002);
           float c = fbm(uv), fade = smoothstep(0.015, 0.12, y);
-          float body = step(0.6, c), core = step(0.68, fbm(uv + vec2(0.04, 0.05)));
+          float body = ${STUDIO ? 'smoothstep(0.54, 0.7, c)' : 'step(0.6, c)'}, core = ${STUDIO ? 'smoothstep(0.62, 0.78, fbm(uv + vec2(0.04, 0.05)))' : 'step(0.68, fbm(uv + vec2(0.04, 0.05)))'};
           vec3 cloud = mix(vec3(0.78, 0.82, 0.88), vec3(0.98, 0.98, 0.97), core);
           col = mix(col, cloud, body * fade * 0.95);
         }
@@ -195,13 +202,17 @@
   g.lineCap = 'round'; g.lineJoin = 'round';
   for (const r of roads) if (r.cls === 6 && !r.bridge) { g.strokeStyle = '#d9cdb3'; g.lineWidth = Math.max(1, r.w / GPX); polyPath(g, [r.pts], toG); g.stroke(); }
   for (const r of roads) if (r.cls <= 4 && !r.bridge) { g.strokeStyle = '#cac1af'; g.lineWidth = (r.w + (r.cls <= 3 ? 6 : 2)) / GPX; polyPath(g, [r.pts], toG); g.stroke(); }
+  // Embankments: a band of stone along every shore (the facing and the promenade on top).
+  g.strokeStyle = '#9b9183'; g.lineWidth = 34 / GPX; g.lineJoin = 'round';
+  for (const rings of waterPolys) { polyPath(g, rings, toG); g.stroke(); }
+  for (const rings of waterPolys) { g.fillStyle = LAND[0]; g.save(); polyPath(g, rings, toG); g.clip('evenodd'); g.strokeStyle = '#7d7466'; g.lineWidth = 14 / GPX; polyPath(g, rings, toG); g.stroke(); g.restore(); }
   // Grain: a little per-texel noise so grass, paving and water read as pixel texture rather than flat fills.
   const img = g.getImageData(0, 0, gw, gh), px = img.data;
   let seed = 7; const rnd = () => (seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296;
-  for (let i = 0; i < px.length; i += 4) { const water = px[i + 2] > px[i] + 30; const nz = (rnd() - 0.5) * (water ? 10 : 16) + (water && rnd() < 0.03 ? 28 : 0); px[i] += nz; px[i + 1] += nz; px[i + 2] += nz; }
+  for (let i = 0; i < px.length; i += 4) { const water = px[i + 2] > px[i] + 30; const nz = (rnd() - 0.5) * (water ? 10 : STUDIO ? 7 : 16) + (water && rnd() < 0.03 ? 28 : 0); px[i] += nz; px[i + 1] += nz; px[i + 2] += nz; }
   g.putImageData(img, 0, 0);
   const groundTex = new THREE.CanvasTexture(ground);
-  groundTex.magFilter = THREE.NearestFilter; groundTex.minFilter = THREE.LinearMipmapLinearFilter; groundTex.anisotropy = 4;
+  groundTex.magFilter = STUDIO ? THREE.LinearFilter : THREE.NearestFilter; groundTex.minFilter = THREE.LinearMipmapLinearFilter; groundTex.anisotropy = 4;
   const wmask = m.getImageData(0, 0, GN.w, GN.h).data;
   await yieldUI();
 
@@ -209,10 +220,32 @@
   say('Raising the hills…');
   // The river: the terrain data smooths the banks away, so the water is set well under the lowest ground around it;
   // the embankment walls show, and bridges get their height back (see the bridge decks below).
+  // The banks: the terrain data blurs the embankments into a slope down to the water, so every street dipped towards
+  // the river and climbed again onto the bridges. Prague's embankments are walls with the street level on top: land
+  // within ~70 m of the water is lifted to the level of the city just behind it (never lowered, so the Vyšehrad rock
+  // and the slopes of Letná keep their height).
+  const WET = k => wmask[k * 4 + 3] > 100, inG = (i, j) => i >= 0 && j >= 0 && i < GN.w && j < GN.h;
+  {
+    const dist = new Int16Array(GN.w * GN.h).fill(99), queue = [];
+    for (let k = 0; k < dist.length; k++) if (WET(k)) { dist[k] = 0; queue.push(k); }
+    for (let qi = 0; qi < queue.length; qi++) { const k = queue[qi], i = k % GN.w, j = (k / GN.w) | 0; if (dist[k] >= 9) continue;
+      for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const a = i + di, b = j + dj; if (inG(a, b) && dist[b * GN.w + a] > dist[k] + 1) { dist[b * GN.w + a] = dist[k] + 1; queue.push(b * GN.w + a); } } }
+    const src = GN.d.slice();
+    for (let j = 0; j < GN.h; j++) for (let i = 0; i < GN.w; i++) {
+      const k = j * GN.w + i, d = dist[k]; if (d < 1 || d > 7) continue;
+      const ring = []; for (let dj = -7; dj <= 7; dj++) for (let di = -7; di <= 7; di++) { const a = i + di, b = j + dj; if (inG(a, b)) { const dd = dist[b * GN.w + a]; if (dd >= 6 && dd <= 9) ring.push(src[b * GN.w + a]); } }
+      if (ring.length < 4) continue;
+      ring.sort((x, y) => x - y); const ref = ring[ring.length >> 1], w = d <= 4 ? 1 : (7 - d) / 3;
+      GN.d[k] = Math.max(src[k], src[k] + (ref - src[k]) * w);
+    }
+  }
+  // The river: deep water sits well under the banks; the water cells along the shore stay at street level as the
+  // embankment's top, so the drop happens inside the river, faced in stone (painted on the ground below).
   const drawn = GN.d.slice();
-  for (let j = 0; j < GN.h; j++) for (let i = 0; i < GN.w; i++) if (wmask[(j * GN.w + i) * 4 + 3] > 100) {
-    let lo = Infinity; for (let dj = -3; dj <= 3; dj++) for (let di = -3; di <= 3; di++) { const a = i + di, b = j + dj; if (a >= 0 && b >= 0 && a < GN.w && b < GN.h) lo = Math.min(lo, GN.d[b * GN.w + a]); }
-    drawn[j * GN.w + i] = lo - 4.5;
+  for (let j = 0; j < GN.h; j++) for (let i = 0; i < GN.w; i++) if (WET(j * GN.w + i)) {
+    let lo = Infinity, shore = -Infinity;
+    for (let dj = -3; dj <= 3; dj++) for (let di = -3; di <= 3; di++) { const a = i + di, b = j + dj; if (inG(a, b)) { lo = Math.min(lo, GN.d[b * GN.w + a]); if (Math.abs(di) <= 1 && Math.abs(dj) <= 1 && !WET(b * GN.w + a)) shore = Math.max(shore, GN.d[b * GN.w + a]); } }
+    drawn[j * GN.w + i] = shore > -Infinity ? shore - 0.3 : lo - 4.5;
   }
   const HD = (x, z) => sample(GN, drawn, x, z) ?? H(x, z);   // the ground as drawn (the riverbed under bridges)
   const isWater = (x, z) => { const i = Math.round((x - N.x0) / N.cell), j = Math.round((z - N.z0) / N.cell); return i >= 0 && j >= 0 && i < GN.w && j < GN.h && wmask[(j * GN.w + i) * 4 + 3] > 100; };
@@ -243,10 +276,42 @@
     geo.setIndex(new THREE.BufferAttribute(idx, 1)); geo.computeVertexNormals();
     return geo;
   }
-  const nearMesh = new THREE.Mesh(terrainGeo(GN, drawn, true, false), patch(new THREE.MeshLambertMaterial({ map: groundTex }), 'ground'));
+  const nearMesh = new THREE.Mesh(terrainGeo(GN, drawn, true, false), (STUDIO ? patch(new THREE.MeshStandardMaterial({ map: groundTex, roughness: 0.96, metalness: 0 }), 'ground') : patch(new THREE.MeshLambertMaterial({ map: groundTex }), 'ground')));
   nearMesh.receiveShadow = true; scene.add(nearMesh);
-  const farMesh = new THREE.Mesh(terrainGeo(GF, GF.d, false, true), patch(new THREE.MeshLambertMaterial({ vertexColors: true }), 'far'));
+  const farMesh = new THREE.Mesh(terrainGeo(GF, GF.d, false, true), (STUDIO ? patch(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0 }), 'far') : patch(new THREE.MeshLambertMaterial({ vertexColors: true }), 'far')));
   farMesh.receiveShadow = false; scene.add(farMesh);
+  if (STUDIO) {
+    // The sky as an environment: every material reflects a soft blue dome with a warm sun patch and a pale horizon.
+    const envScene = new THREE.Scene();
+    envScene.add(new THREE.Mesh(new THREE.SphereGeometry(100, 32, 16), new THREE.ShaderMaterial({ side: THREE.BackSide, uniforms: { sunDir: { value: SUN } },
+      vertexShader: 'varying vec3 vD; void main() { vD = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+      fragmentShader: `varying vec3 vD; uniform vec3 sunDir; void main() { vec3 d = normalize(vD);
+        vec3 c = mix(vec3(0.83, 0.87, 0.89), vec3(0.3, 0.52, 0.8), pow(clamp(d.y, 0.0, 1.0), 0.5));
+        if (d.y < 0.0) c = mix(vec3(0.83, 0.87, 0.89), vec3(0.42, 0.4, 0.36), clamp(-d.y * 4.0, 0.0, 1.0));
+        c += vec3(1.0, 0.85, 0.6) * pow(max(dot(d, sunDir), 0.0), 40.0) * 2.5;
+        gl_FragColor = vec4(c, 1.0); }` })));
+    const pm = new THREE.PMREMGenerator(renderer);
+    scene.environment = pm.fromScene(envScene, 0.02).texture; pm.dispose();
+    // The river: a still, glassy surface over the riverbed, drawn on the cells that are water.
+    const wpos = [], widx = [], wid = new Map();
+    const wet = (i, j) => i >= 0 && j >= 0 && i < GN.w && j < GN.h && wmask[(j * GN.w + i) * 4 + 3] > 100;
+    // The surface sits 3.3 m over the deep riverbed near it, and always under the stone shelf of the shore.
+    const level = (i, j) => { let lo = Infinity, near = Infinity;
+      for (let dj = -4; dj <= 4; dj++) for (let di = -4; di <= 4; di++) if (inG(i + di, j + dj)) { const v = drawn[(j + dj) * GN.w + i + di]; if (wet(i + di, j + dj)) lo = Math.min(lo, v); if (Math.abs(di) <= 1 && Math.abs(dj) <= 1) near = Math.min(near, v); }
+      return Math.min(lo + 3.3, near - 0.6); };
+    const wv = (i, j) => { const k = j * GN.w + i; if (!wid.has(k)) { wid.set(k, wpos.length / 3); wpos.push(N.x0 + i * N.cell, level(i, j), N.z0 + j * N.cell); } return wid.get(k); };
+    for (let j = 0; j < GN.h - 1; j++) for (let i = 0; i < GN.w - 1; i++) {
+      if (!(wet(i, j) || wet(i + 1, j) || wet(i, j + 1) || wet(i + 1, j + 1))) continue;
+      const a = wv(i, j), d = wv(i + 1, j), b = wv(i, j + 1), c = wv(i + 1, j + 1); widx.push(a, b, d, b, c, d);
+    }
+    // One level per stretch of river: smooth the surface heights so it lies flat, like water does.
+    for (let pass = 0; pass < 6; pass++) for (const [k, n] of wid) { let sum = 0, cnt = 0; const i = k % GN.w, j = (k / GN.w) | 0;
+      for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const m = wid.get((j + dj) * GN.w + i + di); if (m !== undefined) { sum += wpos[m * 3 + 1]; cnt++; } }
+      if (cnt) wpos[n * 3 + 1] = (wpos[n * 3 + 1] + sum) / (cnt + 1); }
+    const wg = new THREE.BufferGeometry(); wg.setAttribute('position', new THREE.Float32BufferAttribute(wpos, 3)); wg.setIndex(widx.length / 3 > 65535 ? new THREE.Uint32BufferAttribute(widx, 1) : new THREE.Uint16BufferAttribute(widx, 1)); wg.computeVertexNormals();
+    const water = new THREE.Mesh(wg, patch(new THREE.MeshStandardMaterial({ color: 0x2f5a74, roughness: 0.07, metalness: 0.0, envMapIntensity: 1.6, transparent: true, opacity: 0.93 }), 'water'));
+    water.receiveShadow = true; scene.add(water);
+  }
   await yieldUI();
 
   // ---------------------------------------------------------------- geometry builder (indexed, flat shaded)
@@ -470,8 +535,8 @@
   const tr = reader(tBuf), nT = tr.count;
   const leafy = [], pines = [];
   for (let k = 0; k < nT; k++) { const x = tr.i16() / 4, z = tr.i16() / 4, s = tr.u8(), kind = tr.u8(); (kind ? pines : leafy).push([x, z, 4 + s / 255 * 14]); }
-  const treeMat = patch(new THREE.MeshPhongMaterial({ flatShading: true, shininess: 0, specular: 0x000000 }), 'tree');
-  const crown = new THREE.IcosahedronGeometry(1, 0), cone = new THREE.ConeGeometry(1, 1, 6), trunk = new THREE.CylinderGeometry(0.16, 0.24, 1, 5);
+  const treeMat = mat({ flatShading: !STUDIO }, 'tree', { roughness: 0.95 });
+  const crown = STUDIO ? new THREE.IcosahedronGeometry(1, 2) : new THREE.IcosahedronGeometry(1, 0), cone = new THREE.ConeGeometry(1, 1, STUDIO ? 10 : 6), trunk = new THREE.CylinderGeometry(0.16, 0.24, 1, STUDIO ? 8 : 5);
   crown.translate(0, 0, 0); cone.translate(0, 0.5, 0); trunk.translate(0, 0.5, 0);
   const crowns = new THREE.InstancedMesh(crown, treeMat, leafy.length), cones = new THREE.InstancedMesh(cone, treeMat, pines.length), trunks = new THREE.InstancedMesh(trunk, treeMat, nT);
   const M4 = new THREE.Matrix4(), Q0 = new THREE.Quaternion(), S = new THREE.Vector3(), T = new THREE.Vector3(), C = new THREE.Color();
@@ -525,7 +590,7 @@
     const post = new THREE.BoxGeometry(0.22, 7, 0.22); post.translate(0, 3.5, 0);
     const arm = new THREE.BoxGeometry(0.16, 0.16, 1.6); arm.translate(0, 6.9, 0.7);
     const head = new THREE.BoxGeometry(0.5, 0.35, 0.7); head.translate(0, 6.75, 1.4);
-    const lampMat = patch(new THREE.MeshPhongMaterial({ color: 0x33393a, flatShading: true, shininess: 0, specular: 0x000000 }), 'lamp');
+    const lampMat = mat({ color: 0x33393a, flatShading: true }, 'lamp', { roughness: 0.45, metalness: 0.6 });
     for (const gtry of [post, arm, head]) {
       const im = new THREE.InstancedMesh(gtry, lampMat, lamps.length);
       lamps.forEach(([x, z, rot], k) => { Q0.setFromAxisAngle(UP, rot); M4.compose(T.set(x, H(x, z) - 0.2, z), Q0, S.set(1, 1, 1)); im.setMatrixAt(k, M4); });
@@ -558,7 +623,7 @@
     [0.08, 0.7, 1.6, 0, 3.65, 1.5, '#333'], [2.1, 0.5, 2.6, 0, 0.3, 4.6, '#222'], [2.1, 0.5, 2.6, 0, 0.3, -4.6, '#222'], [1.6, 0.4, 0.06, 0, 2.6, 7.01, '#2b3340'], [0.5, 0.3, 0.06, 0, 3.0, 7.02, '#f2c94c']]);
   const bodyGeo = model([[0.46, 0.68, 0.27, 0, 1.2, 0, '#ffffff'], [0.17, 0.84, 0.22, 0.11, 0.42, 0, '#777777'], [0.17, 0.84, 0.22, -0.11, 0.42, 0, '#777777'], [0.12, 0.6, 0.14, 0.3, 1.18, 0, '#ffffff'], [0.12, 0.6, 0.14, -0.3, 1.18, 0, '#ffffff']]);
   const headGeo = model([[0.24, 0.26, 0.24, 0, 1.69, 0, '#e2b896'], [0.26, 0.08, 0.26, 0, 1.84, 0, '#4a3628']]);
-  const objMat = patch(new THREE.MeshPhongMaterial({ vertexColors: true, flatShading: true, shininess: 0, specular: 0x000000 }), 'obj');
+  const objMat = mat({ vertexColors: true, flatShading: true }, 'obj', { roughness: 0.42, metalness: 0.1 });
   const PAINT = ['#c8c8c4', '#2c2f36', '#e9e7e1', '#9a1f1f', '#26496e', '#4e5a63', '#7b7f84', '#1d5c3a', '#d4a52c', '#6a1e2e', '#b7b0a2', '#f0f0ec'].map(c => new THREE.Color(c));
   const CLOTHES = ['#2d3a55', '#5a2f2f', '#2f4a3a', '#7d6b4f', '#3a3a3e', '#a33b2a', '#c9b38a', '#4f6b8a', '#6e3d5c', '#d9d4c8', '#1f2a30'].map(c => new THREE.Color(c));
   const placeRot = (im, k, x, y, z, rot, pitch = 0) => { Q0.setFromEuler(new THREE.Euler(pitch, rot, 0, 'YXZ')); M4.compose(T.set(x, y, z), Q0, S.set(1, 1, 1)); im.setMatrixAt(k, M4); };
@@ -659,7 +724,7 @@
   bodies.castShadow = true; scene.add(bodies, heads); bodies.frustumCulled = heads.frustumCulled = false;
 
   // Your car: a red hatchback that rides along the route, or goes anywhere in free-drive mode.
-  const myCar = new THREE.Mesh(model(carParts('#b8291f')), patch(new THREE.MeshPhongMaterial({ vertexColors: true, flatShading: true, shininess: 0, specular: 0x000000 }), 'mycar')); myCar.castShadow = true; scene.add(myCar);
+  const myCar = new THREE.Mesh(model(carParts('#b8291f')), mat({ vertexColors: true, flatShading: true }, 'mycar', { roughness: 0.3, metalness: 0.15 })); myCar.castShadow = true; scene.add(myCar);
   // Where the buildings stand, at 2 m, so the car stops at walls instead of driving through them.
   const OCC = 2, ow = Math.ceil((N.x1 - N.x0) / OCC), oh = Math.ceil((N.z1 - N.z0) / OCC);
   const occCv = document.createElement('canvas'); occCv.width = ow; occCv.height = oh;
@@ -747,7 +812,7 @@
 
   // ---------------------------------------------------------------- size: a low-resolution frame, scaled up with hard pixels
   function resize() {
-    const px = Math.max(2, Math.round(innerHeight / (LITE ? 220 : 270))), w = Math.ceil(innerWidth / px), h = Math.ceil(innerHeight / px);
+    const px = STUDIO ? 1 : Math.max(2, Math.round(innerHeight / (LITE ? 220 : 270))), w = Math.ceil(innerWidth / px), h = Math.ceil(innerHeight / px);
     renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
   }
   addEventListener('resize', resize); resize();
