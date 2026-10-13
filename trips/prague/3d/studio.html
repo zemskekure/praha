@@ -37,8 +37,8 @@
   #views button { font: 12px/1 var(--display); text-transform: uppercase; letter-spacing: 0.06em; color: var(--paper); background: var(--panel); border: 2px solid var(--panel);
                   padding: 8px 10px; cursor: pointer; }
   #views button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); }
-  #drive { margin-right: 8px; }
-  #drive[aria-pressed="true"] { background: var(--paper); color: var(--ink); border-color: var(--paper); }
+  #fly { margin-right: 8px; }
+  #drive[aria-pressed="true"], #fly[aria-pressed="true"] { background: var(--paper); color: var(--ink); border-color: var(--paper); }
   #views button:focus-visible { outline: 2px solid var(--paper); outline-offset: 1px; }
   #map { position: fixed; right: 12px; top: calc(12px + env(safe-area-inset-top, 0px)); width: 150px; height: 180px; image-rendering: pixelated; border: 2px solid var(--panel); }
   #help { left: 12px; bottom: calc(30px + env(safe-area-inset-bottom, 0px)); color: var(--muted); font-size: 18px; }
@@ -53,20 +53,21 @@
 <body>
 <canvas id="c" aria-label="A pixel-art drive through Prague. Scroll or drag to change speed."></canvas>
 <div id="hud" class="panel" aria-live="polite">
-  <div id="street">Pražský hrad</div>
-  <div id="place">Hradčany</div>
+  <div id="street">Chotkova</div>
+  <div id="place">Chotkovy sady</div>
   <div id="row"><span id="km">0.00 km</span><span id="speed">32 km/h</span></div>
 </div>
 <div id="lm"></div>
 <canvas id="map" width="150" height="180" hidden></canvas>
 <div id="views" role="group" aria-label="View">
   <button type="button" id="drive" aria-pressed="false" title="Free drive (F)">Drive</button>
+  <button type="button" id="fly" aria-pressed="false" title="Fly as a bird (B)">Fly</button>
   <button type="button" data-view="street" aria-pressed="true">Street</button>
   <button type="button" data-view="car" aria-pressed="false">Car</button>
   <button type="button" data-view="drone" aria-pressed="false">Drone</button>
   <button type="button" data-view="bird" aria-pressed="false">Bird</button>
 </div>
-<div id="help" class="panel">Scroll or drag: speed · Q/E or drag: look · F: drive · V: view · M: map</div>
+<div id="help" class="panel">Scroll or drag: speed · Q/E or drag: look · F: drive · B: fly · V: view · M: map</div>
 <div id="credits">Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a> (ODbL) · Terrain: Terrain Tiles (Mapzen, AWS Open Data) · Route: OSRM · Landmarks: Wikidata</div>
 <div id="load">Loading…</div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>

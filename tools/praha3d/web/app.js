@@ -376,7 +376,7 @@
     const all = rings.flat(), ids = all.map(p => G.v(p[0], y, p[1], col, ex));
     for (const t of tris) G.tri(ids[t[0]], ids[t[1]], ids[t[2]], 0, 1, 0);
   }
-  let nBuild = 0; const feet = [];   // ground floors, for the car to bump into
+  let nBuild = 0; const feet = [], tops = [];   // ground floors, for the car to bump into
   for (let k = 0; k < br.count; k++) {
     const kind = br.u8(), roof = br.u8(), h = br.u16() / 10, minH = br.u16() / 10; let rh = br.u16() / 10;
     const wall = [br.u8(), br.u8(), br.u8()], rc = [br.u8(), br.u8(), br.u8()], nr = br.u8(), rings = [];
@@ -461,6 +461,7 @@
     }
     if (!done) flatCap(G, rings, yt, rc, R0);
     if (minH < 2.5 && kind !== 4) feet.push(outer);
+    tops.push([outer, peak]);
     nBuild++;
   }
   for (const G of tiles.values()) { if (!G.n) continue; const mesh = G.mesh(bMat); mesh.castShadow = mesh.receiveShadow = true; scene.add(mesh); }
@@ -739,6 +740,18 @@
   const oc = occCv.getContext('2d'); oc.fillStyle = '#000';
   for (const r of feet) { polyPath(oc, [r], ([x, z]) => [(x - N.x0) / OCC, (z - N.z0) / OCC]); oc.fill(); }
   const occ = oc.getImageData(0, 0, ow, oh).data; feet.length = 0;
+  // Roof heights at 4 m, so a flying bird is lifted over buildings and spires instead of passing through them.
+  const RC4 = 4, rw = Math.ceil((N.x1 - N.x0) / RC4), rh4 = Math.ceil((N.z1 - N.z0) / RC4), roofs = new Float32Array(rw * rh4);
+  for (const [r, top] of tops) {
+    let b = [1e9, 1e9, -1e9, -1e9]; for (const [x, z] of r) b = [Math.min(b[0], x), Math.min(b[1], z), Math.max(b[2], x), Math.max(b[3], z)];
+    for (let j = Math.max(0, Math.floor((b[1] - N.z0) / RC4)); j <= Math.min(rh4 - 1, Math.floor((b[3] - N.z0) / RC4)); j++)
+      for (let i = Math.max(0, Math.floor((b[0] - N.x0) / RC4)); i <= Math.min(rw - 1, Math.floor((b[2] - N.x0) / RC4)); i++)
+        if (inPoly([N.x0 + (i + 0.5) * RC4, N.z0 + (j + 0.5) * RC4], r)) roofs[j * rw + i] = Math.max(roofs[j * rw + i], top);
+  }
+  tops.length = 0;
+  const roofAt = (x, z) => { let m = 0; for (const [dx, dz] of [[0, 0], [4, 0], [-4, 0], [0, 4], [0, -4]]) { const i = Math.floor((x + dx - N.x0) / RC4), j = Math.floor((z + dz - N.z0) / RC4); if (i >= 0 && j >= 0 && i < rw && j < rh4) m = Math.max(m, roofs[j * rw + i]); } return m; };
+  // Named parks: "Chotkovy sady" on screen rather than the district.
+  const parkAt = (x, z) => { for (const p of path.parks || []) if (inPoly([x, z], p.ring)) return p.name; return null; };
   const blocked = (x, z) => { const i = Math.floor((x - N.x0) / OCC), j = Math.floor((z - N.z0) / OCC); return i < 0 || j < 0 || i >= ow || j >= oh || occ[(j * ow + i) * 4 + 3] > 128; };
   // Nearest named road, for the street name while driving freely.
   const segCells = new Map();
@@ -754,10 +767,20 @@
 
   // ---------------------------------------------------------------- views and state
   const VIEWS = ['street', 'car', 'drone', 'bird'];
-  let view = Math.max(0, VIEWS.indexOf(P.get('view') || 'street'));
-  let s = Math.max(0, Math.min(total - 1, +(P.get('m') || 0) || (+(P.get('km') || 0) * 1000)));
-  let kmh = P.has('paused') ? 0 : +(P.get('speed') || 32), paused = P.has('paused');
+  // The game starts at Chotkovy sady, in the car, at the top of the Chotkova serpentine down to Klárov.
+  const chotkova = path.names.indexOf('Chotkova'), startAt = chotkova >= 0 ? Math.max(0, pts.findIndex(q => q[3] === chotkova) * step + 5) : 0;
+  let view = Math.max(0, VIEWS.indexOf(P.get('view') || 'car'));
+  let s = Math.max(0, Math.min(total - 1, P.has('m') ? +P.get('m') : P.has('km') ? +P.get('km') * 1000 : startAt));
+  let kmh = P.has('paused') ? 0 : +(P.get('speed') || 30), paused = P.has('paused');
   const drive = { on: false, x: 0, z: 0, y: 0, h: 0, v: 0, pitch: 0 };
+  const fly = { on: false, x: 0, y: 0, z: 0, h: 0, pitch: 0, bank: 0, v: 15, flap: 0 };
+  // The bird: a swift-like body with wings that beat when it climbs or cruises and stay spread when it glides.
+  const birdMat = mat({ vertexColors: true, flatShading: true }, 'bird', { roughness: 0.6 });
+  const bird = new THREE.Group(), birdBody = new THREE.Mesh(model([[0.26, 0.22, 0.62, 0, 0, 0, '#3b3a3d'], [0.2, 0.19, 0.2, 0, 0.04, 0.38, '#3b3a3d'], [0.08, 0.06, 0.12, 0, 0.02, 0.52, '#d9902e'],
+    [0.04, 0.04, 0.02, 0.07, 0.08, 0.47, '#f2f2f2'], [0.04, 0.04, 0.02, -0.07, 0.08, 0.47, '#f2f2f2'], [0.22, 0.03, 0.3, 0, 0.02, -0.42, '#2f2e31'], [0.18, 0.12, 0.3, 0, -0.06, 0.05, '#d8d4cc']]), birdMat);
+  const wingGeo = model([[0.9, 0.035, 0.32, 0.45, 0, 0, '#2f2e31'], [0.5, 0.03, 0.2, 1.05, 0, -0.04, '#262528']]);
+  const wingL = new THREE.Mesh(wingGeo, birdMat), wingR = new THREE.Mesh(wingGeo, birdMat); wingR.scale.x = -1; wingL.position.set(0.1, 0.04, 0.02); wingR.position.set(-0.1, 0.04, 0.02);
+  bird.add(birdBody, wingL, wingR); bird.scale.setScalar(2.4); bird.visible = false; bird.traverse(o => { o.castShadow = true; }); scene.add(bird);
   let lookYaw = 0;
   const keys = new Set();
 
@@ -766,17 +789,30 @@
   const viewBtns = [...document.querySelectorAll('#views button[data-view]')], driveBtn = $('drive');
   const setView = v => { view = v; viewBtns.forEach((b, k) => b.setAttribute('aria-pressed', k === v)); };
   viewBtns.forEach((b, k) => b.addEventListener('click', () => setView(k))); setView(view);
+  const flyBtn = $('fly');
+  const helpText = () => drive.on ? 'W A S D or arrows: drive · Q/E or drag: look · F: back to the tour' : fly.on ? 'A/D or ←→: turn · W/S or ↑↓: climb and dive · Shift: faster · B: land on the tour' : 'Scroll or drag: speed · Q/E or drag: look · F: drive · B: fly · V: view · M: map';
+  function setFly(on) {
+    if (on && !fly.on) {   // take off from where you are, 25 m up
+      if (drive.on) setDrive(false);
+      const p = at(s), p2 = at(s + 4);
+      Object.assign(fly, { on: true, x: p.x, z: p.z, y: Math.max(p.y, roofAt(p.x, p.z)) + 25, h: Math.atan2(p2.x - p.x, p2.z - p.z), pitch: 0, bank: 0, v: 15 });
+      if (view === 0) setView(1);
+    } else if (!on) fly.on = false;
+    flyBtn.setAttribute('aria-pressed', fly.on); hud.help.textContent = helpText();
+  }
+  flyBtn.addEventListener('click', () => setFly(!fly.on));
   function setDrive(on) {
+    if (on && fly.on) setFly(false);
     if (on && !drive.on) {   // leave the route where you are, in the right-hand lane
       const p = at(s), p2 = at(s + 4), hx = p2.x - p.x, hz = p2.z - p.z, hl = Math.hypot(hx, hz) || 1;
       Object.assign(drive, { on: true, x: p.x - hz / hl * 1.8, z: p.z + hx / hl * 1.8, y: p.y, h: Math.atan2(hx, hz), v: Math.max(0, kmh / 3.6), pitch: 0 });
       if (view === 0) setView(1);
     } else if (!on) drive.on = false;
     driveBtn.setAttribute('aria-pressed', drive.on);
-    hud.help.textContent = drive.on ? 'W A S D or arrows: drive · Q/E or drag: look · F: back to the tour' : 'Scroll or drag: speed · Q/E or drag: look · F: drive · V: view · M: map';
+    hud.help.textContent = helpText();
   }
   driveBtn.addEventListener('click', () => setDrive(!drive.on));
-  setDrive(P.has('drive'));
+  setDrive(P.has('drive')); setFly(P.has('fly'));
   function placeAt(s) { let best = null; for (const [ps, name] of path.places) if (Math.abs(ps - s) < 900 && (!best || Math.abs(ps - s) < Math.abs(best[0] - s))) best = [ps, name]; return best ? best[1] : 'Praha'; }
   const mapCv = $('map'), mctx = mapCv.getContext('2d');
   function drawMap(x, z) {
@@ -790,14 +826,14 @@
 
   // ---------------------------------------------------------------- input
   const bump = d => { kmh = Math.max(-120, Math.min(260, kmh + d)); paused = false; };
-  addEventListener('wheel', e => { e.preventDefault(); if (!drive.on) bump(-e.deltaY * 0.06); }, { passive: false });
+  addEventListener('wheel', e => { e.preventDefault(); if (fly.on) fly.v = Math.max(6, Math.min(45, fly.v - e.deltaY * 0.02)); else if (!drive.on) bump(-e.deltaY * 0.06); }, { passive: false });
   // Mouse: drag to look around. Touch: drag sideways to look, up and down for speed (or, driving, to steer and accelerate).
   let drag = null;
   canvas.addEventListener('pointerdown', e => { drag = { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, axis: e.pointerType === 'mouse' ? 'look' : null, touch: e.pointerType !== 'mouse' }; canvas.setPointerCapture(e.pointerId); });
   canvas.addEventListener('pointermove', e => {
     if (!drag) return;
     const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.x = e.clientX; drag.y = e.clientY;
-    if (drive.on && drag.touch) return;   // read as a joystick in the loop
+    if ((drive.on || fly.on) && drag.touch) return;   // read as a joystick in the loop
     if (!drag.axis && Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) > 8) drag.axis = Math.abs(e.clientX - drag.x0) > Math.abs(e.clientY - drag.y0) ? 'look' : 'speed';
     if (drag.axis === 'look') lookYaw = Math.max(-2.8, Math.min(2.8, lookYaw - dx * 0.006));
     else if (drag.axis === 'speed') bump(-dy * 0.35);
@@ -808,10 +844,11 @@
     const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
     keys.add(k);
     if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(k)) e.preventDefault();
-    if (!drive.on && k === 'ArrowUp') bump(8); else if (!drive.on && k === 'ArrowDown') bump(-8);
+    if (!drive.on && !fly.on && k === 'ArrowUp') bump(8); else if (!drive.on && !fly.on && k === 'ArrowDown') bump(-8);
     else if (k === ' ') { if (drive.on) drive.v *= 0.2; else paused = !paused; }
     else if (k === 'v') setView((view + 1) % VIEWS.length);
     else if (k === 'f') setDrive(!drive.on);
+    else if (k === 'b') setFly(!fly.on);
     else if (k === 'm') mapCv.hidden = !mapCv.hidden;
     else if (k >= '1' && k <= '4') setView(+k - 1);
   });
@@ -829,6 +866,23 @@
   const look = new THREE.Vector3(), camOff = new THREE.Vector3(), lookOff = new THREE.Vector3(), anchor = new THREE.Vector3();
   let first = true, last = performance.now(), frames = 0, tSim = 0;
   const rotY = (x, z, a) => [x * Math.cos(a) + z * Math.sin(a), -x * Math.sin(a) + z * Math.cos(a)];
+  function flyStep(dt) {
+    let turn = (keys.has('a') || keys.has('ArrowLeft') ? 1 : 0) - (keys.has('d') || keys.has('ArrowRight') ? 1 : 0);
+    let climb = (keys.has('w') || keys.has('ArrowUp') ? 1 : 0) - (keys.has('s') || keys.has('ArrowDown') ? 1 : 0);
+    if (drag && drag.touch) { climb = Math.max(-1, Math.min(1, -(drag.y - drag.y0) / 70)); turn = Math.max(-1, Math.min(1, -(drag.x - drag.x0) / 70)); }
+    const F = fly, boost = keys.has('Shift') ? 1.8 : 1, k = 1 - Math.exp(-dt * 3);
+    F.bank += (turn * 0.65 - F.bank) * k; F.pitch += (climb * 0.42 - F.pitch) * k;
+    F.h += F.bank * 1.1 * dt;
+    const v = F.v * boost * (1 - F.pitch * 0.25);
+    F.x += Math.sin(F.h) * Math.cos(F.pitch) * v * dt; F.z += Math.cos(F.h) * Math.cos(F.pitch) * v * dt; F.y += Math.sin(F.pitch) * v * dt;
+    const floor = Math.max(H(F.x, F.z), roofAt(F.x, F.z), deck(F.x, F.z)) + 2.5;
+    if (F.y < floor) { F.y += (floor - F.y) * Math.min(1, dt * 8); if (F.pitch < 0) F.pitch *= 0.8; }
+    F.y = Math.min(F.y, 700);
+    F.flap += dt * (F.pitch > -0.15 ? 9 + climb * 4 : 0);
+    const beat = F.pitch > -0.15 ? Math.sin(F.flap) * 0.55 : 0.05;
+    wingL.rotation.z = beat; wingR.rotation.z = -beat;
+    bird.position.set(F.x, F.y, F.z); bird.rotation.set(0, 0, 0); bird.rotation.order = 'YXZ'; bird.rotation.y = F.h; bird.rotation.x = -F.pitch; bird.rotation.z = -F.bank;
+  }
   function driveStep(dt) {
     const up = keys.has('w') || keys.has('ArrowUp'), down = keys.has('s') || keys.has('ArrowDown');
     let steer = (keys.has('a') || keys.has('ArrowLeft') ? 1 : 0) - (keys.has('d') || keys.has('ArrowRight') ? 1 : 0);
@@ -851,7 +905,8 @@
     const dt = Math.min(0.1, (now - last) / 1000); last = now; tSim += dt;
     // Where am I, and which way am I facing?
     let px, py, pz, fx, fz, carRot, carPitch = 0;
-    if (drive.on) { driveStep(dt); px = drive.x; py = drive.y; pz = drive.z; fx = Math.sin(drive.h); fz = Math.cos(drive.h); carRot = drive.h; carPitch = drive.pitch; }
+    if (fly.on) { flyStep(dt); px = fly.x; py = fly.y - 1.4; pz = fly.z; fx = Math.sin(fly.h); fz = Math.cos(fly.h); carRot = fly.h; }
+    else if (drive.on) { driveStep(dt); px = drive.x; py = drive.y; pz = drive.z; fx = Math.sin(drive.h); fz = Math.cos(drive.h); carRot = drive.h; carPitch = drive.pitch; }
     else {
       if (!paused) { s += kmh / 3.6 * dt; if (s >= total) s -= total; if (s < 0) s += total; }
       const p = at(s), p2 = at(s + 5), hx = p2.x - p.x, hz = p2.z - p.z, hl = Math.hypot(hx, hz) || 1;
@@ -861,13 +916,13 @@
     const qe = (keys.has('q') ? 1 : 0) - (keys.has('e') ? 1 : 0);
     if (qe) lookYaw = Math.max(-2.8, Math.min(2.8, lookYaw + qe * 1.8 * dt)); else if (!drag || drag.axis !== 'look') lookYaw *= Math.exp(-dt * 1.6);
     myCar.position.set(px, py + 0.22, pz); myCar.rotation.set(0, 0, 0); myCar.rotation.order = 'YXZ'; myCar.rotation.y = carRot; myCar.rotation.x = carPitch;
-    myCar.visible = view !== 0;
+    myCar.visible = view !== 0 && !fly.on; bird.visible = fly.on && view !== 0;
     // The camera, as offsets from the car, eased so that switching views glides.
     const V = VIEWS[view], ahead = !drive.on ? at(s + (view === 2 ? 150 : view === 3 ? 620 : 26)) : null;
     let co, lo;   // camera offset and look offset in world space, relative to the car
     const [rfx, rfz] = rotY(fx, fz, lookYaw);
-    if (V === 'street') { co = [fx * 0.3, 1.45, fz * 0.3]; lo = [rfx * 30, 1.2, rfz * 30]; }
-    else if (V === 'car') { co = [-rfx * 8.5, 3.1, -rfz * 8.5]; lo = [fx * 10, 1.2, fz * 10]; }
+    if (V === 'street') { co = [fx * 0.3, 1.45, fz * 0.3]; lo = [rfx * 30, 1.2 + (fly.on ? Math.sin(fly.pitch) * 30 - 3 : 0), rfz * 30]; }
+    else if (V === 'car') { co = fly.on ? [-rfx * 7, 2.6, -rfz * 7] : [-rfx * 8.5, 3.1, -rfz * 8.5]; lo = fly.on ? [fx * 12, 1.4 + Math.sin(fly.pitch) * 12, fz * 12] : [fx * 10, 1.2, fz * 10]; }
     else if (V === 'drone') { co = [-rfx * 30, 42, -rfz * 30]; lo = [rfx * 140, 4, rfz * 140]; }
     else { co = [-rfx * 160, 260, -rfz * 160]; lo = [rfx * 520, 0, rfz * 520]; }
     // Street view on the route: aim at the road ahead (smoother on bends than the car's own heading).
@@ -919,13 +974,17 @@
     sun.target.position.copy(focus); sun.position.copy(focus).addScaledVector(SUN, 2500);
     renderer.render(scene, camera);
     if (frames++ % 6 === 0) {
-      if (drive.on) {
-        hud.street.textContent = streetAt(px, pz) || ' '; hud.place.textContent = 'Free drive';
+      if (fly.on) {
+        const alt = fly.y - H(fly.x, fly.z);
+        hud.street.textContent = (alt < 80 && streetAt(px, pz)) || parkAt(px, pz) || ' '; hud.place.textContent = 'Flying';
+        hud.km.textContent = `${Math.round(alt)} m up`; hud.speed.textContent = `${Math.round(fly.v * (keys.has('Shift') ? 1.8 : 1) * 3.6)} km/h`; hud.lm.textContent = '';
+      } else if (drive.on) {
+        hud.street.textContent = streetAt(px, pz) || ' '; hud.place.textContent = parkAt(px, pz) || 'Free drive';
         hud.km.textContent = ''; hud.speed.textContent = `${Math.round(Math.abs(drive.v) * 3.6)} km/h${drive.v < -0.3 ? ' R' : ''}`; hud.lm.textContent = '';
       } else {
         const p = at(s), ni = pts[p.i][3];
         hud.street.textContent = ni >= 0 ? path.names[ni] : '';
-        hud.place.textContent = placeAt(s);
+        hud.place.textContent = parkAt(px, pz) || (Math.abs(s - startAt) < 220 ? 'Chotkovy sady' : placeAt(s));
         hud.km.textContent = `${(s / 1000).toFixed(2)} / ${(total / 1000).toFixed(1)} km`;
         hud.speed.textContent = paused ? 'paused' : `${Math.round(kmh)} km/h`;
         const lm = path.landmarks.filter(l => l.s > s - 60 && l.s < s + 260).sort((a, b) => Math.abs(a.s - s) - Math.abs(b.s - s))[0];

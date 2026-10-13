@@ -295,7 +295,11 @@ for (let s = 0; s <= total; s += 5) {
 // The best-known landmarks near the road, shown as a caption as you pass (the LDS record is a mis-tagged building).
 const shown = lms.filter(l => l.qid !== 'Q42504' && Math.abs(l.side) < 700 && l.links >= 15).sort((a, b) => b.links - a.links).slice(0, 30)
   .map(l => ({ name: l.name, s: l.s, side: l.side }));
-const path = { roadNames: [...roadNames.keys()], total: Math.round(total), step: 5, points: pts, names, places: chunk.places.filter(p => Math.abs(p[3]) < 900).map(p => [p[0], p[1]]), landmarks: shown,
+// Named parks and gardens, so the screen can say "Chotkovy sady" rather than the district.
+const parks = [];
+for (const e of els.values()) { const t = e.tags || {}; if (!t.name || e.type === 'node' || !/^(park|garden)$/.test(t.leisure || '')) continue;
+  for (const pg of polys(e)) { const o = pg[0], A = Math.abs(area(o)); if (A < 2500 || !fits(o)) continue; parks.push({ name: t.name, ring: o.filter((_, i) => i % Math.max(1, Math.floor(o.length / 60)) === 0).map(([x, z]) => [Math.round(x), Math.round(z)]) }); } }
+const path = { parks, roadNames: [...roadNames.keys()], total: Math.round(total), step: 5, points: pts, names, places: chunk.places.filter(p => Math.abs(p[3]) < 900).map(p => [p[0], p[1]]), landmarks: shown,
   near: NEAR, far: { x0: -16000, z0: -16000, x1: 16000, z1: 16000, cell: 160 }, origin: [LON0, LAT0], from: 'Pražský hrad', to: 'Vyšehrad' };
 
 writeFileSync(join(OUT, 'buildings.bin'), B.out());
