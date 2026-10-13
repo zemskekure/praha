@@ -69,13 +69,14 @@
       "h": 128,
       "hm": 8,
       "avg": [
-        134,
-        100,
-        78
+        133,
+        94,
+        63
       ],
       "placeholder": false,
       "drop": true,
       "flags": [
+        "holes filled (980 px)",
         "cut"
       ]
     },
@@ -162,14 +163,14 @@
       "h": 160,
       "hm": 14,
       "avg": [
-        178,
-        157,
-        125
+        126,
+        116,
+        102
       ],
       "placeholder": false,
-      "drop": true,
+      "drop": false,
       "flags": [
-        "cut"
+        "holes filled (3679 px)"
       ]
     },
     "praha-tower-1": {
@@ -196,20 +197,17 @@
       "role": "tree",
       "theme": "praha",
       "kind": "sprite",
-      "w": 128,
-      "h": 160,
+      "w": 122,
+      "h": 149,
       "hm": 9,
       "avg": [
-        80,
-        96,
-        64
+        63,
+        85,
+        53
       ],
       "placeholder": false,
-      "drop": true,
-      "flags": [
-        "cut",
-        "boxed"
-      ]
+      "drop": false,
+      "flags": []
     },
     "praha-tree-2": {
       "file": "art/praha-tree-2.png",
@@ -398,17 +396,18 @@
       "role": "house",
       "theme": "praha",
       "kind": "facade",
-      "w": 120,
+      "w": 116,
       "h": 128,
       "hm": 8,
       "avg": [
-        167,
-        144,
-        113
+        130,
+        108,
+        89
       ],
       "placeholder": false,
       "drop": true,
       "flags": [
+        "holes filled (887 px)",
         "cut"
       ]
     },
@@ -417,37 +416,35 @@
       "role": "house",
       "theme": "praha",
       "kind": "facade",
-      "w": 160,
-      "h": 128,
+      "w": 140,
+      "h": 126,
       "hm": 8,
       "avg": [
-        137,
-        127,
-        117
+        171,
+        140,
+        112
       ],
       "placeholder": false,
-      "drop": true,
-      "flags": [
-        "cut"
-      ]
+      "drop": false,
+      "flags": []
     },
     "praha-house-5": {
       "file": "art/praha-house-5.png",
       "role": "house",
       "theme": "praha",
       "kind": "facade",
-      "w": 159,
-      "h": 128,
+      "w": 154,
+      "h": 127,
       "hm": 8,
       "avg": [
-        145,
-        127,
-        114
+        153,
+        112,
+        91
       ],
       "placeholder": false,
-      "drop": true,
+      "drop": false,
       "flags": [
-        "cut"
+        "holes filled (532 px)"
       ]
     },
     "praha-house-6": {
@@ -455,13 +452,13 @@
       "role": "house",
       "theme": "praha",
       "kind": "facade",
-      "w": 152,
+      "w": 154,
       "h": 128,
       "hm": 8,
       "avg": [
-        164,
-        116,
-        86
+        153,
+        108,
+        76
       ],
       "placeholder": false,
       "drop": true,
@@ -686,13 +683,13 @@
       "role": "landmark",
       "theme": "praha",
       "kind": "landmark",
-      "w": 170,
+      "w": 106,
       "h": 192,
       "hm": 15,
       "avg": [
-        108,
-        89,
-        75
+        72,
+        66,
+        69
       ],
       "label": "Staroměstský orloj",
       "qid": "Q729370",
