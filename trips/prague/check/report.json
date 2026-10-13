@@ -1,0 +1,253 @@
+{
+  "trip": "trips/prague",
+  "detail": "detailed",
+  "at": "2026-10-13T14:14:15.302Z",
+  "problems": [
+    "4 pictures dropped by the cleanup: praha-house-1 (holes filled (980 px), cut); praha-house-3 (holes filled (887 px), cut); praha-house-6 (cut); lm-Q729370 (cut). Re-roll them: node rd.mjs run --trip trips/prague --budget <USD> --regen praha-house-1,praha-house-3,praha-house-6,lm-Q729370",
+    "the sweep found 6 of 261 frames with sky through or between buildings (worst: km 1.184 look 30: 0 px, 10 columns; km 1.184 look 0: 0 px, 5 columns; km 1.628 look 30: 0 px, 4 columns; km 2.368 look -30: 0 px, 4 columns); see check/worst-frames.png"
+  ],
+  "warnings": [
+    "1 landmarks have no usable picture, so only their brown sign shows: Staroměstský orloj",
+    "km 0.23: praha-shop-2 x16, praha-shop-1 x16, praha-house-5 x4, praha-shop-5 x14, praha-shop-4 x15, praha-shop-6 x10, praha-shop-3 x12, praha-civic-3 x8, praha-apartment-3 x12, praha-house-2 x3, praha-civic-4 x8, praha-apartment-2 x7, praha-apartment-1 x10, praha-civic-2 x8, praha-apartment-6 x13, praha-apartment-5 x8, praha-civic-1 x6, praha-apartment-4 x10 in one frame",
+    "km 1.25: praha-house-2 x17, praha-civic-3 x7, praha-house-5 x11, praha-house-4 x12, praha-civic-4 x5, praha-civic-2 x5, praha-civic-1 x4, praha-apartment-6 x3, praha-shop-6 x21, praha-shop-4 x22, praha-shop-1 x18, praha-shop-5 x20, praha-shop-3 x21, praha-apartment-4 x3, praha-shop-2 x18, praha-apartment-1 x3, praha-apartment-2 x3, praha-apartment-3 x3 in one frame",
+    "km 2.27: praha-house-5 x8, praha-shop-4 x12, praha-house-4 x5, praha-shop-5 x9, praha-shop-3 x8, praha-house-2 x7, praha-shop-6 x9, praha-shop-2 x9, praha-shop-1 x7 in one frame",
+    "km 3.29: praha-shop-2 x10, praha-apartment-2 x8, praha-civic-3 x8, praha-shop-4 x12, praha-apartment-4 x7, praha-shop-1 x13, praha-civic-1 x10, praha-shop-6 x14, praha-apartment-6 x8, praha-shop-5 x14, praha-civic-2 x11, praha-apartment-5 x6, praha-apartment-3 x6, praha-apartment-1 x6, praha-shop-3 x9, praha-civic-4 x9, praha-house-4 x6, praha-house-5 x4, praha-house-2 x4 in one frame",
+    "km 4.31: praha-apartment-1 x16, praha-house-4 x4, praha-apartment-4 x14, praha-apartment-2 x17, praha-shop-2 x8, praha-apartment-6 x17, praha-civic-4 x10, praha-shop-3 x7, praha-house-2 x4, praha-apartment-5 x14, praha-civic-3 x9, praha-apartment-3 x17, praha-shop-6 x8, praha-civic-1 x8, praha-shop-1 x6, praha-civic-2 x7, praha-shop-5 x10, praha-shop-4 x7 in one frame",
+    "km 5.33: praha-apartment-4 x19, praha-shop-1 x12, praha-civic-2 x3, praha-house-2 x5, praha-shop-5 x10, praha-house-5 x4, praha-shop-2 x8, praha-house-4 x5, praha-shop-4 x9, praha-apartment-3 x21, praha-apartment-6 x20, praha-apartment-1 x17, praha-apartment-2 x17, praha-apartment-5 x17, praha-shop-6 x9, praha-shop-3 x8 in one frame",
+    "km 6.35: praha-shop-1 x11, praha-house-2 x4, praha-shop-6 x7, praha-house-4 x4, praha-civic-3 x7, praha-shop-3 x6, praha-shop-5 x7, praha-shop-2 x4, praha-shop-4 x8, praha-civic-2 x9, praha-apartment-6 x11, praha-house-5 x4, praha-apartment-5 x7, praha-apartment-2 x8, praha-apartment-3 x7, praha-apartment-4 x7, praha-apartment-1 x6, praha-civic-4 x8, praha-civic-1 x7 in one frame",
+    "km 7.35: praha-civic-4 x3, praha-shop-6 x3, praha-shop-4 x5, praha-shop-5 x4, praha-shop-3 x3 in one frame",
+    "km 7.37: praha-civic-4 x5, praha-civic-3 x3, praha-house-5 x3, praha-shop-6 x3, praha-civic-1 x3, praha-shop-4 x4, praha-shop-5 x3 in one frame",
+    "the budget stopped the re-rolls: some pictures are still dropped (their roles use other pictures)"
+  ],
+  "layout": {
+    "planes": 846,
+    "frontage_m": 8636,
+    "gaps": 0,
+    "repeats": 0,
+    "distinctFacades": 22,
+    "gap_m": 0
+  },
+  "art": {
+    "pictures": 42,
+    "real": 42,
+    "placeholders": 0,
+    "dropped": [
+      "praha-house-1 (holes filled (980 px), cut)",
+      "praha-house-3 (holes filled (887 px), cut)",
+      "praha-house-6 (cut)",
+      "lm-Q729370 (cut)"
+    ]
+  },
+  "sweep": {
+    "frames": 261,
+    "bad": 6,
+    "holes": 0,
+    "gapCols": 29,
+    "worst": [
+      {
+        "km": 1.184,
+        "look": 30,
+        "holes": 0,
+        "gaps": 10,
+        "place": "Střešovice"
+      },
+      {
+        "km": 1.184,
+        "look": 0,
+        "holes": 0,
+        "gaps": 5,
+        "place": "Střešovice"
+      },
+      {
+        "km": 1.628,
+        "look": 30,
+        "holes": 0,
+        "gaps": 4,
+        "place": "Střešovice"
+      },
+      {
+        "km": 2.368,
+        "look": -30,
+        "holes": 0,
+        "gaps": 4,
+        "place": "Starý Bubeneč"
+      },
+      {
+        "km": 1.184,
+        "look": -30,
+        "holes": 0,
+        "gaps": 3,
+        "place": "Střešovice"
+      },
+      {
+        "km": 2.59,
+        "look": -30,
+        "holes": 0,
+        "gaps": 3,
+        "place": "Starý Bubeneč"
+      }
+    ]
+  },
+  "frames": [
+    {
+      "km": 0.23,
+      "tag": "day",
+      "place": "Praha",
+      "road": "Úvoz",
+      "mean": 125,
+      "std": 54,
+      "visible": 25,
+      "facades": 19,
+      "holes": {
+        "px": 0,
+        "inside": 16770,
+        "png": null
+      },
+      "shot": "shot-0_23.png"
+    },
+    {
+      "km": 1.25,
+      "tag": "day",
+      "place": "Střešovice",
+      "road": "Keplerova",
+      "mean": 124,
+      "std": 52,
+      "visible": 25,
+      "facades": 19,
+      "holes": {
+        "px": 0,
+        "inside": 4088,
+        "png": null
+      },
+      "shot": "shot-1_25.png"
+    },
+    {
+      "km": 2.27,
+      "tag": "day",
+      "place": "Střešovice",
+      "road": "Mariánské hradby",
+      "mean": 127,
+      "std": 51,
+      "visible": 24,
+      "facades": 18,
+      "holes": {
+        "px": 0,
+        "inside": 4550,
+        "png": null
+      },
+      "shot": "shot-2_27.png"
+    },
+    {
+      "km": 2.97,
+      "tag": "day",
+      "place": "Starý Bubeneč",
+      "road": "Chotkova",
+      "mean": 112,
+      "std": 44,
+      "visible": 11,
+      "facades": 8,
+      "holes": {
+        "px": 0,
+        "inside": 6359,
+        "png": null
+      },
+      "shot": "shot-2_97.png"
+    },
+    {
+      "km": 3.29,
+      "tag": "day",
+      "place": "Starý Bubeneč",
+      "road": "Chotkova",
+      "mean": 128,
+      "std": 49,
+      "visible": 25,
+      "facades": 19,
+      "holes": {
+        "px": 0,
+        "inside": 8183,
+        "png": null
+      },
+      "shot": "shot-3_29.png"
+    },
+    {
+      "km": 4.31,
+      "tag": "day",
+      "place": "Staré Město",
+      "road": "Křižovnická",
+      "mean": 104,
+      "std": 54,
+      "visible": 23,
+      "facades": 19,
+      "holes": {
+        "px": 0,
+        "inside": 34114,
+        "png": null
+      },
+      "shot": "shot-4_31.png"
+    },
+    {
+      "km": 5.33,
+      "tag": "day",
+      "place": "Staré Město",
+      "road": "Masarykovo nábřeží",
+      "mean": 124,
+      "std": 50,
+      "visible": 25,
+      "facades": 19,
+      "holes": {
+        "px": 0,
+        "inside": 16179,
+        "png": null
+      },
+      "shot": "shot-5_33.png"
+    },
+    {
+      "km": 6.35,
+      "tag": "day",
+      "place": "Staré Město",
+      "road": "Rašínovo nábřeží",
+      "mean": 111,
+      "std": 44,
+      "visible": 22,
+      "facades": 19,
+      "holes": {
+        "px": 0,
+        "inside": 13655,
+        "png": null
+      },
+      "shot": "shot-6_35.png"
+    },
+    {
+      "km": 7.35,
+      "tag": "day",
+      "place": "Praha",
+      "road": "V Pevnosti",
+      "mean": 119,
+      "std": 44,
+      "visible": 15,
+      "facades": 12,
+      "holes": {
+        "px": 0,
+        "inside": 17852,
+        "png": null
+      },
+      "shot": "shot-7_35.png"
+    },
+    {
+      "km": 7.37,
+      "tag": "day",
+      "place": "Praha",
+      "road": "K Rotundě",
+      "mean": 120,
+      "std": 47,
+      "visible": 16,
+      "facades": 13,
+      "holes": {
+        "px": 0,
+        "inside": 18885,
+        "png": null
+      },
+      "shot": "shot-7_37.png"
+    }
+  ]
+}

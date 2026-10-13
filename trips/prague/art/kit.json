@@ -734,7 +734,7 @@
       "label": "Letohrádek královny Anny",
       "qid": "Q2424070",
       "placeholder": false,
-      "drop": false,
+      "drop": true,
       "flags": []
     },
     "lm-Q1419555": {
