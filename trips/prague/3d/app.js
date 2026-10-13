@@ -7,7 +7,14 @@
   const $ = id => document.getElementById(id);
   const say = t => { $('load').textContent = t; };
   const P = new URLSearchParams(location.search);
-  const get = async (f, bin) => { const r = await fetch(f); if (!r.ok) throw Error(`${f}: HTTP ${r.status}`); return bin ? r.arrayBuffer() : r.json(); };
+  // Binary files are read raw (local server) or, where only text can be hosted, from a base64 copy next to them.
+  const b64 = t => { const s = atob(t.trim()), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u.buffer; };
+  const get = async (f, bin) => {
+    let r = await fetch(f).catch(() => null);
+    if (bin && !(r && r.ok && !(r.headers.get('content-type') || '').includes('text/html'))) { r = await fetch(f + '.txt'); if (!r.ok) throw Error(`${f}: HTTP ${r.status}`); return b64(await r.text()); }
+    if (!r || !r.ok) throw Error(`${f}: HTTP ${r ? r.status : 'failed'}`);
+    return bin ? r.arrayBuffer() : r.json();
+  };
   say('Loading the map…');
   const [path, nearBuf, farBuf, bBuf, lBuf, rBuf, tBuf] = await Promise.all([get('path.json'), get('terrain-near.bin', 1), get('terrain-far.bin', 1),
     get('buildings.bin', 1), get('land.bin', 1), get('roads.bin', 1), get('trees.bin', 1)]);
