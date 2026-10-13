@@ -45,8 +45,7 @@
     const edge = h.depth * Math.min(h.I.rx, h.I.ry);          // tiles from the shore, roughly
     const n = fbm(x * 0.12, y * 0.12, h.I.seed);
     if (edge < (onBeach ? 3.2 : 1.6)) map[k] = onBeach ? K.SHINGLE : K.CLIFF;
-    else if (n > 0.66 && edge > 5 && !(h.I.id === 'little' && x < h.I.cx + 2)) map[k] = K.SNOW;
-    else if (n < 0.34) map[k] = K.SCREE;
+    else if (n < 0.3) map[k] = K.SCREE;
     else map[k] = K.TUNDRA;
   }
   // Shallow water within 3 tiles of any land.
@@ -62,7 +61,8 @@
   }
   const piers = { big: pier(ISLANDS[0], 1), little: pier(ISLANDS[1], -1) };
   // Paths: from each pier up into the island (to the village on Little Diomede, to the weather station on Big).
-  function path(x0, y0, x1, y1) { const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)); for (let i = 0; i <= n; i++) { const x = Math.round(x0 + (x1 - x0) * i / n + Math.sin(i * 0.4) * 1.2), y = Math.round(y0 + (y1 - y0) * i / n); for (const [dx, dy] of [[0, 0], [1, 0]]) { const k = (y + dy) * MW + x + dx; if (WALK.has(map[k]) && map[k] !== K.DOCK) map[k] = K.PATH; } } }
+  const trails = [];   // the paths again, as smooth lines in pixels, for painting
+  function path(x0, y0, x1, y1) { const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)); const tr = []; trails.push(tr); for (let i = 0; i <= n; i++) { tr.push([(x0 + (x1 - x0) * i / n + Math.sin(i * 0.4) * 1.2 + 1) * T, (y0 + (y1 - y0) * i / n + 0.5) * T]); const x = Math.round(x0 + (x1 - x0) * i / n + Math.sin(i * 0.4) * 1.2), y = Math.round(y0 + (y1 - y0) * i / n); for (const [dx, dy] of [[0, 0], [1, 0]]) { const k = (y + dy) * MW + x + dx; if (WALK.has(map[k]) && map[k] !== K.DOCK) map[k] = K.PATH; } } }
   const L = ISLANDS[1], B = ISLANDS[0];
   path(piers.little.x0 + 1, piers.little.y, L.cx - 6, L.cy - 6); path(L.cx - 20, L.cy - 1, L.cx + 6, L.cy - 4);
   path(piers.big.x0 - 1, piers.big.y, B.cx + 8, B.cy - 18);
@@ -73,16 +73,15 @@
   const rnd = mulberry(20261013);
   const props = [];
   const place = (kind, tx, ty, extra = {}) => props.push({ kind, x: tx * T, y: ty * T, ...extra });
-  // Little Diomede: houses climbing the slope above the beach, drying racks, upturned skin boats, the school.
+  // Little Diomede: three houses above the beach.
   const HOUSE_COL = ['#7d4b3a', '#4d6b78', '#8a7b5a', '#5e6e4f', '#a0553c', '#6b6f75'];
-  for (let i = 0; i < 6; i++) { const tx = L.cx - 19 + (i % 3) * 8 + (Math.floor(i / 3) % 2) * 3, ty = L.cy - 10 + Math.floor(i / 3) * 9 + rnd() * 0.6; if (WALK.has(at(tx | 0, ty | 0))) place('house', tx, ty, { col: HOUSE_COL[i % HOUSE_COL.length], w: 2 + (rnd() < 0.4 ? 1 : 0), v: i }); }
-  place('school', L.cx + 6, L.cy - 12);
+  for (let i = 0; i < 3; i++) { const tx = L.cx - 17 + i * 9 + (i === 1 ? 1 : 0), ty = L.cy - 9 + (i === 1 ? -2 : 0) + rnd() * 0.6; if (WALK.has(at(tx | 0, ty | 0))) place('house', tx, ty, { col: HOUSE_COL[i % HOUSE_COL.length], w: 2 + (rnd() < 0.4 ? 1 : 0), v: i }); }
   for (let i = 0; i < 4; i++) rnd();   // keep the seeded layout below unchanged
-  for (const [dx, dy] of [[-14, -2], [-6, -3], [2, -4], [-18, 3]]) place('lamp', L.cx + dx, L.cy + dy);
-  // Big Diomede: the weather station, its mast, a radar dome and a fuel tank, all old and quiet.
-  place('station', B.cx + 6, B.cy - 22); place('mast', B.cx + 14, B.cy - 26); place('dome', B.cx - 4, B.cy - 30); place('tank', B.cx + 14, B.cy - 16);
+  for (const [dx, dy] of [[-10, -3], [-18, 3]]) place('lamp', L.cx + dx, L.cy + dy);
+  // Big Diomede: only the old weather station and its mast.
+  place('station', B.cx + 6, B.cy - 22); place('mast', B.cx + 14, B.cy - 26);
   // Boulders and lichen-covered rocks everywhere on the plateaus.
-  for (let i = 0; i < 320; i++) { const tx = 4 + rnd() * (MW - 8), ty = 4 + rnd() * (MH - 8), t = at(tx | 0, ty | 0); if (t === K.TUNDRA || t === K.SCREE) place('rock', tx, ty, { s: 0.6 + rnd() * 0.8 }); }
+  for (let i = 0; i < 0; i++) { const tx = 4 + rnd() * (MW - 8), ty = 4 + rnd() * (MH - 8), t = at(tx | 0, ty | 0); if (t === K.TUNDRA || t === K.SCREE) place('rock', tx, ty, { s: 0.6 + rnd() * 0.8 }); }
   // Date-line buoys in the strait.
   for (let ty = 6; ty < MH - 6; ty += 9) if (at(DATE_LINE, ty) === K.DEEP) place('buoy', DATE_LINE + 0.5, ty);
 
@@ -114,19 +113,97 @@
   // Organic edges: the tile painting is resampled through a smooth noise field, so shores, beaches, snow and grass
   // meet in curves instead of 16 px steps. Piers stay straight. The curved shoreline is kept for the surf.
   const surf = [], waterMask = document.createElement('canvas'), reflTmp = document.createElement('canvas');   // per tile row: [x, y, nx, ny] water pixels touching land, nx/ny pointing out to sea
+  // Nature, painted per pixel after the warp: meadows that drift between moss, sage and autumn gold with rusty
+  // bearberry patches, and a sea that deepens from turquoise shallows to ink blue. Ordered dithering keeps it pixel art.
+  const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+  const hex = c => [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)];
+  const MEADOW = ['#465f3a', '#526c3f', '#5f7a45', '#6d874b', '#7c9350', '#8d9c56', '#a0a35c', '#b3a660', '#c2a964'].map(hex);
+  const BERRY = ['#6b7446', '#7d7449', '#8d6f4a', '#97704c'].map(hex);
+  const PEBBLE = ['#5f5a52', '#716a5f', '#857c6e', '#998e7d', '#ad a08d'.replace(' ', ''), '#c2b5a0'].map(hex);
+  const CLIFFP = ['#2f2e2c', '#3a3936', '#47453f', '#55524b', '#63604f'].map(hex);
+  const DIRT = ['#6f5f48', '#7d6b51', '#8c795c', '#9a8866'].map(hex);
+  const ROCK = ['#55574d', '#63655a', '#727366', '#838374', '#8a9a5c'].map(hex);
+  const SEA = ['#8cc8bf', '#71b5b3', '#5a9fa8', '#47889b', '#3a7290', '#2f5f80', '#284f71', '#224364', '#1d3958'].map(hex);
+  function paintNature(out, kind, W, H) {
+    const C = 8, cw = Math.ceil(W / C) + 1, ch = Math.ceil(H / C) + 1, zone = new Float32Array(cw * ch), patch = new Float32Array(cw * ch), dist = new Float32Array(cw * ch);
+    for (let j = 0; j < ch; j++) for (let i = 0; i < cw; i++) { const x = i * C, y = j * C, k = j * cw + i;
+      zone[k] = fbm(x / 170, y / 170, 71); patch[k] = fbm(x / 28, y / 28, 83);
+      const kk = kind[Math.min(H - 1, y) * W + Math.min(W - 1, x)]; dist[k] = kk === K.DEEP || kk === K.SHALLOW ? 1e6 : 0; }
+    // Distance to land, in cells (two-pass chamfer).
+    for (let j = 0; j < ch; j++) for (let i = 0; i < cw; i++) { const k = j * cw + i; let d = dist[k]; if (!d) continue;
+      if (i) d = Math.min(d, dist[k - 1] + 1); if (j) { d = Math.min(d, dist[k - cw] + 1); if (i) d = Math.min(d, dist[k - cw - 1] + 1.414); if (i < cw - 1) d = Math.min(d, dist[k - cw + 1] + 1.414); } dist[k] = d; }
+    for (let j = ch - 1; j >= 0; j--) for (let i = cw - 1; i >= 0; i--) { const k = j * cw + i; let d = dist[k]; if (!d) continue;
+      if (i < cw - 1) d = Math.min(d, dist[k + 1] + 1); if (j < ch - 1) { d = Math.min(d, dist[k + cw] + 1); if (i < cw - 1) d = Math.min(d, dist[k + cw + 1] + 1.414); if (i) d = Math.min(d, dist[k + cw - 1] + 1.414); } dist[k] = d; }
+    const lerp = (A, x, y) => { const i = Math.min(cw - 2, (x / C) | 0), j = Math.min(ch - 2, (y / C) | 0), fx = x / C - i, fy = y / C - j, k = j * cw + i;
+      return (A[k] * (1 - fx) + A[k + 1] * fx) * (1 - fy) + (A[k + cw] * (1 - fx) + A[k + cw + 1] * fx) * fy; };
+    const pick = (P, v, x, y) => { const f = Math.max(0, Math.min(P.length - 1.001, v * (P.length - 1))), b = f | 0; return P[(f - b) * 16 > BAYER[(y & 3) * 4 + (x & 3)] ? b + 1 : b]; };
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = y * W + x, t = kind[i]; let c;
+      if (t === K.TUNDRA) {
+        const z = lerp(zone, x, y), pa = lerp(patch, x, y), fine = hash2(x >> 1, y >> 1, 5) - 0.5;
+        if (pa > 0.72 && z < 0.45 && hash2(x >> 1, y >> 1, 9) < 0.7) c = pick(BERRY, (pa - 0.72) * 4 + fine * 0.6, x, y);
+        else c = pick(MEADOW, 0.15 + (z - 0.3) * 1.3 + (pa - 0.5) * 0.5 + fine * 0.18, x, y);
+      } else if (t === K.SHINGLE) {   // rounded pebbles, each its own shade, lit from the top left
+        const px2 = x >> 1, py2 = y >> 1, hv = hash2(px2 + ((y >> 2) & 1), py2, 21);
+        c = pick(PEBBLE, 0.25 + hv * 0.55 + (lerp(zone, x, y) - 0.5) * 0.4 + ((x & 1) === 0 && (y & 1) === 0 ? 0.12 : 0), x, y);
+      } else if (t === K.CLIFF) {   // dark basalt, streaked downward
+        const st = hash2(x >> 1, (y >> 3) + ((x >> 1) & 3) * 7, 31);
+        c = pick(CLIFFP, 0.15 + st * 0.6 + (lerp(zone, x, y) - 0.5) * 0.3, x, y);
+      } else if (t === K.SCREE) {   // broken rock with lichen
+        const hv = hash2(x >> 2, y >> 2, 23), l = hash2(x >> 1, y >> 1, 24);
+        c = l < 0.42 ? pick(MEADOW, 0.1 + lerp(zone, x, y) * 0.5 + (hv - 0.5) * 0.3, x, y) : l > 0.9 ? ROCK[4] : pick(ROCK.slice(0, 4), 0.25 + hv * 0.55 + ((y & 3) === 0 ? 0.15 : 0), x, y);
+      } else if (t === K.DEEP || t === K.SHALLOW) {
+        const d = lerp(dist, x, y) * C, v = Math.min(1, Math.pow(d / 190, 0.75)) + (lerp(zone, x, y) - 0.5) * 0.15;
+        c = pick(SEA, v, x, y);
+      } else continue;
+      out[i * 4] = c[0]; out[i * 4 + 1] = c[1]; out[i * 4 + 2] = c[2]; }
+  }
+  // Wildflowers in drifts: yellow arctic poppies, magenta fireweed, blue forget-me-nots, white cotton grass.
+  const FLOWERS = [['#f4d65a', '#c9a637'], ['#d65493', '#a63a70'], ['#7f95e0', '#5a6fbf'], ['#f6f3e8', '#cfcabb']];
+  function plantFlowers(kind, W, H) {
+    // The trails: worn earth with soft, grassy edges.
+    for (const tr of trails) for (let i = 0; i < tr.length - 1; i++) { const [ax, ay] = tr[i], [bx, by] = tr[i + 1], L = Math.hypot(bx - ax, by - ay);
+      for (let s2 = 0; s2 < L; s2 += 3) { const cx = ax + (bx - ax) * s2 / L, cy = ay + (by - ay) * s2 / L, r = 6 + fbm(cx / 30, cy / 30, 3) * 3;
+        for (let dy = -9; dy <= 9; dy++) for (let dx = -9; dx <= 9; dx++) { const X = Math.round(cx + dx), Y = Math.round(cy + dy); if (X < 0 || Y < 0 || X >= W || Y >= H) continue; const kk = kind[Y * W + X]; if (kk === K.DEEP || kk === K.SHALLOW || kk === K.DOCK) continue;
+          const d = Math.hypot(dx, dy) / r; if (d > 1 - hash2(X, Y, 33) * 0.35) continue; const v = 0.3 + hash2(X >> 1, Y >> 1, 34) * 0.5 - d * 0.3, f = Math.max(0, Math.min(3, Math.floor(v * 4))); const c = DIRT[f];
+          w.fillStyle = `rgb(${c.join(',')})`; w.fillRect(X, Y, 1, 1); } } }
+    // Boulders: lichen-spotted stones resting in the grass, each with its own shadow.
+    for (let i = 0; i < 1400; i++) { const x = (hash2(i, 1, 55) * W) | 0, y = (hash2(i, 2, 55) * H) | 0, kk = kind[y * W + x]; if (kk !== K.TUNDRA && kk !== K.SCREE) continue;
+      if (kk === K.TUNDRA && hash2(i, 3, 55) > 0.35) continue; const r = 2 + Math.floor(hash2(i, 4, 55) ** 2 * 6);
+      w.fillStyle = 'rgba(30,36,26,0.35)'; w.beginPath(); w.ellipse(x + 2, y + 2, r + 1, r * 0.7 + 1, 0, 0, 6.283); w.fill();
+      w.fillStyle = '#5c5d57'; w.beginPath(); w.ellipse(x, y, r, r * 0.75, 0, 0, 6.283); w.fill();
+      w.fillStyle = '#7b7b72'; w.beginPath(); w.ellipse(x - r * 0.25, y - r * 0.25, r * 0.6, r * 0.42, 0, 0, 6.283); w.fill();
+      if (r > 3) { w.fillStyle = hash2(i, 5, 55) < 0.5 ? '#c9a33e' : '#9aa65a'; w.fillRect(x + ((hash2(i, 6, 55) - 0.5) * r) | 0, y - 1, 2, 1); } }
+    for (let i = 0; i < 70000; i++) { const x = (hash2(i, 1, 77) * W) | 0, y = (hash2(i, 2, 77) * H) | 0;
+      if (kind[y * W + x] !== K.TUNDRA) continue;
+      const bloom = fbm(x / 60, y / 60, 101); if (bloom < 0.5 || hash2(i, 4, 77) > (bloom - 0.5) * 4) continue;
+      const [c1, c2] = FLOWERS[Math.floor(fbm(x / 90, y / 90, 113) * 7.99) % 4];
+      w.fillStyle = '#3f5a33'; w.fillRect(x, y + 1, 1, 1);
+      w.fillStyle = c1; w.fillRect(x, y, 1, 1); if (hash2(i, 3, 77) < 0.35) { w.fillStyle = c2; w.fillRect(x + 1, y, 1, 1); } }
+  }
   function warpWorld() {
     const W = world.width, H = world.height, src = w.getImageData(0, 0, W, H).data, out = new Uint8ClampedArray(src.length), kind = new Uint8Array(W * H);
     const G = 4, gw = Math.ceil(W / G) + 1, gh = Math.ceil(H / G) + 1, ofx = new Float32Array(gw * gh), ofy = new Float32Array(gw * gh), A = 7;
-    for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) { const x = i * G, y = j * G; ofx[j * gw + i] = (fbm(x / 38, y / 38, 41) - 0.5) * 2 * A; ofy[j * gw + i] = (fbm(x / 38, y / 38, 57) - 0.5) * 2 * A; }
+    // The land itself is classified smoothly, from the same island shapes and noise the tiles came from, sampled at the
+    // warped position: coasts, cliff bands and rocky patches become curves instead of 16 px steps.
+    const gE = new Float32Array(gw * gh), gN = new Float32Array(gw * gh), gB = new Uint8Array(gw * gh);
+    for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) { const x = i * G, y = j * G, k = j * gw + i; ofx[k] = (fbm(x / 38, y / 38, 41) - 0.5) * 2 * A; ofy[k] = (fbm(x / 38, y / 38, 57) - 0.5) * 2 * A;
+      const tx = (x + ofx[k]) / T, ty = (y + ofy[k]) / T; let best = -1e9, bi = null, ba = 0;
+      for (const I of ISLANDS) { const dx = (tx - I.cx) / I.rx, dy = (ty - I.cy) / I.ry, a = Math.atan2(dy, dx), e = (1 - Math.hypot(dx, dy) / radius(I, a)) * Math.min(I.rx, I.ry); if (e > best) { best = e; bi = I; ba = a; } }
+      gE[k] = best; gN[k] = fbm(tx * 0.12, ty * 0.12, bi.seed); gB[k] = angDiff(ba, bi.beach.ang) < bi.beach.width ? 1 : 0; }
     for (let y = 0; y < H; y++) { const j = Math.min(gh - 2, (y / G) | 0), fy = y / G - j;
       for (let x = 0; x < W; x++) { const i = Math.min(gw - 2, (x / G) | 0), fx = x / G - i, k0 = j * gw + i;
         const dx = (ofx[k0] * (1 - fx) + ofx[k0 + 1] * fx) * (1 - fy) + (ofx[k0 + gw] * (1 - fx) + ofx[k0 + gw + 1] * fx) * fy;
         const dy = (ofy[k0] * (1 - fx) + ofy[k0 + 1] * fx) * (1 - fy) + (ofy[k0 + gw] * (1 - fx) + ofy[k0 + gw + 1] * fx) * fy;
         let sx = Math.max(0, Math.min(W - 1, Math.round(x + dx))), sy = Math.max(0, Math.min(H - 1, Math.round(y + dy)));
-        const own = at((x / T) | 0, (y / T) | 0); let t = at((sx / T) | 0, (sy / T) | 0);
-        if (own === K.DOCK || t === K.DOCK) { sx = x; sy = y; t = own; }
+        const own = at((x / T) | 0, (y / T) | 0); let t;
+        if (own === K.DOCK) { sx = x; sy = y; t = own; }
+        else { const e = (gE[k0] * (1 - fx) + gE[k0 + 1] * fx) * (1 - fy) + (gE[k0 + gw] * (1 - fx) + gE[k0 + gw + 1] * fx) * fy, n = (gN[k0] * (1 - fx) + gN[k0 + 1] * fx) * (1 - fy) + (gN[k0 + gw] * (1 - fx) + gN[k0 + gw + 1] * fx) * fy, beach = gB[fx < 0.5 ? (fy < 0.5 ? k0 : k0 + gw) : (fy < 0.5 ? k0 + 1 : k0 + gw + 1)];
+          t = e <= 0 ? K.DEEP : e < (beach ? 3.2 : 1.6) ? (beach ? K.SHINGLE : K.CLIFF) : n < 0.3 ? K.SCREE : K.TUNDRA;
+          if (t !== K.DEEP && at((sx / T) | 0, (sy / T) | 0) === K.PATH && t === K.CLIFF) t = K.SCREE; }
         const si = (sy * W + sx) * 4, di = (y * W + x) * 4; out[di] = src[si]; out[di + 1] = src[si + 1]; out[di + 2] = src[si + 2]; out[di + 3] = 255; kind[y * W + x] = t; } }
+    paintNature(out, kind, W, H);
     w.putImageData(new ImageData(out, W, H), 0, 0);
+    plantFlowers(kind, W, H);
     { const m = new Uint8ClampedArray(W * H * 4); for (let i = 0; i < W * H; i++) if (kind[i] === K.DEEP || kind[i] === K.SHALLOW) m[i * 4 + 3] = 255;
       waterMask.width = W; waterMask.height = H; waterMask.getContext('2d').putImageData(new ImageData(m, W, H), 0, 0); }
     for (let ty = 0; ty < MH; ty++) surf.push([]);
@@ -359,10 +436,10 @@
   }
   const lightLevel = () => { const G = grade(); return 1 - (G.mul[0] + G.mul[1] + G.mul[2]) / 765; };   // 0 at noon, ~0.7 at night
   // Weather: snow comes and goes in waves; the wind veers slowly and gusts.
-  const weather = () => { const t = clock / 60 + 115.5;   // phase picked so the first day has dawn flurries, a clear golden evening, snow at night
-    const n = fbm(t * 0.35, 3.1, 99); return { snow: Math.max(0, Math.min(1, (n - 0.6) * 3.5)), fog: Math.max(0, Math.min(1, (fbm(t * 0.25, 8.3, 7) - 0.5) * 3)) }; };
+  const weather = () => { const t = clock / 60 + 211;   // phase picked so the first day is clear from dawn to dusk, with a little snow late at night
+    const n = fbm(t * 0.35, 3.1, 99); return { snow: Math.max(0, Math.min(1, (n - 0.6) * 3.5)), fog: Math.max(0, Math.min(0.6, (fbm(t * 0.25, 8.3, 7) - 0.58) * 3)) }; };
   const wind = { x: 10, y: 3 };
-  function windStep() { const a = 0.25 + 0.6 * (fbm(clock * 0.004, 1.7, 3) - 0.5) * 2, gust = 1 + 0.6 * Math.max(0, Math.sin(now * 0.7) * Math.sin(now * 0.23)); const sp = (8 + 10 * weather().snow) * gust; wind.x = Math.cos(a) * sp; wind.y = Math.sin(a) * sp; }
+  function windStep() { const a = 0.25 + 0.6 * (fbm(clock * 0.004, 1.7, 3) - 0.5) * 2, gust = 1 + 0.25 * Math.max(0, Math.sin(now * 0.7) * Math.sin(now * 0.23)); const sp = (5 + 8 * weather().snow) * gust; wind.x = Math.cos(a) * sp; wind.y = Math.sin(a) * sp; }
 
   // Silhouettes for shadows, cached per image.
   const silCache = new Map();
@@ -383,15 +460,15 @@
 
   // ------------------------------------------------------------------ life: birds, ice, seals, villagers, smoke, prints
   const R2 = mulberry(777);
-  const gulls = Array.from({ length: 22 }, (_, i) => ({ cx: (20 + R2() * (MW - 40)) * T, cy: (20 + R2() * (MH - 40)) * T, R: 60 + R2() * 160, w: (R2() < 0.5 ? -1 : 1) * (0.15 + R2() * 0.25), ph: R2() * 6.28, alt: 20 + R2() * 40 }));
+  const gulls = Array.from({ length: 9 }, (_, i) => ({ cx: (20 + R2() * (MW - 40)) * T, cy: (20 + R2() * (MH - 40)) * T, R: 60 + R2() * 160, w: (R2() < 0.5 ? -1 : 1) * (0.15 + R2() * 0.25), ph: R2() * 6.28, alt: 20 + R2() * 40 }));
   // Auklet clouds swirl off the cliffs of both islands.
   const cliffs = []; for (let k = 0; k < map.length; k += 7) if (map[k] === K.CLIFF && cliffs.length < 400) cliffs.push(k);
-  const swarms = Array.from({ length: 5 }, (_, i) => { const k = cliffs[Math.floor(R2() * cliffs.length)] || 0; return { x: (k % MW) * T, y: ((k / MW) | 0) * T, n: 26, seed: i * 31 }; });
+  const swarms = Array.from({ length: 2 }, (_, i) => { const k = cliffs[Math.floor(R2() * cliffs.length)] || 0; return { x: (k % MW) * T, y: ((k / MW) | 0) * T, n: 26, seed: i * 31 }; });
   // Ice floes drift south through the strait and wrap round.
-  const floes = Array.from({ length: 18 }, () => ({ x: (DATE_LINE - 22 + R2() * 44) * T, y: R2() * MH * T, r: 7 + R2() * 16, sp: 3 + R2() * 4, rot: R2() * 6, pts: Array.from({ length: 8 }, () => 0.7 + R2() * 0.35) }));
+  const floes = Array.from({ length: 8 }, () => ({ x: (DATE_LINE - 14 + R2() * 28) * T, y: R2() * MH * T, r: 7 + R2() * 16, sp: 3 + R2() * 4, rot: R2() * 6, pts: Array.from({ length: 8 }, () => 0.7 + R2() * 0.35) }));
   // Seals surface here and there near the shores, look around, and dive.
   const shallows = []; for (let k = 0; k < map.length; k += 3) if (map[k] === K.SHALLOW) shallows.push(k);
-  const seals = Array.from({ length: 10 }, (_, i) => { const k = shallows[Math.floor(R2() * shallows.length)] || 0; return { x: (k % MW) * T + 8, y: ((k / MW) | 0) * T + 8, ph: R2() * 20 }; });
+  const seals = Array.from({ length: 0 }, (_, i) => { const k = shallows[Math.floor(R2() * shallows.length)] || 0; return { x: (k % MW) * T + 8, y: ((k / MW) | 0) * T + 8, ph: R2() * 20 }; });
   // Villagers walk between the houses, the racks and the pier, and stop to talk to nobody in particular.
   const homes = props.filter(p => p.kind === 'house' || p.kind === 'rack' || p.kind === 'school').map(p => [p.x, p.y + 14]);
   homes.push([(piers.little.x0 + 1) * T, piers.little.y * T + 8]);
@@ -402,8 +479,8 @@
 
   function lifeStep(dt) {
     windStep();
-    for (const f of floes) { f.y += f.sp * dt; f.x += wind.x * 0.05 * dt; if (f.y > MH * T + 30) { f.y = -30; } f.rot += dt * 0.02;
-      if (man.inBoat) { const d = Math.hypot(boat.x - f.x, boat.y - f.y); if (d < f.r + 12) { const nx = (boat.x - f.x) / d, ny = (boat.y - f.y) / d; boat.x = f.x + nx * (f.r + 12); boat.y = f.y + ny * (f.r + 12); boat.v *= 0.6; } } }
+    for (const f of floes) { f.y += f.sp * dt; if (f.y > MH * T + 30) { f.y = -30; } f.rot += dt * 0.02;
+      if (man.inBoat) { const d = Math.hypot(boat.x - f.x, boat.y - f.y); if (d < f.r + 12) { const nx = (boat.x - f.x) / d, ny = (boat.y - f.y) / d; boat.x = f.x + nx * (f.r + 12); boat.y = f.y + ny * (f.r + 12); boat.v *= 0.92; } } }
     for (const v of villagers) {
       if (v.wait > 0) { v.wait -= dt; v.moving = false; continue; }
       const [tx, ty] = homes[v.to % homes.length], dx = tx - v.x, dy = ty - v.y, d = Math.hypot(dx, dy);
@@ -432,14 +509,13 @@
   }
   function drawWater(ox, oy) {
     const G = grade(), h = hourNow(), night = lightLevel(), golden = (h > 16 && h < 19.2) || (h > 5.6 && h < 7.6);
-    // Long swell lines that move with the wind.
-    g.lineWidth = 1;
-    for (let gy = -(oy % 18); gy < VH; gy += 18) for (let gx = -(ox % 30) - 30; gx < VW + 30; gx += 30) {
-      const wx = gx + ox, wy = gy + oy; if (!floats(wx, wy)) continue;
-      const ph = now * 0.9 + wx * 0.02 + wy * 0.05 + hash2(wx / 30 | 0, wy / 18 | 0, 2) * 6, a = (Math.sin(ph) + 1) / 2;
-      const sx = gx + Math.sin(now * 0.4 + wy * 0.03) * 6 + wind.x * 0.3, sy = gy + 0.5;
-      px(g, sx, sy, 7 + a * 5, 1, `rgba(${golden ? '255,214,170' : '210,226,232'},${0.10 + a * 0.16})`);
-    }
+    // Soft swells: short light ripples anchored in the sea, each swelling and fading on its own time, drifting a little with the wind.
+    { const CW = 44, CH = 26;
+      for (let cy = Math.floor(oy / CH) - 1; cy * CH < oy + VH + CH; cy++) for (let cx = Math.floor(ox / CW) - 1; cx * CW < ox + VW + CW; cx++) {
+        const life = 4 + hash2(cx, cy, 3) * 5, t = (now + hash2(cx, cy, 4) * life) / life, cyc = Math.floor(t), a = Math.sin((t - cyc) * Math.PI);
+        const wx = cx * CW + hash2(cx + cyc * 131, cy, 5) * CW + wind.x * (t - cyc) * 2, wy = cy * CH + hash2(cx, cy + cyc * 71, 6) * CH + wind.y * (t - cyc);
+        if (!floats(wx, wy)) continue; const X = wx - ox, Y = wy - oy, L = 3 + a * 7;
+        px(g, X, Y, L, 1, `rgba(${golden ? '255,214,170' : '218,238,236'},${0.2 * a})`); px(g, X + 1, Y + 1, L - 2, 1, `rgba(10,30,50,${0.10 * a})`); } }
     // Surf breathing along the curved shoreline.
     for (let ty = Math.max(0, Math.floor(oy / T) - 1); ty < Math.min(MH, (oy + VH) / T + 1); ty++) for (const [x, y, nx, ny] of surf[ty]) {
       const X = x - ox; if (X < -4 || X > VW + 4) continue; const ph = Math.sin(now * 1.2 + hash2(x >> 3, y >> 3, 6) * 6.28 - (x + y) * 0.01), reach = 1 + (ph + 1) * 2.2;
@@ -449,7 +525,7 @@
     for (let i = 0; i < n; i++) { const gx = (hash2(i, 1, 4) * (VW + 40) + now * 6 * (0.5 + hash2(i, 2, 4))) % (VW + 40) - 20, gy = hash2(i, 3, 4) * VH;
       if (floats(gx + ox, gy + oy) && Math.sin(now * 2.2 + i * 1.7) > 0.55) px(g, gx, gy, golden ? 3 : 2, 1, `rgba(${col},0.7)`); }
     // Ice floes.
-    for (const f of floes) { const X = f.x - ox, Y = f.y - oy; if (X < -40 || Y < -40 || X > VW + 40 || Y > VH + 40) continue;
+    for (const f of floes) { const X = f.x - ox, Y = f.y - oy; if (!floats(f.x, f.y) || !floats(f.x + f.r, f.y) || !floats(f.x - f.r, f.y)) continue; if (X < -40 || Y < -40 || X > VW + 40 || Y > VH + 40) continue;
       const poly = (dx, dy, k, col) => { g.beginPath(); f.pts.forEach((r, i) => { const a = f.rot + i / f.pts.length * 6.283; const x = X + dx + Math.cos(a) * f.r * r * k, y = Y + dy + Math.sin(a) * f.r * r * 0.8 * k; i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.closePath(); g.fillStyle = col; g.fill(); };
       poly(1, 3, 1, 'rgba(20,40,60,0.35)'); poly(0, 0, 1, '#cfe0e8'); poly(-1, -1, 0.82, '#eef5f7'); }
     // Seals: a head breaks the surface, ripples, looks around, dives.
@@ -475,7 +551,7 @@
     // Footprints fade over a minute.
     for (const p of prints) { const age = now - p.t; if (age > 60) continue; const a = 0.28 * (1 - age / 60), X = p.x - ox, Y = p.y - oy; if (p.k) { px(g, X - 3, Y - 1, 1, 1, `rgba(70,80,96,${a})`); px(g, X + 2, Y, 1, 1, `rgba(70,80,96,${a})`); } else px(g, X - 1, Y - 1, 2, 2, `rgba(70,80,96,${a})`); }
     // Spindrift: wind-blown snow streaking across the land.
-    const W = weather(), n = 30 + W.snow * 70, wl = Math.hypot(wind.x, wind.y) || 1;
+    const W = weather(), n = W.snow * 60, wl = Math.hypot(wind.x, wind.y) || 1;
     for (let i = 0; i < n; i++) { const span = VW + 80; const x0 = (hash2(i, 9, 1) * span + now * wind.x * (1.6 + hash2(i, 8, 1))) % span - 40, y0 = (hash2(i, 7, 1) * (VH + 40) + now * wind.y * 1.6) % (VH + 40) - 20;
       if (!walkable(x0 + ox, y0 + oy)) continue; const L2 = 6 + hash2(i, 6, 1) * 12; g.strokeStyle = 'rgba(244,248,250,0.32)'; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x0 - wind.x / wl * L2, y0 - wind.y / wl * L2); g.stroke(); }
   }
@@ -498,10 +574,15 @@
         px(g, X0 + Math.cos(a) * r, Y0 + Math.sin(a * 1.3) * r * 0.6 - 10, 2, 1, (j + Math.floor(now * 8)) % 3 ? '#26282c' : '#3a3d42'); } }
     // Cloud shadows drift across land and sea in daylight.
     const S = sunState(); if (S.up) for (let i = 0; i < 7; i++) {
-      const span = MW * T + 600, X = ((hash2(i, 1, 9) * span + clock * 2.2 * wind.x) % span) - 300 - ox, Y = ((hash2(i, 2, 9) * MH * T + clock * 2.2 * wind.y) % (MH * T)) - oy;
+      const span = MW * T + 600, X = ((hash2(i, 1, 9) * span + clock * 9) % span) - 300 - ox, Y = ((hash2(i, 2, 9) * MH * T + clock * 2.5) % (MH * T)) - oy;
       if (X < -260 || X > VW + 260 || Y < -200 || Y > VH + 200) continue;
       g.fillStyle = 'rgba(20,32,48,0.11)'; for (let k = 0; k < 6; k++) { g.beginPath(); g.arc(X + Math.cos(k * 1.7 + i) * 60, Y + Math.sin(k * 2.3 + i) * 30, 50 + hash2(i, k, 3) * 40, 0, 6.283); g.fill(); }
     }
+    // Cotton-grass seeds and pollen floating on the air, catching the light; at dusk they glow like embers.
+    if (S.up && weather().snow < 0.2) { const h = hourNow(), warm = h > 16 || h < 8;
+      for (let i = 0; i < 46; i++) { const span = VW + 40, t = now * (0.5 + hash2(i, 2, 13) * 0.6);
+        const x = ((hash2(i, 1, 13) * span + t * (wind.x * 1.4 + 4) - ox * 0.3) % span + span) % span - 20, y = ((hash2(i, 3, 13) * (VH + 40) + t * wind.y + Math.sin(t * 0.9 + i) * 10 - oy * 0.3) % (VH + 40) + VH + 40) % (VH + 40) - 20;
+        const tw = 0.5 + 0.5 * Math.sin(now * 2 + i * 1.3); px(g, x, y, 1, 1, warm ? `rgba(255,226,160,${0.5 + 0.4 * tw})` : `rgba(255,255,248,${0.45 + 0.35 * tw})`); } }
   }
   // Colour of the hour, then lights, stars, aurora, snow and fog on top.
   function drawLight(ox, oy) {
@@ -571,12 +652,15 @@
     if (man.inBoat) {
       // Row: up/down pull forward and back, left/right turn. The boat glides and slows in the water.
       const pull = -ay, turn = ax;
-      boat.a += turn * 1.9 * dt * (0.4 + Math.min(1, Math.abs(boat.v) / 30));
-      boat.v += pull * 42 * dt; boat.v *= Math.exp(-dt * 0.9); boat.v = Math.max(-18, Math.min(46, boat.v));
+      boat.a += turn * 2.2 * dt;
+      boat.v += pull * 90 * dt; boat.v *= Math.exp(-dt * 0.7); boat.v = Math.max(-40, Math.min(110, boat.v));
       if (pull || turn) boat.stroke += dt * 6;
       const nx = boat.x + Math.cos(boat.a) * boat.v * dt, ny = boat.y + Math.sin(boat.a) * boat.v * dt;
       const bow = [nx + Math.cos(boat.a) * 11 * Math.sign(boat.v || 1), ny + Math.sin(boat.a) * 11 * Math.sign(boat.v || 1)];
-      if (floats(nx, ny) && floats(...bow)) { boat.x = nx; boat.y = ny; } else { boat.v *= -0.25; say('Rocks. Back off and find the pier.'); }
+      const ok = (x, y) => floats(x, y) && floats(x + Math.cos(boat.a) * 11 * Math.sign(boat.v || 1), y + Math.sin(boat.a) * 11 * Math.sign(boat.v || 1));
+      if (ok(nx, ny)) { boat.x = nx; boat.y = ny; }
+      else if (ok(nx, boat.y)) { boat.x = nx; boat.v *= 0.97; } else if (ok(boat.x, ny)) { boat.y = ny; boat.v *= 0.97; }   // glance along the shore
+      else { boat.v *= 0.3; say('The shore. Row along it to the pier.'); }
       man.x = boat.x - Math.cos(boat.a) * 2; man.y = boat.y - Math.sin(boat.a) * 2; dog.x = boat.x + Math.cos(boat.a) * 6; dog.y = boat.y + Math.sin(boat.a) * 6;
       dog.dir = dirOf(Math.cos(boat.a), Math.sin(boat.a)); man.dir = dog.dir;
     } else {
@@ -666,8 +750,8 @@
     requestAnimationFrame(frame);
   }
   say('Little Diomede, before dawn. The boat waits at the end of the pier.');
-  await loadArt(); paintWorld(); warpWorld();
-  window.__ready = true;
+  await loadArt(); await new Promise(r => setTimeout(r, 30)); paintWorld(); warpWorld();
+  window.__ready = true; document.getElementById("load")?.remove();
   window.__game = { man, dog, boat, toggleBoat, keys, setHour: h => { clock = 2 * 1440 + h * 60; }, weather, grade, skyRef };   // for the self-check
   requestAnimationFrame(frame);
 })();

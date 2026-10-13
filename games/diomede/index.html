@@ -28,6 +28,8 @@
   #hint { left: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); color: var(--muted); font-size: 18px; }
   #pad { position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); display: none; gap: 8px; }
   #pad button { font: 12px/1 var(--display); color: var(--paper); background: var(--panel); border: 2px solid var(--muted); padding: 14px; }
+  #load { position: fixed; inset: 0; display: grid; place-content: center; text-align: center; background: var(--ink); font: 18px/1.6 var(--display); letter-spacing: .12em; text-transform: uppercase; }
+  #load span { font: 20px var(--body); letter-spacing: 0; text-transform: none; color: var(--muted); }
   @media (pointer: coarse) { #pad { display: flex; } #hint { display: none; } }
 </style>
 </head>
@@ -37,6 +39,7 @@
 <div id="where" class="panel">Little Diomede</div>
 <div id="hint" class="panel">WASD / arrows: walk or row · E: boat · hold T: time passes · M: map</div>
 <div id="pad"><button type="button" id="btn-e">Boat</button><button type="button" id="btn-m">Map</button></div>
+<div id="load">Diomede<br><span>painting the islands…</span></div>
 <script src="game.js"></script>
 </body>
 </html>
