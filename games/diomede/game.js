@@ -61,10 +61,10 @@
   }
   const piers = { big: pier(ISLANDS[0], 1), little: pier(ISLANDS[1], -1) };
   // Paths: from each pier up into the island (to the village on Little Diomede, to the weather station on Big).
-  const trails = [];   // the paths again, as smooth lines in pixels, for painting
+  const trails = [];   // the paths again, as smooth lines in pixels, for painting and for the power line
   function path(x0, y0, x1, y1) { const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)); const tr = []; trails.push(tr); for (let i = 0; i <= n; i++) { tr.push([(x0 + (x1 - x0) * i / n + Math.sin(i * 0.4) * 1.2 + 1) * T, (y0 + (y1 - y0) * i / n + 0.5) * T]); const x = Math.round(x0 + (x1 - x0) * i / n + Math.sin(i * 0.4) * 1.2), y = Math.round(y0 + (y1 - y0) * i / n); for (const [dx, dy] of [[0, 0], [1, 0]]) { const k = (y + dy) * MW + x + dx; if (WALK.has(map[k]) && map[k] !== K.DOCK) map[k] = K.PATH; } } }
   const L = ISLANDS[1], B = ISLANDS[0];
-  path(piers.little.x0 + 1, piers.little.y, L.cx - 6, L.cy - 6); path(L.cx - 20, L.cy - 1, L.cx + 6, L.cy - 4);
+  path(piers.little.x0 + 1, piers.little.y, L.cx - 6, L.cy - 6);
   path(piers.big.x0 - 1, piers.big.y, B.cx + 8, B.cy - 18);
   // The cliffs must still let you up from the beach: carve the path through any cliff tile it meets.
   for (let k = 0; k < map.length; k++) if (map[k] === K.CLIFF) { const x = k % MW, y = (k / MW) | 0; if (at(x - 1, y) === K.PATH && at(x + 1, y) === K.PATH) map[k] = K.PATH; }
@@ -73,13 +73,19 @@
   const rnd = mulberry(20261013);
   const props = [];
   const place = (kind, tx, ty, extra = {}) => props.push({ kind, x: tx * T, y: ty * T, ...extra });
-  // Little Diomede: three houses above the beach.
+  // Little Diomede: a hut above the beach, a fire pit, and the power line that comes up from the pier.
   const HOUSE_COL = ['#7d4b3a', '#4d6b78', '#8a7b5a', '#5e6e4f', '#a0553c', '#6b6f75'];
-  for (let i = 0; i < 3; i++) { const tx = L.cx - 17 + i * 9 + (i === 1 ? 1 : 0), ty = L.cy - 9 + (i === 1 ? -2 : 0) + rnd() * 0.6; if (WALK.has(at(tx | 0, ty | 0))) place('house', tx, ty, { col: HOUSE_COL[i % HOUSE_COL.length], w: 2 + (rnd() < 0.4 ? 1 : 0), v: i }); }
+  place('house', L.cx - 8, L.cy - 10, { col: HOUSE_COL[2], w: 3, v: 2 });   // one log hut at the top of the trail
+  const fire = { kind: 'fire', x: (L.cx - 15.5) * T, y: (L.cy - 8) * T, lit: false, fuel: 0 }; props.push(fire);
+  // Power poles: the line comes up from the pier along the trail to the hut, then strides off over the hill.
+  const poles = [];
+  { const tr = trails[0]; for (let i = 2; i < tr.length; i += 5) { const [x, y] = tr[i]; poles.push([x - 4, y - 22]); }
+    let [x, y] = poles[poles.length - 1]; for (let i = 0; i < 6; i++) { x += 70; y -= 28; if (WALK.has(at((x / T) | 0, (y / T) | 0))) poles.push([x, y]); else break; } }
+  poles.forEach(([x, y], i) => props.push({ kind: 'pole', x, y, lamp: i === poles.length - 1 || i === 3 }));
   for (let i = 0; i < 4; i++) rnd();   // keep the seeded layout below unchanged
-  for (const [dx, dy] of [[-10, -3], [-18, 3]]) place('lamp', L.cx + dx, L.cy + dy);
-  // Big Diomede: only the old weather station and its mast.
-  place('station', B.cx + 6, B.cy - 22); place('mast', B.cx + 14, B.cy - 26);
+  
+  // Big Diomede: nobody, only an old radio mast blinking on the ridge.
+  place('mast', B.cx + 14, B.cy - 26);
   // Boulders and lichen-covered rocks everywhere on the plateaus.
   for (let i = 0; i < 0; i++) { const tx = 4 + rnd() * (MW - 8), ty = 4 + rnd() * (MH - 8), t = at(tx | 0, ty | 0); if (t === K.TUNDRA || t === K.SCREE) place('rock', tx, ty, { s: 0.6 + rnd() * 0.8 }); }
   // Date-line buoys in the strait.
@@ -262,8 +268,15 @@
     return out;
   })();
   function px(c, x, y, w2 = 1, h2 = 1, col) { c.fillStyle = col; c.fillRect(Math.round(x), Math.round(y), w2, h2); }
-  const PROP_SPR = { school: ['school2', 'school'], station: ['station2', 'station'], dome: ['dome2', 'dome'], rack: ['rack2'], umiak: ['umiak2'], tank: ['tank2'], mast: ['mast2'], buoy: ['buoy2'], walrus: ['walrus'], seal: ['seal'] };
+  const PROP_SPR = { pole: ['pole'], school: ['school2', 'school'], station: ['station2', 'station'], dome: ['dome2', 'dome'], rack: ['rack2'], umiak: ['umiak2'], tank: ['tank2'], mast: ['mast2'], buoy: ['buoy2'], walrus: ['walrus'], seal: ['seal'] };
   const pick = list => list && list.find(n => SPR[n]);
+  // A wooden power pole with a crossarm and two glass insulators, drawn in code (48 px tall, base at the bottom).
+  SPR.pole = (() => { const c = document.createElement('canvas'); c.width = 22; c.height = 50; const x = c.getContext('2d'), P = (a, b, w2, h2, col) => { x.fillStyle = col; x.fillRect(a, b, w2, h2); };
+    P(10, 4, 3, 46, '#4a3626'); P(10, 4, 1, 46, '#6b5038'); P(12, 4, 1, 46, '#33251a');   // pole, lit from the left
+    P(1, 7, 20, 3, '#4a3626'); P(1, 7, 20, 1, '#6b5038'); P(4, 10, 2, 3, '#33251a'); P(16, 10, 2, 3, '#33251a');   // crossarm and braces
+    P(2, 4, 3, 3, '#9fc6c0'); P(17, 4, 3, 3, '#9fc6c0'); P(2, 4, 1, 1, '#e4f2ee'); P(17, 4, 1, 1, '#e4f2ee'); P(10, 1, 3, 3, '#9fc6c0');   // insulators
+    P(9, 47, 5, 3, '#2a2119'); return c; })();
+  const POLE_TOP = 46;   // height of the wires above the ground
   function propSprite(p) {
     if (p.kind === 'house') return pick([['house-a2', 'house-b2', 'house-c2', 'house-d2'][p.v % 4], ['house-a', 'house-b', 'house-c'][p.v % 3]]);
     if (p.kind === 'rock') return p.s > 1.25 ? pick(['rock-a']) : p.s > 1.0 ? pick(['rock-b2']) : null;
@@ -286,6 +299,16 @@
       case 'dome': px(c, x - 2, y + 8, 26, 3, 'rgba(0,0,0,0.25)'); for (let r = 0; r < 11; r++) px(c, x + 11 - Math.sqrt(121 - r * r), y - r + 6, 2 * Math.sqrt(121 - r * r), 1, r > 7 ? '#f1f1ee' : '#dcdcd8'); break;
       case 'tank': px(c, x, y, 14, 9, '#8c7a66'); px(c, x, y - 2, 14, 3, '#a3927d'); px(c, x, y + 9, 14, 2, 'rgba(0,0,0,0.3)'); break;
       case 'rock': { const s = p.s * 7; px(c, x - s / 2, y - s / 3, s, s * 0.7, '#6f6b64'); px(c, x - s / 2, y - s / 3, s * 0.6, s * 0.3, '#8a857d'); px(c, x - s / 2 + 1, y + s * 0.37, s, 1, 'rgba(0,0,0,0.35)'); break; }
+      case 'fire': {   // a ring of stones, crossed driftwood, and when lit, flames that lean with the wind
+        const X = Math.round(x), Y = Math.round(y), f = Math.max(0, Math.min(1, p.fuel / 30)), lit = p.fuel > 0;
+        for (let i = 0; i < 9; i++) { const a = i / 9 * 6.283, sx = X + Math.cos(a) * 9, sy = Y + Math.sin(a) * 5; px(c, sx - 2, sy - 1, 4, 3, '#5d5c55'); px(c, sx - 2, sy - 1, 3, 1, '#8b8a80'); }
+        px(c, X - 6, Y - 1, 12, 2, lit ? '#3a2a1e' : '#6e5136'); px(c, X - 2, Y - 3, 3, 6, lit ? '#2e2218' : '#5e432c'); px(c, X - 5, Y, 10, 1, '#4a3424');
+        if (lit) { px(c, X - 4, Y - 1, 8, 2, `rgba(255,120,40,${0.5 + 0.3 * Math.sin(now * 7)})`);
+          const n = 4 + Math.round(10 * f);
+          for (let k = 0; k < n; k++) { const age = (now * 1.6 + k / n + hash2(k, 1, 61) * 0.5) % 1, sway = Math.sin(now * 6 + k * 2.1) * 2 * (1 - age) + wind.x * age * 0.35;
+            const fx = X + (hash2(k, 2, 61) - 0.5) * 7 * (1 - age * 0.7) + sway, fy = Y - 2 - age * (9 + 7 * f), r = Math.max(1, Math.round((1 - age) * (2.5 + f)));
+            px(c, fx - r / 2, fy - r / 2, r, r + 1, age < 0.25 ? '#fff4b8' : age < 0.55 ? '#ffb53f' : age < 0.8 ? '#ec6a2c' : '#a8361f'); } }
+        break; }
       case 'lamp': px(c, x, y - 16, 2, 24, '#2c2a28'); px(c, x - 2, y - 19, 6, 4, '#3a3630'); px(c, x - 1, y - 18, 4, 2, lightLevel() > 0.25 ? '#ffe2a0' : '#8a8578'); break;
       case 'buoy': { const bob = Math.sin(now * 2 + p.y) * 1; px(c, x - 3, y - 3 + bob, 6, 6, '#e0703a'); px(c, x - 1, y - 7 + bob, 2, 4, '#2b2b2b'); px(c, x - 4, y + 3 + bob, 8, 1, 'rgba(232,238,240,0.6)'); break; }
     }
@@ -341,7 +364,8 @@
     if (SPR.boat) {   // 8 painted views; pick the one whose bow points closest to the heading
       const M = META.boat; let best = 0, bd = 9; M.angles.forEach((a, i) => { const d = Math.abs(Math.atan2(Math.sin(a - b.a), Math.cos(a - b.a))); if (d < bd) { bd = d; best = i; } });
       if (Math.abs(b.v) > 5) { c.fillStyle = 'rgba(232,238,240,0.4)'; c.fillRect(Math.round(cx - ca * 22) - 3, Math.round(cy - sa * 22) - 1, 6, 2); }
-      c.drawImage(SPR.boat, best * M.fw, 0, M.fw, M.fh, Math.round(cx - M.fw / 2), Math.round(cy - M.fh / 2), M.fw, M.fh);
+      const rest = Math.atan2(Math.sin(b.a - M.angles[best]), Math.cos(b.a - M.angles[best]));
+      c.save(); c.translate(Math.round(cx), Math.round(cy)); c.rotate(rest); c.drawImage(SPR.boat, best * M.fw, 0, M.fw, M.fh, -M.fw / 2, -M.fh / 2, M.fw, M.fh); c.restore();
       return;
     }
     const P = (u, v) => [cx + u * sa + v * ca, cy - u * ca + v * sa];   // u along the bow, v to starboard
@@ -361,15 +385,22 @@
   const startX = (piers.little.x0 + piers.little.dir * 1) * T + T / 2, startY = piers.little.y * T + T / 2;   // on the pier, by the shore
   const man = { x: startX, y: startY, dir: 3, step: 0, moving: false, inBoat: false };
   const dog = { x: startX + 14, y: startY + 10, dir: 3, step: 0, moving: false, mode: 'follow', t: 0, ang: 0 };
-  const boat = { x: piers.little.end.x, y: piers.little.end.y, a: piers.little.dir > 0 ? 0 : Math.PI, v: 0, stroke: 0, manned: false };   // moored alongside the pier's end
-  const walkable = (x, y) => WALK.has(at(Math.floor(x / T), Math.floor(y / T)));
+  const boat = { x: piers.little.end.x, y: piers.little.end.y, a: piers.little.dir > 0 ? 0 : Math.PI, v: 0, vx: 0, vy: 0, av: 0, thrust: 0, stroke: 0, manned: false };   // moored alongside the pier's end
+  // Things you can't walk through: the footprint of each building (the lower part of its picture), poles, the fire pit.
+  const solids = [];
+  function buildSolids() { for (const p of props) { const sn = propSprite(p), im = sn && SPR[sn], b = p.y + 8;
+    if (p.kind === 'house' || p.kind === 'school' || p.kind === 'station') { const w2 = (im ? im.width : 40) * 0.42; solids.push([p.x - w2, b - (im ? im.height : 30) * 0.42, p.x + w2, b]); }
+    else if (p.kind === 'pole' || p.kind === 'mast') solids.push([p.x - 3, b - 4, p.x + 3, b]);
+    else if (p.kind === 'fire') solids.push([p.x - 6, p.y - 4, p.x + 6, p.y + 4]); } }
+  const blocked = (x, y) => solids.some(r => x > r[0] && x < r[2] && y > r[1] && y < r[3]);
+  const walkable = (x, y) => WALK.has(at(Math.floor(x / T), Math.floor(y / T))) && !blocked(x, y);
   const floats = (x, y) => FLOAT.has(at(Math.floor(x / T), Math.floor(y / T)));
 
   // ------------------------------------------------------------------ input
   const keys = new Set();
   addEventListener('keydown', e => { const k = e.key.length === 1 ? e.key.toLowerCase() : e.key; keys.add(k);
     if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(k)) e.preventDefault();
-    if (k === 'e' || k === ' ') toggleBoat(); if (k === 'm') showMap = !showMap; });
+    if (k === 'e' || k === ' ') interact(); if (k === 'm') showMap = !showMap; });
   addEventListener('keyup', e => keys.delete(e.key.length === 1 ? e.key.toLowerCase() : e.key));
   addEventListener('blur', () => keys.clear());
   // Touch: hold and drag from where you touched; the man walks (or the boat rows) that way.
@@ -377,12 +408,17 @@
   canvas.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') touch = { x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY }; });
   canvas.addEventListener('pointermove', e => { if (touch) { touch.x = e.clientX; touch.y = e.clientY; } });
   for (const ev of ['pointerup', 'pointercancel']) canvas.addEventListener(ev, () => { touch = null; });
-  $('btn-e').addEventListener('click', () => toggleBoat()); $('btn-m').addEventListener('click', () => { showMap = !showMap; });
+  $('btn-e').addEventListener('click', () => interact()); $('btn-m').addEventListener('click', () => { showMap = !showMap; });
   function axis() {
     let x = (keys.has('d') || keys.has('ArrowRight') ? 1 : 0) - (keys.has('a') || keys.has('ArrowLeft') ? 1 : 0);
     let y = (keys.has('s') || keys.has('ArrowDown') ? 1 : 0) - (keys.has('w') || keys.has('ArrowUp') ? 1 : 0);
     if (touch) { const dx = touch.x - touch.x0, dy = touch.y - touch.y0, l = Math.hypot(dx, dy); if (l > 12) { x = dx / Math.max(l, 50); y = dy / Math.max(l, 50); } }
     return [x, y];
+  }
+  const nearFire = () => !man.inBoat && Math.hypot(man.x - fire.x, man.y - fire.y) < 34;
+  function interact() {
+    if (nearFire()) { if (fire.fuel <= 0) { fire.fuel = 1; fire.grow = true; say('A match, a twist of dry grass. The driftwood catches.'); } else { fire.fuel = Math.min(240, fire.fuel + 60); say('Another piece of driftwood on the fire.'); } return; }
+    toggleBoat();
   }
   function toggleBoat() {
     if (!man.inBoat) {
@@ -393,7 +429,7 @@
       let best = null;
       for (let r = 8; r <= 48 && !best; r += 4) for (let a = 0; a < 6.28; a += 0.4) { const x = boat.x + Math.cos(a) * r, y = boat.y + Math.sin(a) * r; if (walkable(x, y)) { best = [x, y]; break; } }
       if (!best) { say('Too far from a pier or a beach to step ashore.'); return; }
-      man.inBoat = false; boat.manned = false; boat.v = 0; [man.x, man.y] = best; dog.mode = 'follow'; dog.t = 0; dog.x = best[0] + 10; dog.y = best[1] + 4;
+      man.inBoat = false; boat.manned = false; boat.v = 0; boat.vx = boat.vy = boat.av = 0; [man.x, man.y] = best; dog.mode = 'follow'; dog.t = 0; dog.x = best[0] + 10; dog.y = best[1] + 4;
     }
   }
   let msg = '', msgT = 0; const say = s => { msg = s; msgT = 3.5; };
@@ -480,7 +516,7 @@
   function lifeStep(dt) {
     windStep();
     for (const f of floes) { f.y += f.sp * dt; if (f.y > MH * T + 30) { f.y = -30; } f.rot += dt * 0.02;
-      if (man.inBoat) { const d = Math.hypot(boat.x - f.x, boat.y - f.y); if (d < f.r + 12) { const nx = (boat.x - f.x) / d, ny = (boat.y - f.y) / d; boat.x = f.x + nx * (f.r + 12); boat.y = f.y + ny * (f.r + 12); boat.v *= 0.92; } } }
+      if (man.inBoat) { const d = Math.hypot(boat.x - f.x, boat.y - f.y); if (d < f.r + 12) { const nx = (boat.x - f.x) / d, ny = (boat.y - f.y) / d; boat.x = f.x + nx * (f.r + 12); boat.y = f.y + ny * (f.r + 12); boat.vx *= 0.92; boat.vy *= 0.92; } } }
     for (const v of villagers) {
       if (v.wait > 0) { v.wait -= dt; v.moving = false; continue; }
       const [tx, ty] = homes[v.to % homes.length], dx = tx - v.x, dy = ty - v.y, d = Math.hypot(dx, dy);
@@ -555,7 +591,24 @@
     for (let i = 0; i < n; i++) { const span = VW + 80; const x0 = (hash2(i, 9, 1) * span + now * wind.x * (1.6 + hash2(i, 8, 1))) % span - 40, y0 = (hash2(i, 7, 1) * (VH + 40) + now * wind.y * 1.6) % (VH + 40) - 20;
       if (!walkable(x0 + ox, y0 + oy)) continue; const L2 = 6 + hash2(i, 6, 1) * 12; g.strokeStyle = 'rgba(244,248,250,0.32)'; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x0 - wind.x / wl * L2, y0 - wind.y / wl * L2); g.stroke(); }
   }
+  // Two wires between each pair of poles, sagging, swaying a little in the wind; their shadows lie on the ground.
+  function wires(ox, oy, shadow) {
+    for (let i = 0; i < poles.length - 1; i++) { const [ax, ay] = poles[i], [bx, by] = poles[i + 1];
+      if (Math.max(ax, bx) - ox < -40 || Math.min(ax, bx) - ox > VW + 40 || Math.max(ay, by) - oy < -40 || Math.min(ay, by) - oy > VH + 120) continue;
+      for (const side of [-8, 7]) { const sway = Math.sin(now * 1.3 + i * 1.7 + side) * (1 + Math.hypot(wind.x, wind.y) * 0.08);
+        let x1 = ax + side, y1 = ay + 8, x2 = bx + side, y2 = by + 8, h1 = POLE_TOP - 1, hm = POLE_TOP - 9;
+        const mx = (x1 + x2) / 2 + sway, my = (y1 + y2) / 2;
+        if (shadow) { if (SH.a < 0.02) return; g.strokeStyle = `rgba(0,0,0,${SH.a * 0.8})`; g.beginPath(); g.moveTo(x1 + SH.dx * h1 - ox, y1 + SH.dy * h1 - oy); g.quadraticCurveTo(mx + SH.dx * (2 * hm - h1) - ox, my + SH.dy * (2 * hm - h1) - oy, x2 + SH.dx * h1 - ox, y2 + SH.dy * h1 - oy); g.stroke(); }
+        else { g.strokeStyle = '#1f1d1c'; g.beginPath(); g.moveTo(x1 - ox, y1 - h1 - oy); g.quadraticCurveTo(mx - ox, my - (2 * hm - h1) - oy, x2 - ox, y2 - h1 - oy); g.stroke(); } } }
+  }
   function drawSky(ox, oy) {   // things above the ground: smoke, birds (with their shadows), cloud shadows
+    g.lineWidth = 1; wires(ox, oy, false);
+    // Sparks fly up from the fire and drift off with the wind; a thin smoke climbs above it.
+    if (fire.fuel > 0) { const f = Math.min(1, fire.fuel / 30), X = fire.x - ox, Y = fire.y - oy - 8;
+      for (let k = 0; k < 8; k++) { const age = (now * 0.45 + k / 8) % 1; g.fillStyle = `rgba(190,186,180,${0.28 * (1 - age) * f})`; g.beginPath(); g.arc(X + wind.x * age * 6 + Math.sin(now + k) * 2, Y - 12 - age * 40 + wind.y * age * 3, 2 + age * 7, 0, 6.283); g.fill(); }
+      for (let k = 0; k < 14 * f; k++) { const life = 1.2 + hash2(k, 1, 62), age = ((now + hash2(k, 2, 62) * life) % life) / life, cyc = Math.floor((now + hash2(k, 2, 62) * life) / life);
+        const sx = X + (hash2(k + cyc * 17, 3, 62) - 0.5) * 6 + wind.x * age * 2.5 + Math.sin(age * 9 + k) * 3, sy = Y - age * 46 + wind.y * age;
+        px(g, sx, sy, 1, 1, `rgba(255,${200 - age * 120 | 0},90,${1 - age})`); } }
     for (const p of props) if (p.kind === 'house' || p.kind === 'school') {   // chimney smoke bends with the wind
       const sn = propSprite(p), im = sn && SPR[sn]; const cx = p.x - ox + (im ? -im.width * 0.22 : 0), cy = p.y + 8 - oy - (im ? im.height * 0.86 : 20);
       if (cx < -60 || cx > VW + 60 || cy < -80 || cy > VH + 60) continue;
@@ -600,6 +653,9 @@
       g.globalCompositeOperation = 'screen'; g.globalAlpha = R.a; g.drawImage(reflTmp, 0, 0); g.globalAlpha = 1; }
     if (G.gs > 0) { g.globalCompositeOperation = 'screen'; g.fillStyle = `rgba(${G.glow.map(Math.round).join(',')},${G.gs})`; g.fillRect(0, 0, VW, VH); }
     g.globalCompositeOperation = 'lighter';
+    // Firelight: a warm, breathing pool around the fire pit, strongest at night.
+    if (fire.fuel > 0) { const f = Math.min(1, fire.fuel / 30), fl = 0.85 + 0.15 * Math.sin(now * 11) * Math.sin(now * 4.3) + 0.05 * Math.sin(now * 23), X = fire.x - ox, Y = fire.y - oy - 4;
+      for (const [r, a, col] of [[110, 0.30, '255,140,60'], [46, 0.45, '255,180,90'], [12, 0.7, '255,230,170']]) { const gr = g.createRadialGradient(X, Y, 0, X, Y, r * (0.9 + 0.1 * fl)); gr.addColorStop(0, `rgba(${col},${a * f * fl * (0.25 + night * 1.1)})`); gr.addColorStop(1, `rgba(${col},0)`); g.fillStyle = gr; g.fillRect(X - r, Y - r, r * 2, r * 2); } }
     // The northern lights: green and teal curtains rippling across the snow and the sea on clear nights.
     const aur = Math.max(0, night - 0.35) * 2 * (0.4 + 0.6 * fbm(clock * 0.01, 4.2, 5)) * (1 - weather().snow * 0.8);
     if (aur > 0.02) for (let band = 0; band < 3; band++) for (let x = 0; x < VW; x += 3) {
@@ -620,6 +676,7 @@
         const X = p.x - ox, Y = p.y + 8 - oy; if (X < -80 || X > VW + 80 || Y < -80 || Y > VH + 120) continue;
         if (p.kind === 'house' || p.kind === 'school') { const im = SPR[propSprite(p)], hh = im ? im.height : 30; const fl = 0.9 + 0.1 * Math.sin(now * 5 + p.x);
           glow(X, Y - hh * 0.4, 34, '255,186,104', 0.48 * k * fl); glow(X, Y + 10, 48, '255,166,86', 0.30 * k * fl); glow(X, Y - hh * 0.4, 8, '255,236,190', 0.7 * k * fl); }
+        if (p.kind === 'pole' && p.lamp) { glow(X + 1, Y - 40, 60, '255,200,120', 0.38 * k); glow(X + 1, Y - 40, 6, '255,245,210', 0.9 * k); }
         if (p.kind === 'lamp') { glow(X + 1, Y - 18, 56, '255,200,120', 0.40 * k); glow(X + 1, Y - 18, 6, '255,245,210', 0.9 * k); }
         if (p.kind === 'station') glow(X, Y - 30, 30, '170,210,255', 0.10 * k);
         if (p.kind === 'mast') { const blink = Math.sin(now * 3) > 0.6; if (blink) glow(X, Y - 112, 12, '255,60,40', 0.8 * k); }
@@ -648,19 +705,25 @@
   function update(dt) {
     now += dt; clock += dt * (keys.has('t') ? 60 : 1); if (msgT > 0) msgT -= dt;
     lifeStep(dt);
+    if (fire.fuel > 0) { if (fire.grow) { fire.fuel += dt * 30; if (fire.fuel >= 180) fire.grow = false; } else fire.fuel -= dt * 0.75; }
     const [ax, ay] = axis();
     if (man.inBoat) {
-      // Row: up/down pull forward and back, left/right turn. The boat glides and slows in the water.
-      const pull = -ay, turn = ax;
-      boat.a += turn * 2.2 * dt;
-      boat.v += pull * 90 * dt; boat.v *= Math.exp(-dt * 0.7); boat.v = Math.max(-40, Math.min(110, boat.v));
-      if (pull || turn) boat.stroke += dt * 6;
-      const nx = boat.x + Math.cos(boat.a) * boat.v * dt, ny = boat.y + Math.sin(boat.a) * boat.v * dt;
-      const bow = [nx + Math.cos(boat.a) * 11 * Math.sign(boat.v || 1), ny + Math.sin(boat.a) * 11 * Math.sign(boat.v || 1)];
-      const ok = (x, y) => floats(x, y) && floats(x + Math.cos(boat.a) * 11 * Math.sign(boat.v || 1), y + Math.sin(boat.a) * 11 * Math.sign(boat.v || 1));
+      // Steer by pointing: the boat swings its bow smoothly toward the way you press and pulls ahead as it comes round.
+      // It carries way: it glides forward and slows gently, and the keel stops it sliding sideways.
+      const m = Math.min(1, Math.hypot(ax, ay));
+      if (m > 0.1) { const diff = Math.atan2(Math.sin(Math.atan2(ay, ax) - boat.a), Math.cos(Math.atan2(ay, ax) - boat.a));
+        boat.av += (Math.max(-2.4, Math.min(2.4, diff * 3.5)) - boat.av) * Math.min(1, dt * 5);
+        boat.thrust = m * 75 * Math.max(0, Math.cos(diff)) ** 2; boat.stroke += dt * 6; }
+      else { boat.av *= Math.exp(-dt * 6); boat.thrust = 0; }
+      boat.a += boat.av * dt;
+      const fx = Math.cos(boat.a), fy = Math.sin(boat.a); let vf = boat.vx * fx + boat.vy * fy, vl = -boat.vx * fy + boat.vy * fx;
+      vf += boat.thrust * dt; vf *= Math.exp(-dt * 0.55); vf = Math.min(100, vf); vl *= Math.exp(-dt * 3.5);
+      boat.vx = vf * fx - vl * fy; boat.vy = vf * fy + vl * fx; boat.v = vf;
+      const nx = boat.x + boat.vx * dt, ny = boat.y + boat.vy * dt;
+      const ok = (x, y) => floats(x, y) && floats(x + fx * 11, y + fy * 11) && floats(x - fx * 9, y - fy * 9);
       if (ok(nx, ny)) { boat.x = nx; boat.y = ny; }
-      else if (ok(nx, boat.y)) { boat.x = nx; boat.v *= 0.97; } else if (ok(boat.x, ny)) { boat.y = ny; boat.v *= 0.97; }   // glance along the shore
-      else { boat.v *= 0.3; say('The shore. Row along it to the pier.'); }
+      else if (ok(nx, boat.y)) { boat.x = nx; boat.vy *= 0.5; } else if (ok(boat.x, ny)) { boat.y = ny; boat.vx *= 0.5; }   // glance along the shore
+      else { boat.vx *= 0.4; boat.vy *= 0.4; if (msgT <= 0) say('The shore. Row along it to the pier.'); }
       man.x = boat.x - Math.cos(boat.a) * 2; man.y = boat.y - Math.sin(boat.a) * 2; dog.x = boat.x + Math.cos(boat.a) * 6; dog.y = boat.y + Math.sin(boat.a) * 6;
       dog.dir = dirOf(Math.cos(boat.a), Math.sin(boat.a)); man.dir = dog.dir;
     } else {
@@ -678,12 +741,17 @@
       if (far > 190 && dog.mode !== 'follow') { dog.mode = 'follow'; dog.t = 0; }
       if (idle > 4 && dog.mode !== 'zoom' && !dog.zoomed && far < 90 && Math.random() < dt * 0.15) { dog.mode = 'zoom'; dog.t = 5; dog.zoomed = true; dog.ang = Math.atan2(dog.y - man.y, dog.x - man.x); }
       if (man.moving) dog.zoomed = false;
+      // By a lit fire, when he settles, the whippet comes and stays close to the warmth.
+      const byFire = fire.fuel > 30 && Math.hypot(man.x - fire.x, man.y - fire.y) < 70;
+      if (byFire && idle > 1.5 && dog.mode !== 'fire') { dog.mode = 'fire'; dog.t = 0; }
+      if (dog.mode === 'fire' && !byFire) { dog.mode = 'follow'; dog.t = 2; }
       if (dog.mode === 'zoom' && (man.moving || dog.t <= 0)) { dog.mode = 'rest'; dog.t = 2; }
       if (dog.mode === 'follow' && far < 40 && dog.t <= 0) { const r = Math.random(); dog.mode = r < 0.6 ? 'roam' : r < 0.85 ? 'rest' : 'follow'; dog.t = dog.mode === 'follow' ? 4 : 4 + Math.random() * 5; dog.target = null; }
       if (dog.mode === 'rest' && dog.t <= 0) { dog.mode = Math.random() < 0.65 ? 'roam' : 'follow'; dog.t = 3; dog.target = null; }
       if (dog.mode === 'roam' && !dog.target) { for (let k = 0; k < 12; k++) { const a = Math.random() * 6.283, r = 40 + Math.random() * 75, x = man.x + Math.cos(a) * r, y = man.y + Math.sin(a) * r; if (walkable(x, y)) { dog.target = [x, y]; break; } } if (!dog.target) dog.mode = 'follow'; dog.sniff = 0; }
       let tx = dog.x, ty = dog.y, speed = 0;
       if (dog.mode === 'zoom') { dog.ang += dt * 3.2; const R = 26 + Math.sin(dog.t * 2) * 6; tx = man.x + Math.cos(dog.ang) * R; ty = man.y + Math.sin(dog.ang) * R * 0.7; speed = 120; }
+      else if (dog.mode === 'fire') { tx = fire.x + 20; ty = fire.y + 7; speed = 60; }
       else if (dog.mode === 'follow') { tx = man.x - Math.cos(dirAngle(man.dir)) * 16 + 10; ty = man.y - Math.sin(dirAngle(man.dir)) * 16 + 4; speed = far > 120 ? 150 : 90; }
       else if (dog.mode === 'roam') { [tx, ty] = dog.target;
         if (Math.hypot(tx - dog.x, ty - dog.y) < 6) { dog.sniff += dt; if (dog.sniff > 2 + (dog.target[0] % 3)) { dog.target = null; if (Math.random() < 0.3) { dog.mode = 'rest'; dog.t = 3 + Math.random() * 5; } } }
@@ -711,6 +779,7 @@
     drawWater(ox, oy); drawGround(ox, oy);
     // Shadows first, all laid the same way by the sun (or the moon).
     shadowSetup();
+    g.lineWidth = 1; wires(ox, oy, true);
     for (const p of props) { const sn = propSprite(p); if (!sn || p.rot) continue; const im = SPR[sn], X = p.x - ox, Y = p.y + 8 - oy; if (X < -200 || X > VW + 200 || Y < -60 || Y > VH + 300) continue; drawShadow(im, 0, 0, im.width, im.height, X, Y, p.kind === 'mast' ? 2 : 1); }
     if (!man.inBoat) { const F = sheetFrame('man', man.dir, man.step, man.moving); if (F) drawShadow(SPR.man, F[0], 0, F[2], 44, man.x - ox, man.y - oy); const D = DOG[dog.moving ? 'run' + (Math.floor(dog.step * 0.9) % 4) : 'stand'][dog.face === 'left' ? 'left' : 'right']; drawShadow(D, 0, 0, D.width, 20, dog.x - ox, dog.y - oy); }
     for (const v of villagers) { const F = sheetFrame(v.sp, v.dir, v.step, v.moving); if (F) drawShadow(SPR[v.sp], F[0], 0, F[2], 44, v.x - ox, v.y - oy); }
@@ -728,7 +797,8 @@
     items.sort((a, b) => a.y - b.y).forEach(i => i.d());
     drawSky(ox, oy); drawLight(ox, oy);
     // Message line, bottom centre of the picture.
-    if (!man.inBoat && Math.hypot(man.x - boat.x, man.y - boat.y) < 56) { const X = boat.x - ox, Y = boat.y - oy - 26; g.font = '8px monospace'; px(g, X - 24, Y - 8, 48, 11, 'rgba(16,22,28,0.85)'); g.fillStyle = '#efe9dc'; g.fillText('E: board', X - 18, Y); }
+    if (nearFire()) { const t = fire.fuel > 0 ? 'E: add driftwood' : 'E: light the fire', X = fire.x - ox, Y = fire.y - oy - 26; g.font = '8px monospace'; const wd = g.measureText(t).width + 8; px(g, X - wd / 2, Y - 8, wd, 11, 'rgba(16,22,28,0.85)'); g.fillStyle = '#efe9dc'; g.fillText(t, X - wd / 2 + 4, Y); }
+    else if (!man.inBoat && Math.hypot(man.x - boat.x, man.y - boat.y) < 56) { const X = boat.x - ox, Y = boat.y - oy - 26; g.font = '8px monospace'; px(g, X - 24, Y - 8, 48, 11, 'rgba(16,22,28,0.85)'); g.fillStyle = '#efe9dc'; g.fillText('E: board', X - 18, Y); }
     if (man.inBoat && Math.hypot(boat.v) < 8) { let near = false; for (let a = 0; a < 6.28 && !near; a += 0.5) for (let r = 12; r <= 48 && !near; r += 6) near = walkable(boat.x + Math.cos(a) * r, boat.y + Math.sin(a) * r); if (near) { const X = boat.x - ox, Y = boat.y - oy - 30; g.font = '8px monospace'; px(g, X - 32, Y - 8, 64, 11, 'rgba(16,22,28,0.85)'); g.fillStyle = '#efe9dc'; g.fillText('E: step ashore', X - 28, Y); } }
     if (msgT > 0) { g.font = '8px monospace'; const wdt = g.measureText(msg).width + 10; g.globalAlpha = Math.min(1, msgT); px(g, (VW - wdt) / 2, VH - 26, wdt, 13, 'rgba(16,22,28,0.85)'); g.fillStyle = '#efe9dc'; g.fillText(msg, (VW - wdt) / 2 + 5, VH - 16); g.globalAlpha = 1; }
     if (showMap) drawMiniMap();
@@ -762,8 +832,8 @@
     requestAnimationFrame(frame);
   }
   say('Little Diomede, before dawn. The boat waits at the end of the pier.');
-  await loadArt(); await new Promise(r => setTimeout(r, 30)); paintWorld(); warpWorld();
+  await loadArt(); buildSolids(); await new Promise(r => setTimeout(r, 30)); paintWorld(); warpWorld();
   window.__ready = true; document.getElementById("load")?.remove();
-  window.__game = { man, dog, boat, toggleBoat, keys, setHour: h => { clock = 2 * 1440 + h * 60; }, weather, grade, skyRef };   // for the self-check
+  window.__game = { man, dog, boat, toggleBoat, interact, fire, poles, walkable, keys, setHour: h => { clock = 2 * 1440 + h * 60; }, weather, grade, skyRef };   // for the self-check
   requestAnimationFrame(frame);
 })();
