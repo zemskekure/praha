@@ -319,5 +319,98 @@
   "seed": 262,
   "prompt": "a child wearing a bright red winter jacket and a knitted hat, jeans, boots",
   "remove_bg": false
+ },
+ {
+  "name": "wh-stand-a",
+  "style": "rd_plus__default",
+  "w": 64,
+  "h": 64,
+  "seed": 301,
+  "remove_bg": true,
+  "prompt": "a slender white whippet sighthound dog with a few fawn patches on the ears and back, long thin legs, deep chest, narrow tucked waist, long thin tail, small narrow head, side view facing right, full body, game sprite, standing calmly, tail hanging low"
+ },
+ {
+  "name": "wh-stand-b",
+  "style": "rd_plus__default",
+  "w": 64,
+  "h": 64,
+  "seed": 302,
+  "remove_bg": true,
+  "prompt": "a slender white whippet sighthound dog with a few fawn patches on the ears and back, long thin legs, deep chest, narrow tucked waist, long thin tail, small narrow head, side view facing right, full body, game sprite, standing calmly, tail hanging low"
+ },
+ {
+  "name": "wh-sit",
+  "style": "rd_plus__default",
+  "w": 64,
+  "h": 64,
+  "seed": 303,
+  "remove_bg": true,
+  "prompt": "a slender white whippet sighthound dog with a few fawn patches on the ears and back, long thin legs, deep chest, narrow tucked waist, long thin tail, small narrow head, side view facing right, full body, game sprite, sitting upright on its haunches"
+ },
+ {
+  "name": "wh-lie",
+  "style": "rd_plus__default",
+  "w": 64,
+  "h": 64,
+  "seed": 304,
+  "remove_bg": true,
+  "prompt": "a slender white whippet sighthound dog with a few fawn patches on the ears and back, long thin legs, deep chest, narrow tucked waist, long thin tail, small narrow head, side view facing right, full body, game sprite, lying down resting with front legs stretched forward, head up"
+ },
+ {
+  "name": "wh-sniff",
+  "style": "rd_plus__default",
+  "w": 64,
+  "h": 64,
+  "seed": 305,
+  "remove_bg": true,
+  "prompt": "a slender white whippet sighthound dog with a few fawn patches on the ears and back, long thin legs, deep chest, narrow tucked waist, long thin tail, small narrow head, side view facing right, full body, game sprite, sniffing the ground with its nose down, tail up"
+ },
+ {
+  "name": "wh-run",
+  "style": "rd_animation__any_animation",
+  "w": 64,
+  "h": 64,
+  "seed": 306,
+  "prompt": "a slender white whippet sighthound dog with a few fawn patches on the ears and back, long thin legs, deep chest, narrow tucked waist, long thin tail, small narrow head, side view facing right, full body, game sprite, galloping at full speed, running cycle"
+ },
+ {
+  "name": "wh-trot",
+  "style": "rd_animation__any_animation",
+  "w": 64,
+  "h": 64,
+  "seed": 307,
+  "prompt": "a slender white whippet sighthound dog with a few fawn patches on the ears and back, long thin legs, deep chest, narrow tucked waist, long thin tail, small narrow head, side view facing right, full body, game sprite, trotting, walking cycle"
+ },
+ {
+  "name": "wh-idle",
+  "style": "rd_animation__any_animation",
+  "w": 64,
+  "h": 64,
+  "seed": 307,
+  "prompt": "a slender white whippet sighthound dog with a few fawn patches on the ears and back, long thin legs, deep chest, narrow tucked waist, long thin tail, small narrow head, side view facing right, full body, game sprite, standing still idle animation, breathing, gently wagging its tail, looking around"
+ },
+ {
+  "name": "wh-sitA",
+  "style": "rd_animation__any_animation",
+  "w": 64,
+  "h": 64,
+  "seed": 307,
+  "prompt": "a slender white whippet sighthound dog with a few fawn patches on the ears and back, long thin legs, deep chest, narrow tucked waist, long thin tail, small narrow head, side view facing right, full body, game sprite, sitting upright on its haunches, idle animation, breathing, ears twitching"
+ },
+ {
+  "name": "wh-lieA",
+  "style": "rd_animation__any_animation",
+  "w": 64,
+  "h": 64,
+  "seed": 307,
+  "prompt": "a slender white whippet sighthound dog with a few fawn patches on the ears and back, long thin legs, deep chest, narrow tucked waist, long thin tail, small narrow head, side view facing right, full body, game sprite, lying down resting on the ground with front legs stretched forward, idle animation, breathing slowly, head resting"
+ },
+ {
+  "name": "wh-sniffA",
+  "style": "rd_animation__any_animation",
+  "w": 64,
+  "h": 64,
+  "seed": 307,
+  "prompt": "a slender white whippet sighthound dog with a few fawn patches on the ears and back, long thin legs, deep chest, narrow tucked waist, long thin tail, small narrow head, side view facing right, full body, game sprite, standing with its nose down sniffing the ground, idle animation, tail wagging"
  }
 ]
