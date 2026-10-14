@@ -79,9 +79,9 @@
   const fire = { kind: 'fire', x: (L.cx - 15.5) * T, y: (L.cy - 8) * T, lit: false, fuel: 0 }; props.push(fire);
   // Power poles: the line comes up from the pier along the trail to the hut, then strides off over the hill.
   const poles = [];
-  { const tr = trails[0]; for (let i = 2; i < tr.length; i += 5) { const [x, y] = tr[i]; poles.push([x - 4, y - 22]); }
-    let [x, y] = poles[poles.length - 1]; for (let i = 0; i < 6; i++) { x += 70; y -= 28; if (WALK.has(at((x / T) | 0, (y / T) | 0))) poles.push([x, y]); else break; } }
-  poles.forEach(([x, y], i) => props.push({ kind: 'pole', x, y, lamp: i === poles.length - 1 || i === 3 }));
+  { const tr = trails[0]; for (let i = 3; i < tr.length; i += 10) { const [x, y] = tr[i]; poles.push([x - 4, y - 22]); }
+    let [x, y] = poles[poles.length - 1]; for (let i = 0; i < 2; i++) { x += 120; y -= 48; if (WALK.has(at((x / T) | 0, (y / T) | 0))) poles.push([x, y]); else break; } }
+  poles.forEach(([x, y], i) => props.push({ kind: 'pole', x, y, lamp: i === poles.length - 1 || i === 1 }));
   for (let i = 0; i < 4; i++) rnd();   // keep the seeded layout below unchanged
   
   // Big Diomede: nobody, only an old radio mast blinking on the ridge.
@@ -227,46 +227,105 @@
     try { Object.assign(META, await (await fetch('art/sprites.json')).json()); } catch (e) { return; }
     await Promise.all(Object.keys(META).map(n => new Promise(res => { const im = new Image(); im.onload = () => { SPR[n] = im; res(); }; im.onerror = res; im.src = `art/${n}.png`; })));
   }
-  // The whippet, drawn as pixel art in code after the reference: cream body with a deep chest and tucked waist, a tan
-  // coat, folded ears, a long thin tail, near legs white and far legs grey-green, bold dark outline. Four gallop frames
-  // and a standing frame, facing right; facing left is the mirror.
-  const DOG = (() => {
-    const W2 = 34, H2 = 22, mk = () => { const c = document.createElement('canvas'); c.width = W2; c.height = H2; return c; };
-    const poly = (c, pts, col) => { c.fillStyle = col; c.beginPath(); pts.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); c.closePath(); c.fill(); };
-    const line = (c, x0, y0, x1, y1, col) => { const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) * 2 + 1; c.fillStyle = col; for (let i = 0; i <= n; i++) c.fillRect(Math.round(x0 + (x1 - x0) * i / n), Math.round(y0 + (y1 - y0) * i / n), 1, 1); };
-    // paw offsets [front near, front far, hind near, hind far] from shoulder (20,11) and hip (10,10), and a body bob
-    const POSES = {
-      run0: { bob: -1, legs: [[7, 7], [5, 7], [-7, 6], [-5, 7]], tail: 2 }, run1: { bob: 0, legs: [[2, 8], [4, 8], [-3, 8], [-1, 8]], tail: 1 },
-      run2: { bob: 0, legs: [[-4, 7], [-2, 8], [5, 8], [3, 7]], tail: 0 }, run3: { bob: -1, legs: [[0, 8], [2, 8], [1, 8], [-2, 8]], tail: 1 },
-      stand: { bob: 0, legs: [[0, 8], [1, 8], [0, 8], [-1, 8]], tail: 3 },
-    };
-    const out = {};
-    for (const [name, P] of Object.entries(POSES)) {
-      const cv = mk(), c = cv.getContext('2d'), b = P.bob, WHITE = '#f3eee4', SHADE = '#dcd3c3', FAR = '#6f8a83', TAN = '#c79b5f', TAND = '#9c7443';
-      const legs = (i, x0, y0) => { const [dx, dy] = P.legs[i], kx = x0 + dx * 0.45 + (i < 2 ? 1 : -1), ky = y0 + dy * 0.5; line(c, x0, y0, kx, ky, i % 2 ? FAR : WHITE); line(c, kx, ky, x0 + dx, y0 + dy, i % 2 ? FAR : WHITE); c.fillStyle = i % 2 ? FAR : WHITE; c.fillRect(Math.round(x0 + dx), Math.round(y0 + dy), 2, 1); };
-      legs(1, 20, 11 + b); legs(3, 10, 10 + b);                                         // far legs, behind the body
-      poly(c, [[7, 7 + b], [9, 5.5 + b], [20, 5.5 + b], [23.5, 7 + b], [23.5, 10 + b], [21, 13 + b], [17, 13 + b], [13.5, 10.5 + b], [10, 10.5 + b], [7, 9.5 + b]], WHITE);   // body: deep chest, tucked waist
-      poly(c, [[17, 12 + b], [21, 13 + b], [23.5, 10 + b], [23.5, 11.5 + b], [20, 13.5 + b]], SHADE);
-      poly(c, [[20, 6 + b], [23, 2.5 + b], [25.5, 3 + b], [24.5, 8.5 + b]], WHITE);       // neck
-      poly(c, [[22.5, 1.5 + b], [26, 1 + b], [28, 2.5 + b], [31, 3.6 + b], [30.5, 4.6 + b], [26, 5 + b], [23.5, 4.5 + b]], WHITE);   // long narrow head and muzzle
-      c.fillStyle = '#2a2420'; c.fillRect(30, Math.round(3.5 + b), 1, 1); c.fillRect(26, Math.round(2.5 + b), 1, 1);               // nose, eye
-      c.fillStyle = '#9a948c'; c.fillRect(22, Math.round(0.5 + b), 2, 1); c.fillStyle = '#d99c8c'; c.fillRect(23, Math.round(1.5 + b), 1, 1);   // folded rose ear
-      poly(c, [[10, 5 + b], [19.5, 5 + b], [21, 7 + b], [20, 10 + b], [11, 10 + b], [9.5, 7 + b]], TAN);                        // the coat
-      line(c, 11, 10 + b, 20, 10 + b, TAND); line(c, 21, 7 + b, 21, 10 + b, TAND); c.fillStyle = '#e8c890'; c.fillRect(12, Math.round(5.5 + b), 4, 1);
-      const tw = P.tail; line(c, 7, 8 + b, 4, 9 + b + tw * 0.4, WHITE); line(c, 4, 9 + b + tw * 0.4, 1, 8 + b + tw, WHITE);   // tail
-      legs(0, 20, 11 + b); legs(2, 10, 10 + b);                                         // near legs
-      // Binarise, then a bold dark outline around everything.
-      const id = c.getImageData(0, 0, W2, H2), d = id.data;
-      for (let i = 3; i < d.length; i += 4) d[i] = d[i] > 100 ? 255 : 0;
-      const filled = (x, y) => x >= 0 && y >= 0 && x < W2 && y < H2 && d[(y * W2 + x) * 4 + 3] === 255;
-      const o = new Uint8ClampedArray(d);
-      for (let y = 0; y < H2; y++) for (let x = 0; x < W2; x++) if (!filled(x, y) && (filled(x + 1, y) || filled(x - 1, y) || filled(x, y + 1) || filled(x, y - 1))) { const k = (y * W2 + x) * 4; o[k] = 0x2b; o[k + 1] = 0x26; o[k + 2] = 0x22; o[k + 3] = 255; }
-      c.putImageData(new ImageData(o, W2, H2), 0, 0);
-      const fl = mk(), fc = fl.getContext('2d'); fc.translate(W2, 0); fc.scale(-1, 1); fc.drawImage(cv, 0, 0);
-      out[name] = { right: cv, left: fl };
+  // The whippet, built from a little skeleton and rasterised as pixel art. Every pose comes from the same bones, so
+  // standing, trotting, galloping, sniffing, sitting and lying all stay the same dog.
+  function buildWhippet() {
+    const W = 40, H = 26, GROUND = 23;
+    const COL = { o: '#2b2622', w: '#f3eee4', s: '#d8cfc0', k: '#b3a796', f: '#c99a60', F: '#a47a47', e: '#141110', n: '#1d1816', p: '#e8a0a0' };
+    const rad = d => d * Math.PI / 180;
+    // A leg from a top joint through angles (degrees from straight down, positive = toward the head) and lengths.
+    const leg = (x, y, segs) => { const pts = [[x, y]]; for (const [len, ang] of segs) { x += Math.sin(rad(ang)) * len; y += Math.cos(rad(ang)) * len; pts.push([x, y]); } return pts; };
+    function pose(o) {
+      const by = o.by || 0, C = [23 + (o.cx || 0), 12.6 + by + (o.cy || 0)], Hp = [11.5 + (o.hx || 0), 11.0 + by + (o.hy || 0)];
+      const parts = [];   // [kind, layer, shape...] drawn by layer; shapes are capsules (polyline + radii) or ellipses
+      const cap = (layer, col, pts, r0, r1 = r0) => parts.push({ t: 'cap', layer, col, pts, r0, r1 });
+      const ell = (layer, col, x, y, rx, ry, rot = 0) => parts.push({ t: 'ell', layer, col, x, y, rx, ry, rot });
+      // far legs (darker, behind the body)
+      const fl = o.legs;
+      cap(0, 'k', leg(C[0] - 1.5, C[1] + 1.2, [[3.8, fl.ff[0]], [5.8, fl.ff[1]]]), 1.2, 0.9);
+      cap(0, 'k', leg(Hp[0] + 1.5, Hp[1] + 0.5, [[4.4, fl.hf[0]], [4.4, fl.hf[1]], [5.0, fl.hf[2]]]), 1.6, 0.9);
+      // tail: a thin whip that curves
+      { const pts = []; let x = Hp[0] - 2.6, y = Hp[1] - 1.4, a = o.tail; for (let i = 0; i < 7; i++) { pts.push([x, y]); x += Math.sin(rad(a)) * 1.45; y += Math.cos(rad(a)) * 1.45; a += i >= 4 ? (o.tip ?? -28) : (o.curl ?? 5); } cap(1, 'w', pts, 0.9, 0.55); }
+      // body: deep chest, a narrow loin set high (the tuck), round hips
+      ell(2, 'w', C[0] + 0.3, C[1] + 0.5, 4.2, 4.1, (o.tilt || 0) - 10);   // deep chest
+      cap(2, 'w', [[C[0] - 2.2, C[1] - 2.4], [(C[0] + Hp[0]) / 2, Math.min(C[1], Hp[1]) - 2.0], [Hp[0] + 1.2, Hp[1] - 1.4]], 1.9, 1.8);   // the arched loin, set high
+      ell(2, 'w', Hp[0], Hp[1], 3.2, 2.7, o.tilt ? o.tilt * 0.5 : 0);
+      // near legs
+      cap(3, 'w', leg(C[0] + 0.5, C[1] + 1.2, [[3.8, fl.fn[0]], [5.8, fl.fn[1]]]), 1.4, 1.0);
+      cap(3, 'w', leg(Hp[0] - 0.5, Hp[1] + 0.5, [[4.4, fl.hn[0]], [4.4, fl.hn[1]], [5.0, fl.hn[2]]]), 1.9, 1.0);
+      // neck and head
+      const N = [C[0] + 2.8, C[1] - 2.2], P = [C[0] + 2.8 + (o.px ?? 5.4), C[1] - 2.2 + (o.py ?? -4.6)];
+      cap(4, 'w', [N, [(N[0] + P[0]) / 2 + 0.3, (N[1] + P[1]) / 2 - 0.6], P], 2.1, 1.4);
+      const ha = rad(o.head ?? 100), dx = Math.sin(ha), dy = Math.cos(ha);   // muzzle direction: 90 = straight ahead, more = pointing down
+      ell(5, 'f', P[0], P[1], 2.4, 2.1);
+      cap(5, 'w', [[P[0] + dx * 0.8, P[1] + dy * 0.8 + 0.4], [P[0] + dx * 4.6, P[1] + dy * 4.6 + 0.4]], 1.5, 0.9);
+      cap(6, 'F', [[P[0] - 0.6, P[1] - 1.4], [P[0] - 2.6 + (o.ear || 0), P[1] - 1.6 - (o.ear || 0) * 0.6]], 1.0, 0.7);
+      const eye = [P[0] + dx * 0.9 - 0.2, P[1] - 0.7], nose = [P[0] + dx * 4.9, P[1] + dy * 4.9 + 0.2];
+      // a fawn saddle over the loin and hips
+      const saddle = { x: Hp[0] + 3.6, y: Hp[1] - 2.6, rx: 4.4, ry: 2.0 };
+      return { parts, eye, nose, saddle, C, Hp };
     }
+    function segDist(px, py, a, b) { const vx = b[0] - a[0], vy = b[1] - a[1], l2 = vx * vx + vy * vy || 1e-6; let t = ((px - a[0]) * vx + (py - a[1]) * vy) / l2; t = Math.max(0, Math.min(1, t)); const qx = a[0] + vx * t - px, qy = a[1] + vy * t - py; return [Math.hypot(qx, qy), t, qy]; }
+    function render(o) {
+      const P = pose(o), grid = Array.from({ length: H }, () => Array(W).fill(null)), lay = Array.from({ length: H }, () => Array(W).fill(-1));
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        const cx = x + 0.5, cy = y + 0.5;
+        for (const p of P.parts) {
+          let inside = false, low = false;
+          if (p.t === 'ell') { const c = Math.cos(rad(p.rot)), s = Math.sin(rad(p.rot)), u = (cx - p.x) * c + (cy - p.y) * s, v = -(cx - p.x) * s + (cy - p.y) * c; const d = (u * u) / (p.rx * p.rx) + (v * v) / (p.ry * p.ry); inside = d <= 1; low = v > p.ry * 0.38; }
+          else { const n = p.pts.length - 1; for (let i = 0; i < n; i++) { const [d, t, qy] = segDist(cx, cy, p.pts[i], p.pts[i + 1]); const r = p.r0 + (p.r1 - p.r0) * ((i + t) / n); if (d <= r) { inside = true; low = qy < -r * 0.35; break; } } }
+          if (inside && p.layer >= lay[y][x]) { lay[y][x] = p.layer; let col = p.col; if (col === 'w' && low) col = 's'; grid[y][x] = col; }
+        }
+      }
+      // the saddle and head patches
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const g = grid[y][x]; if (!g || lay[y][x] !== 2) continue; const S = P.saddle, d = ((x + 0.5 - S.x) / S.rx) ** 2 + ((y + 0.5 - S.y) / S.ry) ** 2; if (d < 1) grid[y][x] = g === 's' ? 'F' : 'f'; }
+      // outline every empty pixel that touches the dog; a darker line where the far legs meet the body
+      const out = grid.map(r => r.slice());
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (!grid[y][x]) { for (const [a, b] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const g = grid[y + b]?.[x + a]; if (g) { out[y][x] = 'o'; break; } } }
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (grid[y][x] === 'k' && grid[y - 1]?.[x] && grid[y - 1][x] !== 'k') out[y][x] = 'o';
+      const put = (q, c) => { const x = Math.floor(q[0]), y = Math.floor(q[1]); if (out[y]?.[x] !== undefined) out[y][x] = c; };
+      put(P.eye, 'e'); put(P.nose, 'n'); if (o.tongue) put([P.nose[0] - 1.5, P.nose[1] + 1.2], 'p');
+      const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const c = cv.getContext('2d');
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (out[y][x]) { c.fillStyle = COL[out[y][x]]; c.fillRect(x, y, 1, 1); }
+      // sit the lowest standing paw on the ground line
+      return cv;
+    }
+    // Leg angles: front [upper, lower]; hind [thigh, shin, hock]. Degrees from straight down, + toward the head.
+    const STAND = { fn: [6, -4], ff: [0, -6], hn: [40, -52, 6], hf: [34, -56, 2] };
+    const P = {};
+    P.stand0 = { legs: STAND, tail: -34 };
+    P.stand1 = { legs: STAND, tail: -48, curl: 2 };   // tail wagging
+    P.stand2 = { legs: STAND, tail: -22, curl: 6 };
+    P.breathe = { legs: STAND, tail: -34, cy: 0.35 };
+    P.look = { legs: STAND, tail: -40, px: 4.6, py: -5.8, head: 86, ear: 1.2 };   // head up, ears pricked
+    // trot: diagonal pairs swing together
+    const tro = ph => { const s = Math.sin(ph), c = Math.cos(ph), s2 = Math.sin(ph + Math.PI), c2 = Math.cos(ph + Math.PI);
+      return { fn: [6 + 26 * s, -6 + (c > 0 ? 36 * c : 0)], hf: [34 + 24 * s, -56 - (c > 0 ? 16 * c : 0), 6 * s],
+               ff: [6 + 26 * s2, -6 + (c2 > 0 ? 36 * c2 : 0)], hn: [40 + 24 * s2, -52 - (c2 > 0 ? 16 * c2 : 0), 6 * s2] }; };
+    for (let i = 0; i < 4; i++) P['trot' + i] = { legs: tro(i * Math.PI / 2), tail: -50, curl: -2, tip: -14, by: i % 2 ? -0.4 : 0, ear: 0.4, px: 5.8, py: -4.2 };
+    // gallop (double suspension): stretched out, front landing, gathered under, hind landing
+    P.run0 = { legs: { fn: [64, 52], ff: [54, 44], hn: [-26, -72, -60], hf: [-16, -66, -50] }, tail: -82, curl: -2, tip: -4, cx: 1.2, hx: -1.4, by: -1.2, px: 6.4, py: -3.2, head: 96, ear: -0.8 };
+    P.run1 = { legs: { fn: [16, 0], ff: [40, 26], hn: [8, -44, -24], hf: [-6, -56, -36] }, tail: -76, curl: -3, tip: -6, by: 0, px: 6.2, py: -3.4, head: 98, ear: -0.8 };
+    P.run2 = { legs: { fn: [-44, -24], ff: [-32, -12], hn: [80, 30, 46], hf: [70, 22, 36] }, tail: -70, curl: -4, tip: -8, cx: -0.8, hx: 1.8, by: -1.0, px: 5.8, py: -3.8, head: 100, ear: -0.8 };
+    P.run3 = { legs: { fn: [-12, 28], ff: [-24, 18], hn: [50, -34, 0], hf: [60, -14, 16] }, tail: -74, curl: -3, tip: -6, by: 0, px: 6, py: -3.6, head: 98, ear: -0.8 };
+    // sniffing: head down to the ground, tail up and busy
+    const SN = { fn: [16, -4], ff: [10, -6], hn: [40, -52, 6], hf: [34, -56, 2] };
+    P.sniff0 = { legs: SN, tail: -110, curl: -4, tip: -10, px: 6.8, py: 4.2, head: 160 };
+    P.sniff1 = { legs: SN, tail: -96, curl: -4, tip: -10, px: 7.1, py: 4.7, head: 168 };
+    // sitting: hips down on the hocks, front legs straight, tail curled forward along the ground
+    P.sit = { legs: { fn: [-2, 0], ff: [-6, -2], hn: [96, -96, 0], hf: [90, -100, 0] }, tail: -20, curl: 16, tip: 20, hx: 3.0, hy: 7.6, cy: -0.4, tilt: -14, px: 4.4, py: -5.6, head: 94 };
+    // lying like a sphinx: belly down, forelegs out in front, head up; or asleep with the head down on the paws
+    const LIE = { fn: [92, 88], ff: [88, 86], hn: [104, -96, -84], hf: [100, -100, -88] };
+    P.lie = { legs: LIE, tail: -80, curl: 10, tip: 16, by: 6.6, hx: 0.5, px: 4.6, py: -4.8, head: 96 };
+    P.lie1 = { ...P.lie, cy: 0.35 };
+    P.sleep = { legs: LIE, tail: -80, curl: 12, tip: 16, by: 6.6, hx: 0.5, px: 7.2, py: 1.0, head: 112 };
+    const out = {};
+    for (const [k, o] of Object.entries(P)) { const r = render(o); const l = document.createElement('canvas'); l.width = W; l.height = H; const lc = l.getContext('2d'); lc.translate(W, 0); lc.scale(-1, 1); lc.drawImage(r, 0, 0); out[k] = { right: r, left: l }; }
+    out.W = W; out.H = H; out.GROUND = GROUND;
     return out;
-  })();
+  }
+  const DOG = buildWhippet();
+  let occ = [];   // silhouettes of what stands in the picture this frame, so the sea's light doesn't tint them
   function px(c, x, y, w2 = 1, h2 = 1, col) { c.fillStyle = col; c.fillRect(Math.round(x), Math.round(y), w2, h2); }
   const PROP_SPR = { pole: ['pole'], school: ['school2', 'school'], station: ['station2', 'station'], dome: ['dome2', 'dome'], rack: ['rack2'], umiak: ['umiak2'], tank: ['tank2'], mast: ['mast2'], buoy: ['buoy2'], walrus: ['walrus'], seal: ['seal'] };
   const pick = list => list && list.find(n => SPR[n]);
@@ -288,7 +347,7 @@
     if (sn && p.rot) { const im = SPR[sn]; c.save(); c.translate(Math.round(x), Math.round(y)); c.rotate(p.rot);
       c.globalAlpha = 0.28; c.drawImage(sil(im), -im.width / 2 + 3, -im.height / 2 + 3); c.globalAlpha = 1;   // lying flat: a soft drop shadow
       c.drawImage(im, -im.width / 2, -im.height / 2); c.restore(); return; }
-    if (sn) { const im = SPR[sn], k = p.kind === 'mast' ? 2 : 1, bob = p.kind === 'buoy' ? Math.round(Math.sin(now * 2 + p.y) * 1.5) : 0; c.drawImage(im, Math.round(x - im.width * k / 2), Math.round(y + 8 - im.height * k + bob), im.width * k, im.height * k); return; }
+    if (sn) { const im = SPR[sn], k = p.kind === 'mast' ? 2 : 1, bob = p.kind === 'buoy' ? Math.round(Math.sin(now * 2 + p.y) * 1.5) : 0; const dx = Math.round(x - im.width * k / 2), dy = Math.round(y + 8 - im.height * k + bob); c.drawImage(im, dx, dy, im.width * k, im.height * k); if (p.kind !== 'buoy') occ.push(q => q.drawImage(im, dx, dy, im.width * k, im.height * k)); return; }
     switch (p.kind) {
       case 'house': { const wd = p.w * T; px(c, x - 1, y + 9, wd + 2, 3, 'rgba(0,0,0,0.25)'); px(c, x, y - 4, wd, 13, p.col); px(c, x - 1, y - 9, wd + 2, 6, '#3d3432'); px(c, x + 3, y, 4, 5, '#f2d48a'); px(c, x + wd - 7, y + 1, 3, 8, '#2a2522'); for (let i = 0; i < wd; i += 3) px(c, x + i, y + 9, 1, 3, '#2f2a28'); break; }   // on stilts
       case 'school': px(c, x - 1, y + 10, 42, 3, 'rgba(0,0,0,0.25)'); px(c, x, y - 4, 40, 14, '#9c3d2e'); px(c, x - 1, y - 9, 42, 6, '#3d3432'); for (let i = 4; i < 38; i += 7) px(c, x + i, y, 4, 4, '#f2d48a'); break;
@@ -320,8 +379,13 @@
   function drawMan(c, x, y, dir, step, sitting) {
     x = Math.round(x); y = Math.round(y);
     if (SPR.man) {   // RetroDiffusion walk sheet: rows up, left, down, right; 4 steps each
-      const row = [2, 1, 0, 3][dir], f = sitting ? 1 : (man.moving ? Math.floor(step * 0.55) % 4 : 1), M = META.man;
-      c.drawImage(SPR.man, (row * 4 + f) * M.fw, 0, M.fw, sitting ? 30 : M.fh, x - M.fw / 2, y - 44, M.fw, sitting ? 30 : M.fh);
+      const d = sitting || man.moving || man.look == null ? dir : man.look;   // standing still, he looks about
+      const row = [2, 1, 0, 3][d], f = sitting ? 1 : (man.moving ? Math.floor(step * 0.55) % 4 : 1), M = META.man, sx = (row * 4 + f) * M.fw, dx = x - M.fw / 2, dy = y - 44;
+      const draw = k => { if (sitting) { k.drawImage(SPR.man, sx, 0, M.fw, 30, dx, dy, M.fw, 30); return; }
+        // Breathing: on each out-breath the upper body settles by a pixel while the legs stay planted.
+        const cut = 29, br = man.moving ? 0 : (now % 3.4 > 1.7 ? 1 : 0);
+        k.drawImage(SPR.man, sx, cut, M.fw, M.fh - cut, dx, dy + cut, M.fw, M.fh - cut); k.drawImage(SPR.man, sx, 0, M.fw, cut + 1, dx, dy + br, M.fw, cut + 1); };
+      draw(c); occ.push(draw);
       return;
     }
     px(c, x - 5, y + 1, 10, 3, 'rgba(0,0,0,0.25)');                     // shadow
@@ -335,14 +399,22 @@
     if (dir === 1) px(c, x + 2, y - 17, 1, 1, '#2a2020'); if (dir === 3) px(c, x - 3, y - 17, 1, 1, '#2a2020');
   }
   // The whippet: white, long thin legs, deep chest, a thin tail, a grey patch on one ear.
+  // Which picture of the whippet: galloping or trotting when it moves; sniffing, sitting, lying, dozing, looking about
+  // or just breathing and wagging when it doesn't.
+  function dogFrame(inBoat) {
+    const face = dog.face === 'left' ? 'left' : 'right';
+    let k;
+    if (inBoat) k = 'sit';
+    else if (dog.moving) k = dog.gait === 'run' ? 'run' + (Math.floor(dog.step * 0.9) % 4) : 'trot' + (Math.floor(dog.step * 0.7) % 4);
+    else if (dog.mode === 'fire') k = dog.calm > 14 ? 'sleep' : (now % 3.2 < 1.6 ? 'lie' : 'lie1');
+    else if (dog.mode === 'roam') k = (now * 2.5 | 0) % 2 ? 'sniff0' : 'sniff1';
+    else if (dog.mode === 'rest') k = dog.restPose === 'lie' ? (now % 3 < 1.5 ? 'lie' : 'lie1') : 'sit';
+    else { const t = now % 7; k = t < 1.2 ? ['stand0', 'stand1', 'stand2', 'stand1'][(now * 8 | 0) % 4] : t > 5.2 ? 'look' : (now % 2.4 < 1.2 ? 'stand0' : 'breathe'); }
+    return DOG[k][face];
+  }
   function drawDog(c, x, y, dir, step, sitting) {
     x = Math.round(x); y = Math.round(y);
-    if (DOG) {
-      const face = dir === 3 || (dir !== 1 && dog.face === 'left') ? 'left' : 'right';
-      const fr = sitting ? DOG.stand : DOG['run' + (Math.floor(step * 0.9) % 4)];
-      c.drawImage(fr[face], x - 17, y - 20);
-      return;
-    }
+    if (DOG) { const im = dogFrame(sitting); c.drawImage(im, x - 20, y - 21); occ.push(k => k.drawImage(im, x - 20, y - 21)); return; }
     px(c, x - 6, y, 12, 2, 'rgba(0,0,0,0.22)');
     const side = dir === 1 || dir === 3, f = dir === 3 ? -1 : 1, s = Math.sin(step) * 1.5;
     if (side) {
@@ -365,7 +437,7 @@
       const M = META.boat; let best = 0, bd = 9; M.angles.forEach((a, i) => { const d = Math.abs(Math.atan2(Math.sin(a - b.a), Math.cos(a - b.a))); if (d < bd) { bd = d; best = i; } });
       if (Math.abs(b.v) > 5) { c.fillStyle = 'rgba(232,238,240,0.4)'; c.fillRect(Math.round(cx - ca * 22) - 3, Math.round(cy - sa * 22) - 1, 6, 2); }
       const rest = Math.atan2(Math.sin(b.a - M.angles[best]), Math.cos(b.a - M.angles[best]));
-      c.save(); c.translate(Math.round(cx), Math.round(cy)); c.rotate(rest); c.drawImage(SPR.boat, best * M.fw, 0, M.fw, M.fh, -M.fw / 2, -M.fh / 2, M.fw, M.fh); c.restore();
+      const dr = q => { q.save(); q.translate(Math.round(cx), Math.round(cy)); q.rotate(rest); q.drawImage(SPR.boat, best * M.fw, 0, M.fw, M.fh, -M.fw / 2, -M.fh / 2, M.fw, M.fh); q.restore(); }; dr(c); occ.push(dr);
       return;
     }
     const P = (u, v) => [cx + u * sa + v * ca, cy - u * ca + v * sa];   // u along the bow, v to starboard
@@ -510,7 +582,7 @@
   homes.push([(piers.little.x0 + 1) * T, piers.little.y * T + 8]);
   const villagers = [].map((sp, i) => { const h = homes[i % homes.length]; return { sp, x: h[0], y: h[1], to: 1 + i, wait: i * 2, dir: 0, step: 0, moving: false }; });
   // Footprints in snow and on the shingle; a wake behind the boat.
-  const prints = [], wakes = [];
+  const prints = [], wakes = [], dust = [];
   let printT = 0;
 
   function lifeStep(dt) {
@@ -527,11 +599,11 @@
     }
     printT -= dt;
     if (printT <= 0) { printT = 0.32;
-      const soft = (x, y) => { const t = at(Math.floor(x / T), Math.floor(y / T)); return t === K.SNOW || t === K.SHINGLE; };
-      if (!man.inBoat && man.moving && soft(man.x, man.y)) prints.push({ x: man.x + (prints.length % 2 ? 2 : -2), y: man.y, t: now, k: 0 });
-      if (!man.inBoat && dog.moving && soft(dog.x, dog.y)) prints.push({ x: dog.x, y: dog.y, t: now, k: 1 });
+      const soft = (x, y) => { const t = at(Math.floor(x / T), Math.floor(y / T)); return t === K.SNOW || t === K.SHINGLE ? 1 : t === K.TUNDRA ? 2 : t === K.PATH ? 3 : 0; };
+      if (!man.inBoat && man.moving && soft(man.x, man.y)) { const sf = soft(man.x, man.y); prints.push({ x: man.x + (prints.length % 2 ? 2 : -2), y: man.y, t: now, k: 0, sf }); if (sf !== 2) for (let i = 0; i < 3; i++) dust.push({ x: man.x + (Math.random() - 0.5) * 6, y: man.y, t: now, vx: (Math.random() - 0.5) * 8, sf }); }
+      if (!man.inBoat && dog.moving && soft(dog.x, dog.y)) { const sf = soft(dog.x, dog.y); prints.push({ x: dog.x, y: dog.y, t: now, k: 1, sf }); if (sf !== 2 && dog.gait === 'run') dust.push({ x: dog.x, y: dog.y, t: now, vx: (Math.random() - 0.5) * 10, sf }); }
       if (man.inBoat && Math.abs(boat.v) > 6) wakes.push({ x: boat.x - Math.cos(boat.a) * 16, y: boat.y - Math.sin(boat.a) * 16, t: now });
-      while (prints.length > 400) prints.shift(); while (wakes.length > 40) wakes.shift();
+      while (prints.length > 400) prints.shift(); while (dust.length > 80) dust.shift(); while (wakes.length > 40) wakes.shift();
     }
   }
 
@@ -585,7 +657,10 @@
           px(g, x + 2, y, 1, 1, '#5f6a44'); px(g, x + 2 + lx, y - 2 + ly, 1, 1, '#d6cf98'); }
       } }
     // Footprints fade over a minute.
-    for (const p of prints) { const age = now - p.t; if (age > 60) continue; const a = 0.28 * (1 - age / 60), X = p.x - ox, Y = p.y - oy; if (p.k) { px(g, X - 3, Y - 1, 1, 1, `rgba(70,80,96,${a})`); px(g, X + 2, Y, 1, 1, `rgba(70,80,96,${a})`); } else px(g, X - 1, Y - 1, 2, 2, `rgba(70,80,96,${a})`); }
+    for (const p of prints) { const life = p.sf === 2 ? 25 : 60, age = now - p.t; if (age > life) continue; const a = (p.sf === 2 ? 0.32 : 0.3) * (1 - age / life), X = p.x - ox, Y = p.y - oy, col = p.sf === 2 ? '34,52,26' : p.sf === 3 ? '64,48,32' : '60,62,70';
+      if (p.k) { px(g, X - 3, Y - 1, 1, 1, `rgba(${col},${a})`); px(g, X + 2, Y, 1, 1, `rgba(${col},${a})`); } else px(g, X - 1, Y - 1, 2, 2, `rgba(${col},${a})`); }
+    // Dust kicked up on dry paths and pebbles.
+    for (const d of dust) { const age = now - d.t; if (age > 0.9) continue; const a = 0.35 * (1 - age / 0.9); px(g, d.x + d.vx * age - ox, d.y - age * 7 - oy, 1 + (age > 0.3 ? 1 : 0), 1, d.sf === 3 ? `rgba(170,148,110,${a})` : `rgba(190,184,170,${a})`); }
     // Spindrift: wind-blown snow streaking across the land.
     const W = weather(), n = W.snow * 60, wl = Math.hypot(wind.x, wind.y) || 1;
     for (let i = 0; i < n; i++) { const span = VW + 80; const x0 = (hash2(i, 9, 1) * span + now * wind.x * (1.6 + hash2(i, 8, 1))) % span - 40, y0 = (hash2(i, 7, 1) * (VH + 40) + now * wind.y * 1.6) % (VH + 40) - 20;
@@ -644,12 +719,12 @@
     // Land and sea take the light differently: warm light gilds the land but the sea keeps a deep violet-blue under it.
     if (reflTmp.width !== VW || reflTmp.height !== VH) { reflTmp.width = VW; reflTmp.height = VH; } const rc = reflTmp.getContext('2d');
     { const m = G.mul, warm = Math.max(0, Math.min(1, (m[0] - m[2]) / 60)), wm = [m[0] * 0.5, m[1] * 0.62, Math.min(255, m[0] * 0.86)].map((v, k) => Math.round(m[k] + (v - m[k]) * warm));
-      rc.globalCompositeOperation = 'copy'; rc.drawImage(waterMask, ox, oy, VW, VH, 0, 0, VW, VH); rc.globalCompositeOperation = 'source-in'; rc.fillStyle = `rgb(${wm.join(',')})`; rc.fillRect(0, 0, VW, VH);
+      rc.globalCompositeOperation = 'copy'; rc.drawImage(waterMask, ox, oy, VW, VH, 0, 0, VW, VH); rc.globalCompositeOperation = 'source-in'; rc.fillStyle = `rgb(${wm.join(',')})`; rc.fillRect(0, 0, VW, VH); rc.globalCompositeOperation = 'destination-out'; for (const f of occ) f(rc);
       rc.globalCompositeOperation = 'destination-over'; rc.fillStyle = `rgb(${m.map(Math.round).join(',')})`; rc.fillRect(0, 0, VW, VH);
       g.globalCompositeOperation = 'multiply'; g.drawImage(reflTmp, 0, 0); }
     // The sea mirrors the sky: peach at dawn, molten orange at golden hour, violet at dusk.
     { const R = skyRef();
-      rc.globalCompositeOperation = 'copy'; rc.drawImage(waterMask, ox, oy, VW, VH, 0, 0, VW, VH); rc.globalCompositeOperation = 'source-in'; rc.fillStyle = `rgb(${R.c.join(',')})`; rc.fillRect(0, 0, VW, VH);
+      rc.globalCompositeOperation = 'copy'; rc.drawImage(waterMask, ox, oy, VW, VH, 0, 0, VW, VH); rc.globalCompositeOperation = 'source-in'; rc.fillStyle = `rgb(${R.c.join(',')})`; rc.fillRect(0, 0, VW, VH); rc.globalCompositeOperation = 'destination-out'; for (const f of occ) f(rc);
       g.globalCompositeOperation = 'screen'; g.globalAlpha = R.a; g.drawImage(reflTmp, 0, 0); g.globalAlpha = 1; }
     if (G.gs > 0) { g.globalCompositeOperation = 'screen'; g.fillStyle = `rgba(${G.glow.map(Math.round).join(',')},${G.gs})`; g.fillRect(0, 0, VW, VH); }
     g.globalCompositeOperation = 'lighter';
@@ -734,6 +809,9 @@
         man.dir = dirOf(vx, vy); man.step += dt * 10; idle = 0;
       } else idle += dt;
       // The whippet: trots after him, and when he stands still for a while it runs a few happy laps around him.
+      // Standing still he looks about: out to sea, at the dog, up the hill, then back the way he was facing.
+      if (man.moving) { man.look = null; man.lookT = 2.5; } else if ((man.lookT -= dt) <= 0) { const r = Math.random();
+        man.look = r < 0.35 ? dirOf(dog.x - man.x, dog.y - man.y) : r < 0.7 ? Math.floor(Math.random() * 4) : null; man.lookT = 2.5 + Math.random() * 4; }
       // The whippet keeps its own company: it trots off to sniff at things, stands about, and only runs back to him
       // when he gets far away. Now and then, when he stops for a while, it does happy laps around him.
       const far = Math.hypot(man.x - dog.x, man.y - dog.y);
@@ -751,16 +829,19 @@
       if (dog.mode === 'roam' && !dog.target) { for (let k = 0; k < 12; k++) { const a = Math.random() * 6.283, r = 40 + Math.random() * 75, x = man.x + Math.cos(a) * r, y = man.y + Math.sin(a) * r; if (walkable(x, y)) { dog.target = [x, y]; break; } } if (!dog.target) dog.mode = 'follow'; dog.sniff = 0; }
       let tx = dog.x, ty = dog.y, speed = 0;
       if (dog.mode === 'zoom') { dog.ang += dt * 3.2; const R = 26 + Math.sin(dog.t * 2) * 6; tx = man.x + Math.cos(dog.ang) * R; ty = man.y + Math.sin(dog.ang) * R * 0.7; speed = 120; }
-      else if (dog.mode === 'fire') { tx = fire.x + 20; ty = fire.y + 7; speed = 60; }
+      else if (dog.mode === 'fire') { const side = man.x > fire.x ? -1 : 1; tx = fire.x + side * 21; ty = fire.y + 6; speed = 60; if (Math.hypot(tx - dog.x, ty - dog.y) < 8) dog.face = side < 0 ? 'right' : 'left'; }
       else if (dog.mode === 'follow') { tx = man.x - Math.cos(dirAngle(man.dir)) * 16 + 10; ty = man.y - Math.sin(dirAngle(man.dir)) * 16 + 4; speed = far > 120 ? 150 : 90; }
       else if (dog.mode === 'roam') { [tx, ty] = dog.target;
         if (Math.hypot(tx - dog.x, ty - dog.y) < 6) { dog.sniff += dt; if (dog.sniff > 2 + (dog.target[0] % 3)) { dog.target = null; if (Math.random() < 0.3) { dog.mode = 'rest'; dog.t = 3 + Math.random() * 5; } } }
         speed = 55; }
+      if (dog.mode === 'rest') { if (!dog.restPose) dog.restPose = Math.random() < 0.5 ? 'lie' : 'sit'; } else dog.restPose = null;
+      dog.gait = speed > 100 ? 'run' : 'trot';
       const dx = tx - dog.x, dy = ty - dog.y, d = Math.hypot(dx, dy);
       dog.moving = speed > 0 && d > (dog.mode === 'zoom' ? 2 : dog.mode === 'roam' ? 5 : 10);
       if (dog.moving) { const v = Math.min(speed, d * 4) * dt, nx = dog.x + dx / d * v, ny = dog.y + dy / d * v;
         if (walkable(nx, ny)) { dog.x = nx; dog.y = ny; } else if (dog.mode === "roam") dog.target = null; else if (d > 60) { dog.x = man.x + 8; dog.y = man.y + 4; }
-        dog.dir = dirOf(dx, dy); if (Math.abs(dx) > 2) dog.face = dx < 0 ? 'left' : 'right'; dog.step += dt * (dog.mode === 'zoom' ? 18 : speed > 100 ? 16 : speed < 60 ? 8 : 12); }
+        dog.dir = dirOf(dx, dy); if (Math.abs(dx) > 2) dog.face = dx < 0 ? 'left' : 'right'; dog.step += dt * (dog.mode === 'zoom' ? 18 : speed > 100 ? 16 : speed < 60 ? 9 : 12); }
+      dog.calm = dog.mode === 'fire' && !dog.moving ? (dog.calm || 0) + dt : 0;
     }
   }
   const dirOf = (x, y) => Math.abs(x) > Math.abs(y) ? (x > 0 ? 1 : 3) : (y > 0 ? 0 : 2);   // 0 down, 1 right, 2 up, 3 left
@@ -777,12 +858,19 @@
     const ox = Math.round(Math.max(0, Math.min(MW * T - VW, cam.x - VW / 2))), oy = Math.round(Math.max(0, Math.min(MH * T - VH, cam.y - VH / 2)));
     g.drawImage(world, ox, oy, VW, VH, 0, 0, VW, VH);
     drawWater(ox, oy); drawGround(ox, oy);
+    occ = [];
     // Shadows first, all laid the same way by the sun (or the moon).
     shadowSetup();
     g.lineWidth = 1; wires(ox, oy, true);
     for (const p of props) { const sn = propSprite(p); if (!sn || p.rot) continue; const im = SPR[sn], X = p.x - ox, Y = p.y + 8 - oy; if (X < -200 || X > VW + 200 || Y < -60 || Y > VH + 300) continue; drawShadow(im, 0, 0, im.width, im.height, X, Y, p.kind === 'mast' ? 2 : 1); }
-    if (!man.inBoat) { const F = sheetFrame('man', man.dir, man.step, man.moving); if (F) drawShadow(SPR.man, F[0], 0, F[2], 44, man.x - ox, man.y - oy); const D = DOG[dog.moving ? 'run' + (Math.floor(dog.step * 0.9) % 4) : 'stand'][dog.face === 'left' ? 'left' : 'right']; drawShadow(D, 0, 0, D.width, 20, dog.x - ox, dog.y - oy); }
+    if (!man.inBoat) { const F = sheetFrame('man', man.dir, man.step, man.moving); if (F) drawShadow(SPR.man, F[0], 0, F[2], 44, man.x - ox, man.y - oy); const D = dogFrame(false); drawShadow(D, 0, 0, D.width, 23, dog.x - ox, dog.y - oy + 2); }
     for (const v of villagers) { const F = sheetFrame(v.sp, v.dir, v.step, v.moving); if (F) drawShadow(SPR[v.sp], F[0], 0, F[2], 44, v.x - ox, v.y - oy); }
+    // Contact shadows: whatever the light, everything that stands darkens the ground right under it.
+    { const blob = (x, y, rx, ry, a) => { if (x < -80 || y < -40 || x > VW + 80 || y > VH + 40) return; g.save(); g.translate(x, y); g.scale(1, ry / rx); const gr = g.createRadialGradient(0, 0, 0, 0, 0, rx); gr.addColorStop(0, `rgba(16,20,26,${a})`); gr.addColorStop(0.6, `rgba(16,20,26,${a * 0.6})`); gr.addColorStop(1, 'rgba(16,20,26,0)'); g.fillStyle = gr; g.fillRect(-rx, -rx, rx * 2, rx * 2); g.restore(); };
+      if (!man.inBoat) { blob(man.x - ox, man.y - oy + 1, 9, 3.2, 0.5); const low = !dog.moving && (dog.mode === 'fire' || dog.restPose === 'lie'); blob(dog.x - ox, dog.y - oy + 1, low ? 15 : 11, low ? 4 : 3, 0.42); }
+      else blob(boat.x - ox, boat.y - oy + 4, 26, 7, 0.3);
+      for (const p of props) { const X = p.x - ox, Y = p.y + 8 - oy, im = SPR[propSprite(p)];
+        if (p.kind === 'house') blob(X, Y - 3, (im ? im.width : 40) * 0.5, 9, 0.45); else if (p.kind === 'pole' || p.kind === 'mast') blob(X, Y - 1, 6, 2.2, 0.45); else if (p.kind === 'fire') blob(X, Y - 6, 16, 6, 0.3); } }
     // Everything that stands is drawn from back to front by its foot.
     const items = props.map(p => ({ y: p.y + 8, d: () => drawProp(g, p, ox, oy) }));
     items.push({ y: boat.y, d: () => drawBoat(g, boat, ox, oy) });
