@@ -1,5 +1,5 @@
 {
- "spent": 1.8700000000000012,
+ "spent": 5.5599999999999925,
  "done": {
   "patas": {
    "file": "art/raw/patas.gif",
@@ -112,6 +112,210 @@
   "barman3": {
    "file": "art/raw/barman3.gif",
    "cost": 0.07
+  },
+  "face-kevin-b": {
+   "file": "art/raw/face-kevin-b.png",
+   "cost": 0.06
+  },
+  "face-stepa-b": {
+   "file": "art/raw/face-stepa-b.png",
+   "cost": 0.06
+  },
+  "stepa3": {
+   "file": "art/raw/stepa3.gif",
+   "cost": 0.07
+  },
+  "kevin3": {
+   "file": "art/raw/kevin3.gif",
+   "cost": 0.07
+  },
+  "face-kevin-c": {
+   "file": "art/raw/face-kevin-c.png",
+   "cost": 0.06
+  },
+  "kevin4": {
+   "file": "art/raw/kevin4.gif",
+   "cost": 0.07
+  },
+  "face-kevin-d": {
+   "file": "art/raw/face-kevin-d.png",
+   "cost": 0.06
+  },
+  "t-mug": {
+   "file": "art/raw/t-mug.png",
+   "cost": 0.06
+  },
+  "t-chair": {
+   "file": "art/raw/t-chair.png",
+   "cost": 0.06
+  },
+  "t-table": {
+   "file": "art/raw/t-table.png",
+   "cost": 0.06
+  },
+  "t-taxi": {
+   "file": "art/raw/t-taxi.png",
+   "cost": 0.06
+  },
+  "p-standtable": {
+   "file": "art/raw/p-standtable.png",
+   "cost": 0.06
+  },
+  "p-longtable": {
+   "file": "art/raw/p-longtable.png",
+   "cost": 0.06
+  },
+  "p-bench": {
+   "file": "art/raw/p-bench.png",
+   "cost": 0.06
+  },
+  "p-sqtable": {
+   "file": "art/raw/p-sqtable.png",
+   "cost": 0.06
+  },
+  "p-mugempty": {
+   "file": "art/raw/p-mugempty.png",
+   "cost": 0.06
+  },
+  "p-bar": {
+   "file": "art/raw/p-bar.png",
+   "cost": 0.06
+  },
+  "p-taps": {
+   "file": "art/raw/p-taps.png",
+   "cost": 0.06
+  },
+  "p-tank": {
+   "file": "art/raw/p-tank.png",
+   "cost": 0.06
+  },
+  "p-clock": {
+   "file": "art/raw/p-clock.png",
+   "cost": 0.06
+  },
+  "p-coatstand": {
+   "file": "art/raw/p-coatstand.png",
+   "cost": 0.06
+  },
+  "p-radiator": {
+   "file": "art/raw/p-radiator.png",
+   "cost": 0.06
+  },
+  "p-chandelier": {
+   "file": "art/raw/p-chandelier.png",
+   "cost": 0.06
+  },
+  "p-plant": {
+   "file": "art/raw/p-plant.png",
+   "cost": 0.06
+  },
+  "p-menu": {
+   "file": "art/raw/p-menu.png",
+   "cost": 0.06
+  },
+  "p-utopenci": {
+   "file": "art/raw/p-utopenci.png",
+   "cost": 0.06
+  },
+  "p-crates": {
+   "file": "art/raw/p-crates.png",
+   "cost": 0.06
+  },
+  "p-shot": {
+   "file": "art/raw/p-shot.png",
+   "cost": 0.06
+  },
+  "p-plate": {
+   "file": "art/raw/p-plate.png",
+   "cost": 0.06
+  },
+  "w-sink": {
+   "file": "art/raw/w-sink.png",
+   "cost": 0.06
+  },
+  "w-urinal": {
+   "file": "art/raw/w-urinal.png",
+   "cost": 0.06
+  },
+  "s-car1": {
+   "file": "art/raw/s-car1.png",
+   "cost": 0.06
+  },
+  "w-stall": {
+   "file": "art/raw/w-stall.png",
+   "cost": 0.06
+  },
+  "w-dryer": {
+   "file": "art/raw/w-dryer.png",
+   "cost": 0.06
+  },
+  "w-bin": {
+   "file": "art/raw/w-bin.png",
+   "cost": 0.06
+  },
+  "s-lamp": {
+   "file": "art/raw/s-lamp.png",
+   "cost": 0.06
+  },
+  "s-car3": {
+   "file": "art/raw/s-car3.png",
+   "cost": 0.06
+  },
+  "s-car2": {
+   "file": "art/raw/s-car2.png",
+   "cost": 0.06
+  },
+  "s-tram": {
+   "file": "art/raw/s-tram.png",
+   "cost": 0.06
+  },
+  "s-stop": {
+   "file": "art/raw/s-stop.png",
+   "cost": 0.06
+  },
+  "s-tree": {
+   "file": "art/raw/s-tree.png",
+   "cost": 0.06
+  },
+  "s-bike": {
+   "file": "art/raw/s-bike.png",
+   "cost": 0.06
+  },
+  "s-bin": {
+   "file": "art/raw/s-bin.png",
+   "cost": 0.06
+  },
+  "s-noentry": {
+   "file": "art/raw/s-noentry.png",
+   "cost": 0.06
+  },
+  "s-scooter": {
+   "file": "art/raw/s-scooter.png",
+   "cost": 0.06
+  },
+  "s-garden": {
+   "file": "art/raw/s-garden.png",
+   "cost": 0.06
+  },
+  "s-pigeon": {
+   "file": "art/raw/s-pigeon.png",
+   "cost": 0.06
+  },
+  "i-bag": {
+   "file": "art/raw/i-bag.png",
+   "cost": 0.06
+  },
+  "i-money": {
+   "file": "art/raw/i-money.png",
+   "cost": 0.06
+  },
+  "i-joint": {
+   "file": "art/raw/i-joint.png",
+   "cost": 0.06
+  },
+  "taxi-inside": {
+   "file": "art/raw/taxi-inside.png",
+   "cost": 0.18
   }
  },
  "pending": {
@@ -142,6 +346,57 @@
   "face-sasa": "2e1c1565-6587-4023-959d-4b1fcc785db3",
   "face-pazout-b": "2a1a509b-d75a-4307-afe2-f6796f804594",
   "barman2": "2ba9aea0-18a5-4e69-a6cd-d78bde4f2ae0",
-  "barman3": "d7ba50cd-dc6d-42c5-b976-507cb6acf489"
+  "barman3": "d7ba50cd-dc6d-42c5-b976-507cb6acf489",
+  "t-chair": "b17e3577-f4a7-4404-aad8-0cd68bed7dab",
+  "t-mug": "1fb67d31-9234-447e-a15f-313a177e7043",
+  "t-taxi": "0f73ac9c-0c8d-49a4-b7db-91ddefab66bd",
+  "t-table": "9945ec76-8900-47de-a5cf-05c030a990c7",
+  "kevin3": "2043a3e5-3226-4269-9550-ee3337965e37",
+  "stepa3": "630928b6-d4d9-48e0-b0fc-cc0ea030ec62",
+  "face-kevin-b": "4f3230dc-040f-4c85-b69d-b7fe193f4e84",
+  "face-stepa-b": "cd8a8934-7389-49ea-8779-f5745b9484a1",
+  "face-kevin-c": "9d24f15a-5b44-4e01-8d93-905ee7e6c3c0",
+  "kevin4": "ec881eed-13be-4726-9bc9-7d62f58f7ede",
+  "face-kevin-d": "4f02602d-92a7-43ab-ada8-03c00b2ac495",
+  "p-longtable": "fbd37ae9-cd31-4dfb-bb17-70b7df27679b",
+  "p-sqtable": "726ff418-1157-44fc-bb8a-89be5bf373ce",
+  "p-bench": "192a26ca-89ef-4300-873a-6e8b3f786f71",
+  "p-standtable": "4c5dd401-252f-4f25-ade8-e8d4a95f2833",
+  "p-mugempty": "b1748d16-109c-41b0-8e29-5eb33aa6d18a",
+  "p-tank": "989a4b08-9167-4d26-a7fc-76892b76d07b",
+  "p-bar": "b899c250-5f34-4c13-894d-576c1bebbd35",
+  "p-taps": "d2f3e1c7-ca80-46b4-8f2e-4cb386ee98c3",
+  "p-coatstand": "ee1d5a6e-2583-4bd7-9929-b89ba9799c4b",
+  "p-radiator": "19e870cf-a525-494a-9f73-e6ec5d32e5ba",
+  "p-clock": "46a89101-3a9e-4c1a-8082-0c9441d7ee84",
+  "p-chandelier": "67a2f47c-a74d-467b-94f9-c4e6b1f03750",
+  "p-menu": "800a70ca-434d-4e1e-a5c8-2b7a4dcc09ed",
+  "p-utopenci": "bf4ce14f-88fa-42bc-9e9f-31bb78bd145e",
+  "p-crates": "03943e0f-d8e0-41fe-bc91-f4a816f77024",
+  "p-plant": "00836d8e-b377-4588-991d-e412953dfc31",
+  "p-shot": "15101113-3d1c-499f-96b2-4e03fa99176f",
+  "p-plate": "f2066f19-61c8-40c1-9136-c14b2da2f622",
+  "w-urinal": "ae0c173a-e89c-4642-b264-ae994f94557b",
+  "w-sink": "d1278f9b-6243-45c2-9db5-ea3d5d434e38",
+  "w-stall": "cb4fecb6-2a0f-49ec-9e88-3f61edc4ec12",
+  "s-car1": "bc43135b-289a-484f-98aa-c853bcd5c108",
+  "w-bin": "b272e52b-79dd-4757-a05c-7bdc98ef157d",
+  "w-dryer": "71f356a1-a38d-4386-abc8-32147dfde260",
+  "s-car2": "d3b79213-fdcd-4f7f-a526-74a2a2c33dd5",
+  "s-lamp": "0e3c3487-b974-4e48-8379-9549130ac98f",
+  "s-car3": "3b04b6ba-12e7-4b42-81c7-b9f4929dd217",
+  "s-tram": "787df64b-5f02-4ad8-addd-84d13d740560",
+  "s-stop": "80cd0f82-1f46-4c5d-b4ce-146841ed4635",
+  "s-tree": "bcb33e0f-d118-47ef-9cf4-191160ca7d81",
+  "s-bin": "4e719741-d20f-4b0f-a2c4-de64a583d880",
+  "s-bike": "ba4d1487-246f-44da-a587-15220b807c1b",
+  "s-noentry": "32b4d3ed-64d0-4c11-85c8-dea0ed124e72",
+  "s-garden": "116a7a94-1888-42a9-a15a-119ec308d20f",
+  "s-pigeon": "7598ec6e-8094-4095-b0f1-660cbe4c31b4",
+  "s-scooter": "dd226f3c-e9d3-477c-9ef8-39355b160a8c",
+  "i-bag": "d0ea10b1-c6ed-436e-a3c2-fbf5f965828c",
+  "taxi-inside": "a2d8340f-07d9-4e15-8d4c-50294153830d",
+  "i-joint": "98f21988-a798-41ea-ba52-5ee51be1f8c3",
+  "i-money": "7b9cc160-8e72-4fb1-9fa5-e39044a2201d"
  }
 }

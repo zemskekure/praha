@@ -184,5 +184,427 @@
   "h": 48,
   "seed": 2802,
   "prompt": "a tall slim Czech bartender in his thirties with a shaved head and a red-brown beard, a white shirt, black trousers"
+ },
+ {
+  "name": "t-chair",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 3001,
+  "remove_bg": true,
+  "prompt": "a dark brown bentwood thonet pub chair with a round seat and curved back, warm Czech pub"
+ },
+ {
+  "name": "t-table",
+  "style": "rd_plus__topdown_asset",
+  "w": 128,
+  "h": 64,
+  "seed": 3002,
+  "remove_bg": true,
+  "prompt": "a long dark oak pub table with two wooden benches on its sides, three glasses of beer on it"
+ },
+ {
+  "name": "t-mug",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 3003,
+  "remove_bg": true,
+  "prompt": "a glass half-litre beer mug full of golden Pilsner beer with white foam and a handle"
+ },
+ {
+  "name": "t-taxi",
+  "style": "rd_plus__topdown_asset",
+  "w": 128,
+  "h": 64,
+  "seed": 3004,
+  "remove_bg": true,
+  "prompt": "an old cream white Mercedes W124 sedan taxi car with a yellow TAXI sign on the roof"
+ },
+ {
+  "name": "kevin3",
+  "style": "rd_animation__four_angle_walking",
+  "w": 48,
+  "h": 48,
+  "seed": 2901,
+  "input": "/tmp/claude-0/-home-user-praha/c4587557-9fc3-5c68-aa5e-415a56490ed2/scratchpad/face-kevin.png",
+  "prompt": "a man in his thirties with a round friendly face and a big smile, short light brown hair under a beige baseball cap, a black fleece zip-up jacket, dark jeans, sneakers"
+ },
+ {
+  "name": "stepa3",
+  "style": "rd_animation__four_angle_walking",
+  "w": 48,
+  "h": 48,
+  "seed": 2902,
+  "input": "/tmp/claude-0/-home-user-praha/c4587557-9fc3-5c68-aa5e-415a56490ed2/scratchpad/face-stepa.png",
+  "prompt": "a chubby man in his thirties with swept dark brown hair, thick black rectangular glasses, a short dark beard, a plain black t-shirt, dark jeans, sneakers"
+ },
+ {
+  "name": "face-kevin-b",
+  "style": "rd_plus__default",
+  "w": 64,
+  "h": 64,
+  "seed": 2903,
+  "strength": 0.55,
+  "input": "/tmp/claude-0/-home-user-praha/c4587557-9fc3-5c68-aa5e-415a56490ed2/scratchpad/face-kevin.png",
+  "prompt": "pixel art portrait of a smiling man with a round face, a beige baseball cap, a black fleece jacket"
+ },
+ {
+  "name": "face-stepa-b",
+  "style": "rd_plus__default",
+  "w": 64,
+  "h": 64,
+  "seed": 2904,
+  "strength": 0.55,
+  "input": "/tmp/claude-0/-home-user-praha/c4587557-9fc3-5c68-aa5e-415a56490ed2/scratchpad/face-stepa.png",
+  "prompt": "pixel art portrait of a man with swept dark brown hair, thick black rectangular glasses, a short dark beard, a black t-shirt"
+ },
+ {
+  "name": "face-kevin-c",
+  "style": "rd_plus__default",
+  "w": 64,
+  "h": 64,
+  "seed": 2913,
+  "strength": 0.42,
+  "input": "/tmp/claude-0/-home-user-praha/c4587557-9fc3-5c68-aa5e-415a56490ed2/scratchpad/face-kevin.png",
+  "prompt": "pixel art portrait of a pale fair-skinned smiling young man with rosy cheeks and a round face, a light beige baseball cap, a black fleece jacket"
+ },
+ {
+  "name": "kevin4",
+  "style": "rd_animation__four_angle_walking",
+  "w": 48,
+  "h": 48,
+  "seed": 2911,
+  "prompt": "a pale young man with a round face, short light brown hair, a light beige baseball cap with a long curved brim pointing forward, a black fleece zip-up jacket, dark jeans, white sneakers"
+ },
+ {
+  "name": "face-kevin-d",
+  "style": "rd_plus__default",
+  "w": 64,
+  "h": 64,
+  "seed": 2921,
+  "strength": 0.35,
+  "input": "/tmp/claude-0/-home-user-praha/c4587557-9fc3-5c68-aa5e-415a56490ed2/scratchpad/face-kevin2.png",
+  "prompt": "pixel art portrait of a pale young man with blue eyes, a cheeky smile, a light beige baseball cap"
+ },
+ {
+  "name": "p-longtable",
+  "style": "rd_plus__topdown_asset",
+  "w": 128,
+  "h": 64,
+  "seed": 3100,
+  "prompt": "a long dark oak wooden pub table, plain, empty, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "p-bench",
+  "style": "rd_plus__topdown_asset",
+  "w": 128,
+  "h": 64,
+  "seed": 3101,
+  "prompt": "a long plain dark oak wooden pub bench, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "p-sqtable",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 3102,
+  "prompt": "a square dark oak wooden pub table, empty, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "p-standtable",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 3103,
+  "prompt": "a tall round wooden standing bar table on a single iron leg, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "p-mugempty",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 3104,
+  "prompt": "an empty glass half-litre beer mug with a little foam left inside, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "p-bar",
+  "style": "rd_plus__topdown_asset",
+  "w": 128,
+  "h": 64,
+  "seed": 3105,
+  "prompt": "a modern stainless steel island bar counter with chrome beer taps on top and a polished steel beer tank visible through a glass front, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "p-tank",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 3106,
+  "prompt": "a big polished stainless steel beer tank with rivets and a round hatch, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "p-taps",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 3107,
+  "prompt": "a chrome beer tap tower with four taps and a drip tray, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "p-coatstand",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 3108,
+  "prompt": "a wooden coat stand with a green coat and a red scarf hanging on it, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "p-chandelier",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 3109,
+  "prompt": "a round brass ring chandelier with glass candle lights, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "p-clock",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 3110,
+  "prompt": "a round station wall clock with a black frame, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "p-radiator",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 3111,
+  "prompt": "an old white cast iron radiator, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "p-menu",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 3112,
+  "prompt": "a black chalkboard pub menu with white chalk writing on an easel, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "p-utopenci",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 3113,
+  "prompt": "a big glass jar of pickled sausages with onions, Czech utopenci, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "p-plant",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 3114,
+  "prompt": "a tall green potted plant in a terracotta pot, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "p-crates",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 3115,
+  "prompt": "a stack of brown plastic beer crates with bottles, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "p-shot",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 3116,
+  "prompt": "a small shot glass of golden Becherovka liqueur, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "p-plate",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 3117,
+  "prompt": "a white plate with roast pork, dumplings and sauerkraut, Czech dinner, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "w-urinal",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 3118,
+  "prompt": "a white porcelain wall urinal, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "w-sink",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 3119,
+  "prompt": "a small white washbasin with a chrome tap and a mirror above it, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "w-stall",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 3120,
+  "prompt": "a toilet cubicle with a green door and a white toilet bowl, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "w-dryer",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 3121,
+  "prompt": "a white wall hand dryer, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "w-bin",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 3122,
+  "prompt": "a small metal pedal trash bin, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "s-car1",
+  "style": "rd_plus__topdown_asset",
+  "w": 128,
+  "h": 64,
+  "seed": 3123,
+  "prompt": "a dark blue Skoda Octavia car parked, side view, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "s-car2",
+  "style": "rd_plus__topdown_asset",
+  "w": 128,
+  "h": 64,
+  "seed": 3124,
+  "prompt": "a red old Skoda Felicia hatchback car parked, side view, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "s-car3",
+  "style": "rd_plus__topdown_asset",
+  "w": 128,
+  "h": 64,
+  "seed": 3125,
+  "prompt": "a black Volkswagen Golf car parked, side view, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "s-tram",
+  "style": "rd_plus__topdown_asset",
+  "w": 128,
+  "h": 64,
+  "seed": 3126,
+  "prompt": "a red and cream Prague Tatra tram, side view, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "s-lamp",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 3127,
+  "prompt": "a tall modern grey street lamp post glowing warm at night, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "s-tree",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 3128,
+  "prompt": "a leafy green linden tree with a thick trunk in a round iron tree grate, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "s-bin",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 3129,
+  "prompt": "a grey Prague street litter bin on a pole, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "s-stop",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 3130,
+  "prompt": "a red Prague tram stop pillar sign with a timetable, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "s-bike",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 3131,
+  "prompt": "a black road bicycle locked to a metal stand, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "s-noentry",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 3132,
+  "prompt": "a round red no entry traffic sign with a white bar on a grey pole, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "s-garden",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 3133,
+  "prompt": "a wooden beer garden table with two benches, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "s-scooter",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 3134,
+  "prompt": "a green shared electric kick scooter, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "s-pigeon",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 3135,
+  "prompt": "a grey city pigeon, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "i-bag",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 3136,
+  "prompt": "a small transparent zip plastic bag with green weed buds inside, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "i-joint",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 3137,
+  "prompt": "a rolled joint cigarette with a little smoke, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "i-money",
+  "style": "rd_plus__topdown_asset",
+  "w": 64,
+  "h": 64,
+  "seed": 3138,
+  "prompt": "a folded Czech crown banknote, 500 korun, pixel art game asset, plain flat light grey background"
+ },
+ {
+  "name": "taxi-inside",
+  "style": "rd_pro__default",
+  "w": 256,
+  "h": 144,
+  "seed": 3199,
+  "prompt": "pixel art scene: inside an old Mercedes taxi at night seen from the back seat, the driver from behind with a cigarette, glowing dashboard, rain on the windscreen, Prague street lights outside"
  }
 ]

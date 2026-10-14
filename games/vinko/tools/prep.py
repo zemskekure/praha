@@ -36,10 +36,10 @@ for n in CAST:
     print(n, W, H, len(fr), 'feet', feet)
 json.dump(meta, open('art/sprites.json', 'w'), indent=1)
 
-# Portraits for the intro cards: RetroDiffusion img2img from each friend's photo (the photos themselves stay out of the
-# repo). A '-b' take replaces a first one that missed.
+# Portraits for the intro: each friend's photo shrunk to 64 px and reduced to 20 colours (face-<name>-px.png, made
+# outside the repo from the photos, which stay out of it); RetroDiffusion's img2img takes are the fallback.
 for n in CAST:
-    src = next((f for f in (f'art/raw/face-{n}-b.png', f'art/raw/face-{n}.png') if os.path.exists(f)), None)
+    src = next((f for f in (f'art/raw/face-{n}-px.png', f'art/raw/face-{n}-b.png', f'art/raw/face-{n}.png') if os.path.exists(f)), None)
     if not src: continue
     Image.open(src).convert('RGBA').resize((64, 64), Image.NEAREST).save(f'art/face-{n}.png'); meta[f'face-{n}'] = {'fw': 64, 'fh': 64, 'n': 1}
 json.dump(meta, open('art/sprites.json', 'w'), indent=1)
