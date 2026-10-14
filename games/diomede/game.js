@@ -77,6 +77,9 @@
   const HOUSE_COL = ['#7d4b3a', '#4d6b78', '#8a7b5a', '#5e6e4f', '#a0553c', '#6b6f75'];
   place('house', L.cx - 8, L.cy - 10, { col: HOUSE_COL[2], w: 3, v: 2 });   // one log hut at the top of the trail
   const fire = { kind: 'fire', x: (L.cx - 15.5) * T, y: (L.cy - 8) * T, lit: false, fuel: 0 }; props.push(fire);
+  // Martina's fire on Big Diomede, above her pier. It never goes out: it is how he finds her.
+  const fire2 = { kind: 'fire', x: (piers.big.x0 - 5) * T, y: (piers.big.y - 3) * T, fuel: 1e9, hers: true }; props.push(fire2);
+  const fires = [fire, fire2];
   // Power poles: the line comes up from the pier along the trail to the hut, then strides off over the hill.
   const poles = [];
   { const tr = trails[0]; for (let i = 3; i < tr.length; i += 10) { const [x, y] = tr[i]; poles.push([x - 4, y - 22]); }
@@ -403,7 +406,7 @@
   }
   function toggleBoat() {
     if (!man.inBoat) {
-      if (Math.hypot(man.x - boat.x, man.y - boat.y) < 56) { man.inBoat = true; boat.manned = true; dog.mode = 'boat'; say('You climb in. The whippet jumps in after you.'); }
+      if (Math.hypot(man.x - boat.x, man.y - boat.y) < 56) { man.inBoat = true; boat.manned = true; dog.mode = 'boat'; if (mart.state === 'together' && !mart.inBoat) { mart.inBoat = true; say('You climb in, Martina after you, the whippet last.'); } else say('You climb in. The whippet jumps in after you.'); }
       else say('The boat is moored at the end of the pier.');
     } else {
       // Step off onto the nearest walkable tile within reach (a pier or a beach).
@@ -411,6 +414,7 @@
       for (let r = 8; r <= 48 && !best; r += 4) for (let a = 0; a < 6.28; a += 0.4) { const x = boat.x + Math.cos(a) * r, y = boat.y + Math.sin(a) * r; if (walkable(x, y)) { best = [x, y]; break; } }
       if (!best) { say('Too far from a pier or a beach to step ashore.'); return; }
       man.inBoat = false; boat.manned = false; boat.v = 0; boat.vx = boat.vy = boat.av = 0; [man.x, man.y] = best; dog.mode = 'follow'; dog.t = 0; dog.x = best[0] + 10; dog.y = best[1] + 4;
+      if (mart.inBoat === true) { mart.inBoat = false; mart.x = best[0]; mart.y = best[1]; for (const [a, b] of [[-14, 4], [14, 4], [0, 12], [-10, -8]]) if (walkable(best[0] + a, best[1] + b)) { mart.x = best[0] + a; mart.y = best[1] + b; break; } }
     }
   }
   let msg = '', msgT = 0; const say = s => { msg = s; msgT = 3.5; };
@@ -588,7 +592,7 @@
   function drawSky(ox, oy) {   // things above the ground: smoke, birds (with their shadows), cloud shadows
     g.lineWidth = 1; wires(ox, oy, false);
     // Sparks fly up from the fire and drift off with the wind; a thin smoke climbs above it.
-    if (fire.fuel > 0) { const f = Math.min(1, fire.fuel / 30), X = fire.x - ox, Y = fire.y - oy - 8;
+    for (const fire of fires) if (fire.fuel > 0) { const f = Math.min(1, fire.fuel / 30), X = fire.x - ox, Y = fire.y - oy - 8; if (X < -120 || X > VW + 120 || Y < -120 || Y > VH + 120) continue;
       for (let k = 0; k < 8; k++) { const age = (now * 0.45 + k / 8) % 1; g.fillStyle = `rgba(190,186,180,${0.28 * (1 - age) * f})`; g.beginPath(); g.arc(X + wind.x * age * 6 + Math.sin(now + k) * 2, Y - 12 - age * 40 + wind.y * age * 3, 2 + age * 7, 0, 6.283); g.fill(); }
       for (let k = 0; k < 14 * f; k++) { const life = 1.2 + hash2(k, 1, 62), age = ((now + hash2(k, 2, 62) * life) % life) / life, cyc = Math.floor((now + hash2(k, 2, 62) * life) / life);
         const sx = X + (hash2(k + cyc * 17, 3, 62) - 0.5) * 6 + wind.x * age * 2.5 + Math.sin(age * 9 + k) * 3, sy = Y - age * 46 + wind.y * age;
@@ -638,7 +642,7 @@
     if (G.gs > 0) { g.globalCompositeOperation = 'screen'; g.fillStyle = `rgba(${G.glow.map(Math.round).join(',')},${G.gs})`; g.fillRect(0, 0, VW, VH); }
     g.globalCompositeOperation = 'lighter';
     // Firelight: a warm, breathing pool around the fire pit, strongest at night.
-    if (fire.fuel > 0) { const f = Math.min(1, fire.fuel / 30), fl = 0.85 + 0.15 * Math.sin(now * 11) * Math.sin(now * 4.3) + 0.05 * Math.sin(now * 23), X = fire.x - ox, Y = fire.y - oy - 4;
+    for (const fire of fires) if (fire.fuel > 0) { const f = Math.min(1, fire.fuel / 30), fl = 0.85 + 0.15 * Math.sin(now * 11) * Math.sin(now * 4.3) + 0.05 * Math.sin(now * 23), X = fire.x - ox, Y = fire.y - oy - 4;
       for (const [r, a, col] of [[110, 0.30, '255,140,60'], [46, 0.45, '255,180,90'], [12, 0.7, '255,230,170']]) { const gr = g.createRadialGradient(X, Y, 0, X, Y, r * (0.9 + 0.1 * fl)); gr.addColorStop(0, `rgba(${col},${a * f * fl * (0.25 + night * 1.1)})`); gr.addColorStop(1, `rgba(${col},0)`); g.fillStyle = gr; g.fillRect(X - r, Y - r, r * 2, r * 2); } }
     // The northern lights: green and teal curtains rippling across the snow and the sea on clear nights.
     const aur = Math.max(0, night - 0.35) * 2 * (0.4 + 0.6 * fbm(clock * 0.01, 4.2, 5)) * (1 - weather().snow * 0.8);
@@ -665,6 +669,8 @@
         if (p.kind === 'station') glow(X, Y - 30, 30, '170,210,255', 0.10 * k);
         if (p.kind === 'mast') { const blink = Math.sin(now * 3) > 0.6; if (blink) glow(X, Y - 112, 12, '255,60,40', 0.8 * k); }
       }
+      drawBeacon(ox, oy, k);
+      if (mart.inBoat === 'own') glow(boat2.x - ox + 8, boat2.y - oy - 6, 50, '255,190,120', 0.34 * k);
       // His lantern.
       const lx = (man.inBoat ? boat.x : man.x) - ox + 6, ly = (man.inBoat ? boat.y : man.y) - oy - 12, fl = 0.92 + 0.08 * Math.sin(now * 9) * Math.sin(now * 3.7);
       glow(lx, ly, 60, '255,190,120', 0.36 * k * fl); glow(lx, ly, 10, '255,230,180', 0.6 * k * fl);
@@ -680,17 +686,108 @@
     // Fog banks rolling through the strait.
     if (W.fog > 0.02) for (let i = 0; i < 6; i++) { const span = MW * T, X = ((hash2(i, 31, 1) * span + now * wind.x * 1.5) % span) - ox, Y = hash2(i, 32, 1) * MH * T - oy;
       if (X < -300 || X > VW + 300 || Y < -200 || Y > VH + 200) continue; const gr = g.createRadialGradient(X, Y, 0, X, Y, 220); const c = night > 0.4 ? '150,165,200' : '235,238,240'; gr.addColorStop(0, `rgba(${c},${0.16 * W.fog})`); gr.addColorStop(1, `rgba(${c},0)`); g.fillStyle = gr; g.fillRect(X - 220, Y - 220, 440, 440); }
+    if (together > 0.01) { g.fillStyle = `rgba(255,196,150,${0.07 * together})`; g.globalCompositeOperation = 'soft-light'; g.fillRect(0, 0, VW, VH); g.globalCompositeOperation = 'source-over'; }
     // A soft vignette keeps the eye on the man.
     const vg = g.createRadialGradient(VW / 2, VH / 2, Math.min(VW, VH) * 0.35, VW / 2, VH / 2, Math.max(VW, VH) * 0.75); vg.addColorStop(0, 'rgba(10,14,22,0)'); vg.addColorStop(1, `rgba(10,14,22,${0.28 + night * 0.25})`); g.fillStyle = vg; g.fillRect(0, 0, VW, VH);
+  }
+
+  // ================================================================== MARTINA
+  // She is a day ahead, on Big Diomede, by her fire above the pier. When he rows out toward the date line she rows out
+  // to meet him there: the only place where their two days touch. After that they go on together, and while they are
+  // close, time slows: the clocks crawl and the world eases.
+  const mart = { x: fire2.x + 20, y: fire2.y + 6, dir: 1, step: 0, moving: false, state: 'home', inBoat: false, look: null, lookT: 3 };
+  const boat2 = { x: piers.big.end.x, y: piers.big.end.y, a: 0, v: 0, vx: 0, vy: 0, av: 0, thrust: 0, stroke: 0, manned: false };
+  let together = 0, metFire = false;
+  // Lines of speech, one at a time, typed out above whoever speaks.
+  const talk = { q: [], t: 0 };
+  const line = (who, text, dur) => talk.q.push({ who, text, dur: dur || 1.6 + text.length * 0.07 });
+  function steerBoat(b, tx, ty, dt, slowR = 40) {   // the same rowing as his, pointed at a target
+    const dx = tx - b.x, dy = ty - b.y, d = Math.hypot(dx, dy), diff = Math.atan2(Math.sin(Math.atan2(dy, dx) - b.a), Math.cos(Math.atan2(dy, dx) - b.a));
+    if (d > 6) { b.av += (Math.max(-2.2, Math.min(2.2, diff * 3)) - b.av) * Math.min(1, dt * 4); b.thrust = 85 * Math.min(1, d / slowR) * Math.max(0, Math.cos(diff)) ** 2; b.stroke += dt * 6; }
+    else { b.av *= Math.exp(-dt * 4); b.thrust = 0; }
+    b.a += b.av * dt; const fx = Math.cos(b.a), fy = Math.sin(b.a); let vf = b.vx * fx + b.vy * fy, vl = -b.vx * fy + b.vy * fx;
+    vf += b.thrust * dt; vf *= Math.exp(-dt * 0.9); vl *= Math.exp(-dt * 3.5); b.vx = vf * fx - vl * fy; b.vy = vf * fy + vl * fx; b.v = vf;
+    if (floats(b.x + b.vx * dt, b.y + b.vy * dt)) { b.x += b.vx * dt; b.y += b.vy * dt; } else { b.vx *= 0.3; b.vy *= 0.3; }
+  }
+  function martStep(dt) {
+    if (talk.q.length) { talk.t += dt; if (talk.t > talk.q[0].dur) { talk.q.shift(); talk.t = 0; } }
+    const meetX = DATE_LINE * T + T / 2 - 26, meetY = Math.max(10 * T, Math.min((MH - 10) * T, man.y));
+    if (mart.state === 'home') {
+      mart.moving = false; mart.dir = 1;
+      if (man.inBoat) { mart.state = 'rowing'; mart.inBoat = 'own'; boat2.manned = true; }   // she sees his boat and goes down to hers
+    } else if (mart.state === 'rowing') {
+      steerBoat(boat2, meetX, meetY, dt);
+      mart.x = boat2.x; mart.y = boat2.y; mart.dir = dirOf(Math.cos(boat2.a), Math.sin(boat2.a));
+      if (man.inBoat && Math.hypot(boat.x - boat2.x, boat.y - boat2.y) < 52) {
+        mart.state = 'meeting'; boat.vx *= 0.3; boat.vy *= 0.3;
+        line('m', '„Přijel jsi včera, nebo zítra?“'); line('h', '„Hlavně že jsem tady.“', 2.6); line('m', '„Počkej. Přisednu si k tobě.“', 2.8);
+      }
+    } else if (mart.state === 'meeting') {
+      // her boat comes alongside his, bow to stern, a little apart
+      const k = Math.min(1, dt * 1.6), ta = boat.a + Math.PI; boat2.x += (boat.x - boat2.x) * k; boat2.y += (boat.y - 30 - boat2.y) * k;
+      boat2.a += Math.atan2(Math.sin(ta - boat2.a), Math.cos(ta - boat2.a)) * k; boat2.vx = boat2.vy = boat2.v = 0; mart.x = boat2.x; mart.y = boat2.y;
+      if (!talk.q.length) {   // she climbs across; her boat is tied to the nearest date-line buoy
+        mart.state = 'together'; mart.inBoat = man.inBoat ? true : false; boat2.manned = false;
+        let best = null, bd = 1e9; for (const p of props) if (p.kind === 'buoy') { const d = Math.hypot(p.x - boat2.x, p.y - boat2.y); if (d < bd) { bd = d; best = p; } }
+        if (best) { boat2.x = best.x - 22; boat2.y = best.y + 10; boat2.a = Math.PI / 2; } boat2.vx = boat2.vy = boat2.v = 0;
+        say('Martina is with you. While you are close, time slows.');
+      }
+    } else if (mart.state === 'together') {
+      if (mart.inBoat === true) { mart.x = boat.x + Math.cos(boat.a) * 13; mart.y = boat.y + Math.sin(boat.a) * 13; mart.dir = man.dir; mart.moving = false; }
+      else {   // walking with him, at his side, a step behind
+        const tx = man.x - Math.cos(dirAngle(man.dir)) * 16 - (man.dir === 0 || man.dir === 2 ? 14 : 0), ty = man.y - Math.sin(dirAngle(man.dir)) * 16 + (man.dir === 1 || man.dir === 3 ? 6 : 0);
+        const dx = tx - mart.x, dy = ty - mart.y, d = Math.hypot(dx, dy);
+        mart.moving = d > (mart.moving ? 4 : 14);
+        if (mart.moving) { const v = Math.min(d > 90 ? 95 : 66, d * 3) * dt, nx = mart.x + dx / d * v, ny = mart.y + dy / d * v;
+          if (walkable(nx, mart.y)) mart.x = nx; if (walkable(mart.x, ny)) mart.y = ny; mart.dir = dirOf(dx, dy); mart.step += dt * 10; mart.look = null; }
+        else if ((mart.lookT -= dt) <= 0) { mart.look = Math.random() < 0.6 ? dirOf(man.x - mart.x, man.y - mart.y) : Math.floor(Math.random() * 4); mart.lookT = 2 + Math.random() * 4; }
+        if (Math.hypot(man.x - mart.x, man.y - mart.y) > 260) { mart.x = man.x - 12; mart.y = man.y + 4; }
+      }
+      // By his fire, the first time they sit still together, the lines from the beginning.
+      if (!metFire && fire.fuel > 30 && !man.inBoat && idle > 2 && Math.hypot(man.x - fire.x, man.y - fire.y) < 70) { metFire = true;
+        line('m', '„Proč jsme jeli sem? Vždyť je tu strašná zima.“', 4); line('h', '„Abychom měli víc času.“', 3); line('m', '„A máme?“', 2.6); }
+    }
+    const close = mart.state === 'together' && Math.hypot(mart.x - man.x, mart.y - man.y) < 90;
+    together += ((close ? 1 : 0) - together) * Math.min(1, dt * 0.7);
+  }
+  // How fast time runs: slower the closer they are, slowest by a fire.
+  const timeRate = () => { const atFire = together > 0.5 && fires.some(f => f.fuel > 30 && Math.hypot(man.x - f.x, man.y - f.y) < 80); return 1 - together * (atFire ? 0.92 : 0.78); };
+  function drawMart(c, ox, oy, seated) {
+    const M = META.martina; if (!M || !SPR.martina) return;
+    const d = seated || mart.moving || mart.look == null ? mart.dir : mart.look, row = [2, 1, 0, 3][d], f = seated ? 1 : (mart.moving ? Math.floor(mart.step * 0.55) % 4 : 1);
+    const sx = (row * 4 + f) * M.fw, x = Math.round(mart.x - ox) - M.fw / 2, y = Math.round(mart.y - oy) - 44 + (seated ? 20 : 0), h = seated ? 30 : M.fh;
+    const br = !seated && !mart.moving && (now + 1.1) % 3.4 > 1.7 ? 1 : 0, cut = 29;
+    const dr = k => { if (seated) k.drawImage(SPR.martina, sx, 0, M.fw, h, x, y, M.fw, h); else { k.drawImage(SPR.martina, sx, cut, M.fw, M.fh - cut, x, y + cut, M.fw, M.fh - cut); k.drawImage(SPR.martina, sx, 0, M.fw, cut + 1, x, y + br, M.fw, cut + 1); } };
+    dr(c); occ.push(dr);
+  }
+  function drawTalk(ox, oy) {
+    if (!talk.q.length) return;
+    const L = talk.q[0], who = L.who === 'm' ? mart : man, seated = who === man ? man.inBoat : mart.inBoat;
+    const shown = L.text.slice(0, Math.max(1, Math.floor(talk.t * 32))), a = Math.min(1, talk.t * 4, (L.dur - talk.t) * 3);
+    g.save(); g.globalAlpha = Math.max(0, a); g.font = '10px VT323, monospace';
+    const w2 = Math.ceil(g.measureText(L.text).width) + 10, X = Math.round(Math.max(4, Math.min(VW - w2 - 4, who.x - ox - w2 / 2))), Y = Math.round(who.y - oy - (seated ? 34 : 54));
+    px(g, X, Y - 10, w2, 14, 'rgba(16,22,28,0.88)'); px(g, Math.round(who.x - ox) - 1, Y + 4, 3, 2, 'rgba(16,22,28,0.88)');
+    g.fillStyle = L.who === 'm' ? '#f6dcc0' : '#efe9dc'; g.fillText(shown, X + 5, Y + 1); g.restore();
+  }
+  // Before they meet, at night her fire shows at the edge of the picture when it is out of sight.
+  function drawBeacon(ox, oy, k) {
+    if (mart.state === 'together' || k < 0.05) return;
+    const sx = (mart.state === 'home' ? fire2.x : boat2.x) - ox, sy = (mart.state === 'home' ? fire2.y : boat2.y) - oy;
+    if (sx > 0 && sx < VW && sy > 0 && sy < VH) return;
+    const cx = VW / 2, cy = VH / 2, dx = sx - cx, dy = sy - cy, s = Math.min((VW / 2 - 4) / Math.abs(dx || 1e-6), (VH / 2 - 4) / Math.abs(dy || 1e-6));
+    const ex = cx + dx * s, ey = cy + dy * s, far = Math.hypot(dx, dy), fl = 0.85 + 0.15 * Math.sin(now * 7) * Math.sin(now * 3.1), a = k * fl * Math.max(0.25, Math.min(1, 900 / far));
+    const gr = g.createRadialGradient(ex, ey, 0, ex, ey, 60); gr.addColorStop(0, `rgba(255,170,90,${0.5 * a})`); gr.addColorStop(1, 'rgba(255,170,90,0)'); g.fillStyle = gr; g.fillRect(ex - 60, ey - 60, 120, 120);
   }
 
   // ------------------------------------------------------------------ update
   let now = 0, last = performance.now(), showMap = false, idle = 0;
   function update(dt) {
-    now += dt; clock += dt * (keys.has('t') ? 60 : 1); if (msgT > 0) msgT -= dt;
+    const rate = timeRate(); now += dt * (1 - together * 0.3); clock += dt * (keys.has('t') ? 60 : 1) * rate; if (msgT > 0) msgT -= dt;
+    martStep(dt);
     lifeStep(dt);
     if (fire.fuel > 0) { if (fire.grow) { fire.fuel += dt * 30; if (fire.fuel >= 180) fire.grow = false; } else fire.fuel -= dt * 0.75; }
-    const [ax, ay] = axis();
+    const [ax, ay] = mart.state === 'meeting' ? [0, 0] : axis();   // they stop rowing to talk
+    if (mart.state === 'meeting' && man.inBoat) { boat.vx *= Math.exp(-dt * 2.5); boat.vy *= Math.exp(-dt * 2.5); }
     if (man.inBoat) {
       // Steer by pointing: the boat swings its bow smoothly toward the way you press and pulls ahead as it comes round.
       // It carries way: it glides forward and slows gently, and the keel stops it sliding sideways.
@@ -708,7 +805,7 @@
       if (ok(nx, ny)) { boat.x = nx; boat.y = ny; }
       else if (ok(nx, boat.y)) { boat.x = nx; boat.vy *= 0.5; } else if (ok(boat.x, ny)) { boat.y = ny; boat.vx *= 0.5; }   // glance along the shore
       else { boat.vx *= 0.4; boat.vy *= 0.4; if (msgT <= 0) say('The shore. Row along it to the pier.'); }
-      man.x = boat.x - Math.cos(boat.a) * 2; man.y = boat.y - Math.sin(boat.a) * 2; dog.x = boat.x + Math.cos(boat.a) * 6; dog.y = boat.y + Math.sin(boat.a) * 6;
+      man.x = boat.x - Math.cos(boat.a) * 6; man.y = boat.y - Math.sin(boat.a) * 6; dog.x = boat.x + Math.cos(boat.a) * 3; dog.y = boat.y + Math.sin(boat.a) * 3;
       dog.dir = dirOf(Math.cos(boat.a), Math.sin(boat.a)); man.dir = dog.dir;
     } else {
       const l = Math.hypot(ax, ay); man.moving = l > 0.1;
@@ -773,9 +870,12 @@
     g.lineWidth = 1; wires(ox, oy, true);
     for (const p of props) { const sn = propSprite(p); if (!sn || p.rot) continue; const im = SPR[sn], X = p.x - ox, Y = p.y + 8 - oy; if (X < -200 || X > VW + 200 || Y < -60 || Y > VH + 300) continue; drawShadow(im, 0, 0, im.width, im.height, X, Y, p.kind === 'mast' ? 2 : 1); }
     if (!man.inBoat) { const F = sheetFrame('man', man.dir, man.step, man.moving); if (F) drawShadow(SPR.man, F[0], 0, F[2], 44, man.x - ox, man.y - oy); const D = dogFrame(false); if (D) drawShadow(D.img, D.sx, 0, D.fw, D.fh, dog.x - ox, dog.y - oy + 2); }
+    if (!mart.inBoat && SPR.martina) { const M = META.martina, d = mart.moving || mart.look == null ? mart.dir : mart.look; drawShadow(SPR.martina, ([2, 1, 0, 3][d] * 4 + (mart.moving ? Math.floor(mart.step * 0.55) % 4 : 1)) * M.fw, 0, M.fw, 44, mart.x - ox, mart.y - oy); }
     for (const v of villagers) { const F = sheetFrame(v.sp, v.dir, v.step, v.moving); if (F) drawShadow(SPR[v.sp], F[0], 0, F[2], 44, v.x - ox, v.y - oy); }
     // Contact shadows: whatever the light, everything that stands darkens the ground right under it.
     { const blob = (x, y, rx, ry, a) => { if (x < -80 || y < -40 || x > VW + 80 || y > VH + 40) return; g.save(); g.translate(x, y); g.scale(1, ry / rx); const gr = g.createRadialGradient(0, 0, 0, 0, 0, rx); gr.addColorStop(0, `rgba(16,20,26,${a})`); gr.addColorStop(0.6, `rgba(16,20,26,${a * 0.6})`); gr.addColorStop(1, 'rgba(16,20,26,0)'); g.fillStyle = gr; g.fillRect(-rx, -rx, rx * 2, rx * 2); g.restore(); };
+      if (!mart.inBoat) blob(mart.x - ox, mart.y - oy - 1, 7, 2.5, 0.5);
+      if (mart.inBoat === 'own' || mart.state !== 'together') blob(boat2.x - ox, boat2.y - oy + 4, 26, 7, 0.3);
       if (!man.inBoat) { blob(man.x - ox, man.y - oy - 1, 7.5, 2.6, 0.55); const low = !dog.moving && (dog.mode === 'fire' || dog.restPose === 'lie'); blob(dog.x - ox, dog.y - oy + 1, low ? 15 : 11, low ? 4 : 3, 0.42); }
       else blob(boat.x - ox, boat.y - oy + 4, 26, 7, 0.3);
       for (const p of props) { const X = p.x - ox, Y = p.y + 8 - oy, im = SPR[propSprite(p)];
@@ -783,6 +883,9 @@
     // Everything that stands is drawn from back to front by its foot.
     const items = props.map(p => ({ y: p.y + 8, d: () => drawProp(g, p, ox, oy) }));
     items.push({ y: boat.y, d: () => drawBoat(g, boat, ox, oy) });
+    items.push({ y: boat2.y, d: () => { drawBoat(g, boat2, ox, oy); if (mart.inBoat === 'own') drawMart(g, ox, oy, true); } });
+    if (mart.inBoat === true) items.push({ y: boat.y + 0.2, d: () => drawMart(g, ox, oy, true) });
+    else if (!mart.inBoat) items.push({ y: mart.y, d: () => drawMart(g, ox, oy, false) });
     if (man.inBoat) {   // seated in the hull: drawn right after the boat, dog first if it sits further back on screen
       const sitM = () => drawMan(g, man.x - ox, man.y - oy + 20, man.dir, 0, true), sitD = () => drawDog(g, dog.x - ox, dog.y - oy + 6, dog.dir, 0, true);
       items.push({ y: boat.y + 0.1, d: dog.y < man.y ? () => { sitD(); sitM(); } : () => { sitM(); sitD(); } });
@@ -792,11 +895,12 @@
     }
     for (const v of villagers) items.push({ y: v.y, d: () => drawSheet(v.sp, v.x - ox, v.y - oy, v.dir, v.step, v.moving) });
     items.sort((a, b) => a.y - b.y).forEach(i => i.d());
-    drawSky(ox, oy); drawLight(ox, oy);
+    drawSky(ox, oy); drawLight(ox, oy); drawTalk(ox, oy);
     // Message line, bottom centre of the picture.
-    if (nearFire()) { const t = fire.fuel > 0 ? 'E: add driftwood' : 'E: light the fire', X = fire.x - ox, Y = fire.y - oy - 26; g.font = '8px monospace'; const wd = g.measureText(t).width + 8; px(g, X - wd / 2, Y - 8, wd, 11, 'rgba(16,22,28,0.85)'); g.fillStyle = '#efe9dc'; g.fillText(t, X - wd / 2 + 4, Y); }
+    if (talk.q.length) { /* while someone speaks, no prompts */ }
+    else if (nearFire()) { const t = fire.fuel > 0 ? 'E: add driftwood' : 'E: light the fire', X = fire.x - ox, Y = fire.y - oy - 26; g.font = '8px monospace'; const wd = g.measureText(t).width + 8; px(g, X - wd / 2, Y - 8, wd, 11, 'rgba(16,22,28,0.85)'); g.fillStyle = '#efe9dc'; g.fillText(t, X - wd / 2 + 4, Y); }
     else if (!man.inBoat && Math.hypot(man.x - boat.x, man.y - boat.y) < 56) { const X = boat.x - ox, Y = boat.y - oy - 26; g.font = '8px monospace'; px(g, X - 24, Y - 8, 48, 11, 'rgba(16,22,28,0.85)'); g.fillStyle = '#efe9dc'; g.fillText('E: board', X - 18, Y); }
-    if (man.inBoat && Math.hypot(boat.v) < 8) { let near = false; for (let a = 0; a < 6.28 && !near; a += 0.5) for (let r = 12; r <= 48 && !near; r += 6) near = walkable(boat.x + Math.cos(a) * r, boat.y + Math.sin(a) * r); if (near) { const X = boat.x - ox, Y = boat.y - oy - 30; g.font = '8px monospace'; px(g, X - 32, Y - 8, 64, 11, 'rgba(16,22,28,0.85)'); g.fillStyle = '#efe9dc'; g.fillText('E: step ashore', X - 28, Y); } }
+    if (!talk.q.length && man.inBoat && Math.hypot(boat.v) < 8) { let near = false; for (let a = 0; a < 6.28 && !near; a += 0.5) for (let r = 12; r <= 48 && !near; r += 6) near = walkable(boat.x + Math.cos(a) * r, boat.y + Math.sin(a) * r); if (near) { const X = boat.x - ox, Y = boat.y - oy - 30; g.font = '8px monospace'; px(g, X - 32, Y - 8, 64, 11, 'rgba(16,22,28,0.85)'); g.fillStyle = '#efe9dc'; g.fillText('E: step ashore', X - 28, Y); } }
     if (msgT > 0) { g.font = '8px monospace'; const wdt = g.measureText(msg).width + 10; g.globalAlpha = Math.min(1, msgT); px(g, (VW - wdt) / 2, VH - 26, wdt, 13, 'rgba(16,22,28,0.85)'); g.fillStyle = '#efe9dc'; g.fillText(msg, (VW - wdt) / 2 + 5, VH - 16); g.globalAlpha = 1; }
     if (showMap) drawMiniMap();
     hud(fx, fy);
@@ -807,18 +911,19 @@
     g.drawImage(world, 0, 0, MW * T, MH * T, mx, my, MW * s, MH * s);
     const p = man.inBoat ? boat : man; px(g, mx + p.x / T * s - 2, my + p.y / T * s - 2, 4, 4, '#e0703a');
   }
-  const hudEl = { little: $('clock-little'), big: $('clock-big'), where: $('where') };
+  const hudEl = { little: $('clock-little'), big: $('clock-big'), where: $('where'), clocks: $('clocks') };
   let lastHud = '';
   function hud(x, y) {
     const tx = x / T, ty = y / T, k = at(tx | 0, ty | 0), own = owner[(ty | 0) * MW + (tx | 0)];
     const near = Math.abs(tx - DATE_LINE - 0.5) < 1.2 && FLOAT.has(k);
     const side = tx < DATE_LINE + 0.5 ? 'big' : 'little';
     const where = near ? 'International Date Line' : k === K.DOCK ? `${tx < DATE_LINE ? 'Big' : 'Little'} Diomede · the pier` : own >= 0 ? `${ISLANDS[own].name} · ${ISLANDS[own].nick}` : `Bering Strait · ${side === 'big' ? 'Russian side' : 'American side'}`;
-    const key = where + side + Math.floor(clock) + (keys.has('t') ? 't' : '');
+    const slow = together > 0.3, key = where + side + (slow ? Math.floor(clock * 60) : Math.floor(clock)) + (keys.has('t') ? 't' : '') + slow;
     if (key === lastHud) return; lastHud = key;
     hudEl.where.textContent = where; hudEl.where.classList.toggle('line', near);
     const hh = hourNow(), part = hh < 5.6 || hh >= 20 ? 'night' : hh < 7.4 ? 'dawn' : hh < 16.6 ? 'day' : hh < 18.9 ? 'golden hour' : 'dusk';
-    hudEl.little.textContent = `Little Diomede · ${fmt(clock)} · ${part}`; hudEl.big.textContent = `Big Diomede · ${fmt(clock + 21 * 60)}`;
+    const sec = m => slow ? ':' + String(Math.floor((m * 60) % 60)).padStart(2, '0') : '';
+    hudEl.little.textContent = `Little Diomede · ${fmt(clock)}${sec(clock)} · ${part}`; hudEl.big.textContent = `Big Diomede · ${fmt(clock + 21 * 60)}${sec(clock)}`; hudEl.clocks.classList.toggle('slow', slow);
     hudEl.little.className = side === 'little' ? 'here' : 'there'; hudEl.big.className = side === 'big' ? 'here' : 'there';
   }
 
@@ -828,9 +933,10 @@
     window.__frames = (window.__frames || 0) + 1;
     requestAnimationFrame(frame);
   }
-  say('Little Diomede, before dawn. The boat waits at the end of the pier.');
+  say('Before dawn. Across the strait, on Big Diomede, a fire is burning.');
+  document.fonts?.load('10px VT323', 'Přijel jsi včera, nebo zítra? Proč jsme jeli sem? Vždyť je tu strašná zima.');
   await loadArt(); mirrorDog(); buildSolids(); await new Promise(r => setTimeout(r, 30)); paintWorld(); warpWorld();
   window.__ready = true; document.getElementById("load")?.remove();
-  window.__game = { man, dog, boat, toggleBoat, interact, fire, poles, walkable, keys, setHour: h => { clock = 2 * 1440 + h * 60; }, weather, grade, skyRef };   // for the self-check
+  window.__game = { man, dog, boat, mart, boat2, talk, together: () => together, toggleBoat, interact, fire, poles, walkable, keys, setHour: h => { clock = 2 * 1440 + h * 60; }, weather, grade, skyRef };   // for the self-check
   requestAnimationFrame(frame);
 })();

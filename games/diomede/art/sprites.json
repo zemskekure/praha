@@ -147,6 +147,17 @@
    "right": 3
   }
  },
+ "martina": {
+  "fw": 48,
+  "fh": 48,
+  "n": 16,
+  "rows": {
+   "up": 0,
+   "left": 1,
+   "down": 2,
+   "right": 3
+  }
+ },
  "dog-trot": {
   "fw": 32,
   "fh": 21,

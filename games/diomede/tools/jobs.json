@@ -412,5 +412,13 @@
   "h": 64,
   "seed": 307,
   "prompt": "a slender white whippet sighthound dog with a few fawn patches on the ears and back, long thin legs, deep chest, narrow tucked waist, long thin tail, small narrow head, side view facing right, full body, game sprite, standing with its nose down sniffing the ground, idle animation, tail wagging"
+ },
+ {
+  "name": "martina",
+  "style": "rd_animation__four_angle_walking",
+  "w": 48,
+  "h": 48,
+  "seed": 1302,
+  "prompt": "a slim woman in her late twenties with long dark brown hair worn loose, a chunky cream knitted wool sweater, a dark green wool scarf, dark grey trousers, brown leather boots"
  }
 ]

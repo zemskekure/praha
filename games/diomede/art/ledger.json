@@ -1,5 +1,5 @@
 {
- "spent": 4.65,
+ "spent": 4.720000000000001,
  "done": {
   "dog-a": {
    "file": "art/raw/dog-a.gif",
@@ -196,7 +196,14 @@
   "wh-lieA": {
    "file": "art/raw/wh-lieA.gif",
    "cost": 0.25
+  },
+  "martina": {
+   "file": "art/raw/martina.gif",
+   "cost": 0.07
   }
  },
- "note": "includes a $0.25 size probe for the 8-direction style"
+ "note": "includes a $0.25 size probe for the 8-direction style",
+ "pending": {
+  "martina": "59bb8887-5ce7-400d-bec7-05a8aa37a7a3"
+ }
 }
