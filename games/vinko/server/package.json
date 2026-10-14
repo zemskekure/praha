@@ -1,0 +1,8 @@
+{
+  "name": "vinko-server",
+  "private": true,
+  "type": "module",
+  "description": "Serves Vínko and relays everyone's presence, so the game is multiplayer on any server.",
+  "scripts": { "start": "node server.mjs" },
+  "dependencies": { "ws": "^8.18.0" }
+}
