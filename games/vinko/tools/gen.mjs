@@ -9,7 +9,9 @@ const jobs = JSON.parse(readFileSync(new URL('./jobs.json', import.meta.url)));
 mkdirSync('art/raw', { recursive: true });
 const ledgerFile = 'art/ledger.json', ledger = existsSync(ledgerFile) ? JSON.parse(readFileSync(ledgerFile)) : { spent: 0, done: {} };
 const only = A.only ? new Set(String(A.only).split(',')) : null, budget = +(A.budget || 0);
-const body = j => ({ prompt: j.prompt, prompt_style: j.style, width: j.w, height: j.h, num_images: 1, seed: j.seed ?? 7, ...(j.remove_bg ? { remove_bg: true } : {}) });
+// A job may start from a picture (img2img): "input" is a local image path (never committed), "strength" how far to move from it.
+const body = j => ({ prompt: j.prompt, prompt_style: j.style, width: j.w, height: j.h, num_images: 1, seed: j.seed ?? 7, ...(j.remove_bg ? { remove_bg: true } : {}),
+  ...(j.input ? { input_image: readFileSync(j.input).toString('base64') } : {}), ...(j.strength ? { strength: j.strength } : {}) });
 // Network calls retry on dropped connections; a task that was started is logged, so it can be fetched again later.
 const retry = async f => { for (let i = 0; ; i++) { try { return await f(); } catch (e) { if (i >= 5) throw e; await new Promise(r => setTimeout(r, 3000 * (i + 1))); } } };
 const post = b => retry(async () => (await fetch(API, { method: 'POST', headers: H, body: JSON.stringify(b) })).json());

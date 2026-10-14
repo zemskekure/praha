@@ -35,7 +35,7 @@
   @media (max-width: 560px) { #cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } #intro h1 { font-size: 30px; } }
   .card { display: grid; justify-items: center; gap: 2px; padding: 10px 6px 8px; background: var(--panel); color: var(--paper); border: 2px solid #4a3220; cursor: pointer; font: 18px/1.05 var(--body); }
   .card:hover:not(:disabled), .card:focus-visible { border-color: var(--accent); outline: none; background: rgba(60,38,20,.9); }
-  .card .face { width: 96px; height: 68px; image-rendering: pixelated; }
+  .card .face { width: 72px; height: 72px; image-rendering: pixelated; }
   .card b { font: 12px/1.4 var(--display); letter-spacing: .06em; text-transform: uppercase; font-weight: 400; }
   .card span { color: var(--muted); text-align: center; }
   .card i { font-style: normal; color: var(--accent); font-size: 16px; }
@@ -47,8 +47,8 @@
 <body>
 <canvas id="c" aria-label="Top-down view of Lokál Korunní. Walk with WASD or the arrow keys."></canvas>
 <div id="top" class="panel"><div id="clock">Út 20:00</div><div id="who">Kevin</div></div>
-<div id="hint" class="panel">WASD / šipky: chůze · E: mluvit, objednat · Esc: vyměnit postavu</div>
-<div id="pad"><button type="button" id="btn-e">E</button><button type="button" id="btn-tab">Esc</button></div>
+<div id="hint" class="panel">WASD: chůze · E: mluvit, sednout, pivo, dveře · Q: napít se · F: šťouchnout · Esc: postava</div>
+<div id="pad"><button type="button" id="btn-e">E</button><button type="button" id="btn-q">Pít</button><button type="button" id="btn-f">Rána</button><button type="button" id="btn-tab">Esc</button></div>
 <section id="intro" hidden aria-labelledby="intro-title">
   <h1 id="intro-title">Vínko</h1>
   <p class="sub">Lokál Korunní · Vinohrady · úterý večer</p>

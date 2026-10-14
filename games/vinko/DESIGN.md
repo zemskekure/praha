@@ -46,14 +46,33 @@ With nobody else there, or offline, the page plays alone. Built on the artifact 
 view-only guests can play too).
 
 ## Verbs
-Walk (WASD/arrows) · E: talk, order at the bar · Esc: back to the intro to switch friends · punch (step 3) ·
-drink (step 3) · the taxi (step 5) · the toilet together (step 6).
+- **Walk**: WASD/arrows. After a few beers the floor tilts: walking sways, the camera drifts, the light warms, words slur.
+- **E** does the one thing that fits where you stand (shown under you): order a beer at the bar, sit on a bench or a
+  chair (and stand up), talk to someone, go through a door, knock on the taxi.
+- **Q**: take a sip. Every glass goes in four sips; the HUD counts your beers.
+- **F**: a playful punch at whoever is in front of you: a lunge, stars, a stumble, a spilled beer, a line back
+  (and sometimes a punch back). Four punches in a minute and the barman threatens to throw you out.
+- **Doors**: the friends the pub runs who stand near you come along; in the toilet they say honest things.
+- The friends nobody plays sit at the tables, go to the bar, step out to Korunní or to the toilet on their own.
+
+## Scenes as built
+- **Lokál Korunní**: candles on every table, chandeliers, a runner rug, coats on hooks, radiators under the windows;
+  the tram's light crosses the curtains when it passes.
+- **Záchod**: green tiles and grout, two urinals, a sink with a mirror and a dripping tap, a stall, graffiti
+  („Paťas byl tady“), a fluorescent tube that flickers, someone knocking.
+- **Korunní**: black-and-white mosaic pavement, granite curbs, tram rails and wires, a zebra, lime trees in iron
+  grates, lamps, the tram stop, Lokál's ochre house with lit windows and door, the cream Mercedes taxi with a
+  cigarette glowing inside, tram 22 about once an hour of the night.
+
+## Faces
+Each friend's walk sheet was drawn by RetroDiffusion from a closer description of his photo with the photo as the
+starting picture, and the intro cards carry pixel portraits made from the photos. The photos stay out of the repo.
 
 ## Build order
 1. The pub with Honza: the room, light and life.
 2. The friends, their lives, their lines; online play with an intro screen to pick who you are.
-3. Drinks and punches.
-4. The street and tram 22.
-5. The taxi.
-6. The toilet.
+3. Drinks, sitting and punches. ✓
+4. The street and tram 22. ✓ (taxi scene still to come)
+5. The taxi: inside the cab.
+6. The toilet. ✓ (more honest talk to come)
 7. The clock, last round, dawn.

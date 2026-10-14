@@ -24,8 +24,9 @@ def key_out(im, tol=20):
     return im
 
 meta = json.load(open('art/sprites.json')) if os.path.exists('art/sprites.json') else {}
+# the second takes (art/raw/<name>2.gif) were drawn from closer descriptions of the photos; prefer them
 for n in CAST:
-    src = f'art/raw/{n}.gif'
+    src = f'art/raw/{n}2.gif' if os.path.exists(f'art/raw/{n}2.gif') else f'art/raw/{n}.gif'
     if not os.path.exists(src): continue
     fr = [key_out(f) for f in frames(src)]
     W, H = fr[0].size; s = Image.new('RGBA', (W * len(fr), H))
@@ -33,4 +34,12 @@ for n in CAST:
     s.save(f'art/{n}.png'); meta[n] = {'fw': W, 'fh': H, 'n': len(fr)}
     feet = max((f.getbbox() or (0, 0, 0, 0))[3] for f in fr); meta[n]['feet'] = feet
     print(n, W, H, len(fr), 'feet', feet)
+json.dump(meta, open('art/sprites.json', 'w'), indent=1)
+
+# Portraits for the intro cards: RetroDiffusion img2img from each friend's photo (the photos themselves stay out of the
+# repo). A '-b' take replaces a first one that missed.
+for n in CAST:
+    src = next((f for f in (f'art/raw/face-{n}-b.png', f'art/raw/face-{n}.png') if os.path.exists(f)), None)
+    if not src: continue
+    Image.open(src).convert('RGBA').resize((64, 64), Image.NEAREST).save(f'art/face-{n}.png'); meta[f'face-{n}'] = {'fw': 64, 'fh': 64, 'n': 1}
 json.dump(meta, open('art/sprites.json', 'w'), indent=1)

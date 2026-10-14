@@ -1,5 +1,5 @@
 {
- "spent": 0.6300000000000001,
+ "spent": 1.730000000000001,
  "done": {
   "patas": {
    "file": "art/raw/patas.gif",
@@ -36,6 +36,74 @@
   "barman": {
    "file": "art/raw/barman.gif",
    "cost": 0.07
+  },
+  "face-stepa": {
+   "file": "art/raw/face-stepa.png",
+   "cost": 0.06
+  },
+  "face-patas": {
+   "file": "art/raw/face-patas.png",
+   "cost": 0.06
+  },
+  "patas2": {
+   "file": "art/raw/patas2.gif",
+   "cost": 0.07
+  },
+  "stepa2": {
+   "file": "art/raw/stepa2.gif",
+   "cost": 0.07
+  },
+  "face-pazout": {
+   "file": "art/raw/face-pazout.png",
+   "cost": 0.06
+  },
+  "face-ado": {
+   "file": "art/raw/face-ado.png",
+   "cost": 0.06
+  },
+  "pazout2": {
+   "file": "art/raw/pazout2.gif",
+   "cost": 0.07
+  },
+  "ado2": {
+   "file": "art/raw/ado2.gif",
+   "cost": 0.07
+  },
+  "face-kopinaut": {
+   "file": "art/raw/face-kopinaut.png",
+   "cost": 0.06
+  },
+  "face-bob": {
+   "file": "art/raw/face-bob.png",
+   "cost": 0.06
+  },
+  "bob2": {
+   "file": "art/raw/bob2.gif",
+   "cost": 0.07
+  },
+  "kopinaut2": {
+   "file": "art/raw/kopinaut2.gif",
+   "cost": 0.07
+  },
+  "face-sasa": {
+   "file": "art/raw/face-sasa.png",
+   "cost": 0.06
+  },
+  "face-kevin": {
+   "file": "art/raw/face-kevin.png",
+   "cost": 0.06
+  },
+  "sasa2": {
+   "file": "art/raw/sasa2.gif",
+   "cost": 0.07
+  },
+  "kevin2": {
+   "file": "art/raw/kevin2.gif",
+   "cost": 0.07
+  },
+  "face-pazout-b": {
+   "file": "art/raw/face-pazout-b.png",
+   "cost": 0.06
   }
  },
  "pending": {
@@ -47,6 +115,23 @@
   "bob": "2eee00b0-7b6b-4443-ae54-d85650811ed6",
   "sasa": "e6c4713c-d0b9-4ca2-af31-f75b9bac492b",
   "kevin": "f31cee4f-b753-41ef-88c3-1d026349b67a",
-  "barman": "3ab84bf0-9197-4c43-b0ea-fdb04382f593"
+  "barman": "3ab84bf0-9197-4c43-b0ea-fdb04382f593",
+  "patas2": "758dcea1-bb4a-409c-ae35-f29cced401f5",
+  "face-stepa": "ad1dca05-0950-4371-8181-a31e617389bd",
+  "face-patas": "f8bdcf86-844d-4671-aaae-675dd9fe19ab",
+  "stepa2": "555a21f0-3efa-40e4-8709-5e5ccc95d9d6",
+  "pazout2": "81c68e76-a8e6-4017-8e63-09438b972922",
+  "ado2": "074727aa-ce75-40b6-ad4d-5e1d3fa5cd87",
+  "face-ado": "e13b5af8-85c6-4efd-9bf0-9b8eafa32ad0",
+  "face-pazout": "38fc14ad-70bc-43d2-88a4-a051234a93c7",
+  "kopinaut2": "0abcccf9-02a9-4ef3-a88d-a8f5e1154dca",
+  "face-kopinaut": "43b08b1b-b7bc-419e-95e5-a7a63105d63b",
+  "face-bob": "0da95c30-21ed-4578-b5e9-fb646c39a7ba",
+  "bob2": "a89068c7-bc2f-4883-a9fe-903020b10945",
+  "kevin2": "24071960-64aa-4fa5-bbe7-957a99cfb490",
+  "sasa2": "0f0fa715-520a-465d-9459-377d5c868c2f",
+  "face-kevin": "b19a055f-5b0c-4541-af87-f270790c026b",
+  "face-sasa": "2e1c1565-6587-4023-959d-4b1fcc785db3",
+  "face-pazout-b": "2a1a509b-d75a-4307-afe2-f6796f804594"
  }
 }

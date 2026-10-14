@@ -1,74 +1,172 @@
 [
  {
-  "name": "patas",
-  "style": "rd_animation__four_angle_walking",
-  "w": 48,
-  "h": 48,
-  "seed": 2401,
-  "prompt": "a chubby man in his thirties with dark slicked-back hair, round dark tortoiseshell glasses, light stubble, a white shirt with rolled-up sleeves, dark jeans, brown shoes"
- },
- {
-  "name": "stepa",
-  "style": "rd_animation__four_angle_walking",
-  "w": 48,
-  "h": 48,
-  "seed": 2402,
-  "prompt": "a chubby man in his thirties with a floppy brown fringe, clear transparent-frame glasses, a moustache and chin stubble, a black t-shirt, dark trousers, a white cycling helmet on his head"
- },
- {
-  "name": "pazout",
-  "style": "rd_animation__four_angle_walking",
-  "w": 48,
-  "h": 48,
-  "seed": 2403,
-  "prompt": "a chubby man in his thirties with short dark brown hair and stubble, a white collared shirt under a navy blazer, beige chinos, brown leather shoes"
- },
- {
-  "name": "ado",
-  "style": "rd_animation__four_angle_walking",
-  "w": 48,
-  "h": 48,
-  "seed": 2404,
-  "prompt": "a slim athletic man in his twenties with messy dark curly hair and a thick dark moustache, white wireless earbuds, a white towel around his neck, a grey tank top, black gym shorts, white sneakers"
- },
- {
-  "name": "kopinaut",
-  "style": "rd_animation__four_angle_walking",
-  "w": 48,
-  "h": 48,
-  "seed": 2405,
-  "prompt": "a skinny man in his thirties with short spiky fair hair and light stubble, a green and white striped football jersey, a green and white football scarf, blue jeans, sneakers"
- },
- {
-  "name": "bob",
-  "style": "rd_animation__four_angle_walking",
-  "w": 48,
-  "h": 48,
-  "seed": 2406,
-  "prompt": "a skinny man in his twenties with messy dark hair and heavy dark eyebrows, shirtless with a hairy chest, blue jeans, holding a glass of beer"
- },
- {
-  "name": "kevin",
-  "style": "rd_animation__four_angle_walking",
-  "w": 48,
-  "h": 48,
-  "seed": 2407,
-  "prompt": "a skinny man in his thirties with short fair hair, a white t-shirt, beige cargo trousers, a grey baseball cap, a tired dad face"
- },
- {
-  "name": "sasa",
-  "style": "rd_animation__four_angle_walking",
-  "w": 48,
-  "h": 48,
-  "seed": 2408,
-  "prompt": "a skinny man in his thirties with a shaved bald head, a thin dark moustache and a big grin, a white t-shirt, a thin gold chain, black trousers"
- },
- {
   "name": "barman",
   "style": "rd_animation__four_angle_walking",
   "w": 48,
   "h": 48,
   "seed": 2409,
   "prompt": "a tired middle-aged Czech bartender with a grey moustache and receding grey hair, a white shirt, a black waistcoat, a long white apron down to his knees"
+ },
+ {
+  "name": "patas2",
+  "style": "rd_animation__four_angle_walking",
+  "w": 48,
+  "h": 48,
+  "seed": 2501,
+  "prompt": "a chubby man in his thirties with thick dark slicked-back hair, round black-framed glasses, a round face with light stubble, a white shirt with rolled-up sleeves, dark jeans, brown shoes",
+  "input": "/tmp/claude-0/-home-user-praha/c4587557-9fc3-5c68-aa5e-415a56490ed2/scratchpad/face-patas.png"
+ },
+ {
+  "name": "face-patas",
+  "style": "rd_plus__default",
+  "w": 64,
+  "h": 64,
+  "seed": 2601,
+  "strength": 0.62,
+  "prompt": "pixel art portrait of a chubby man in his thirties with thick dark slicked-back hair,  round black-framed glasses,  a round face with light stubble",
+  "input": "/tmp/claude-0/-home-user-praha/c4587557-9fc3-5c68-aa5e-415a56490ed2/scratchpad/face-patas.png"
+ },
+ {
+  "name": "stepa2",
+  "style": "rd_animation__four_angle_walking",
+  "w": 48,
+  "h": 48,
+  "seed": 2502,
+  "prompt": "a chubby man in his thirties with a floppy light-brown fringe, clear transparent-framed glasses, a light brown moustache and chin beard, a black t-shirt, dark trousers, sneakers",
+  "input": "/tmp/claude-0/-home-user-praha/c4587557-9fc3-5c68-aa5e-415a56490ed2/scratchpad/face-stepa.png"
+ },
+ {
+  "name": "face-stepa",
+  "style": "rd_plus__default",
+  "w": 64,
+  "h": 64,
+  "seed": 2602,
+  "strength": 0.62,
+  "prompt": "pixel art portrait of a chubby man in his thirties with a floppy light-brown fringe,  clear transparent-framed glasses,  a light brown moustache and chin beard",
+  "input": "/tmp/claude-0/-home-user-praha/c4587557-9fc3-5c68-aa5e-415a56490ed2/scratchpad/face-stepa.png"
+ },
+ {
+  "name": "pazout2",
+  "style": "rd_animation__four_angle_walking",
+  "w": 48,
+  "h": 48,
+  "seed": 2503,
+  "prompt": "a chubby man in his thirties with short dark brown hair, a round face with dark stubble, a white collared shirt under a navy blazer, beige chinos, brown shoes",
+  "input": "/tmp/claude-0/-home-user-praha/c4587557-9fc3-5c68-aa5e-415a56490ed2/scratchpad/face-pazout.png"
+ },
+ {
+  "name": "face-pazout",
+  "style": "rd_plus__default",
+  "w": 64,
+  "h": 64,
+  "seed": 2603,
+  "strength": 0.62,
+  "prompt": "pixel art portrait of a chubby man in his thirties with short dark brown hair,  a round face with dark stubble,  a white collared shirt under a navy blazer",
+  "input": "/tmp/claude-0/-home-user-praha/c4587557-9fc3-5c68-aa5e-415a56490ed2/scratchpad/face-pazout.png"
+ },
+ {
+  "name": "ado2",
+  "style": "rd_animation__four_angle_walking",
+  "w": 48,
+  "h": 48,
+  "seed": 2504,
+  "prompt": "a slim man in his twenties with messy dark brown curly hair, a thick dark moustache, white wireless earbuds, a white towel around his neck, a grey tank top, black shorts, white sneakers",
+  "input": "/tmp/claude-0/-home-user-praha/c4587557-9fc3-5c68-aa5e-415a56490ed2/scratchpad/face-ado.png"
+ },
+ {
+  "name": "face-ado",
+  "style": "rd_plus__default",
+  "w": 64,
+  "h": 64,
+  "seed": 2604,
+  "strength": 0.62,
+  "prompt": "pixel art portrait of a slim man in his twenties with messy dark brown curly hair,  a thick dark moustache,  white wireless earbuds",
+  "input": "/tmp/claude-0/-home-user-praha/c4587557-9fc3-5c68-aa5e-415a56490ed2/scratchpad/face-ado.png"
+ },
+ {
+  "name": "kopinaut2",
+  "style": "rd_animation__four_angle_walking",
+  "w": 48,
+  "h": 48,
+  "seed": 2505,
+  "prompt": "a skinny man in his late thirties with short spiky light brown hair, light stubble, a green and white striped football jersey, a green and white scarf, blue jeans",
+  "input": "/tmp/claude-0/-home-user-praha/c4587557-9fc3-5c68-aa5e-415a56490ed2/scratchpad/face-kopinaut.png"
+ },
+ {
+  "name": "face-kopinaut",
+  "style": "rd_plus__default",
+  "w": 64,
+  "h": 64,
+  "seed": 2605,
+  "strength": 0.62,
+  "prompt": "pixel art portrait of a skinny man in his late thirties with short spiky light brown hair,  light stubble,  a green and white striped football jersey",
+  "input": "/tmp/claude-0/-home-user-praha/c4587557-9fc3-5c68-aa5e-415a56490ed2/scratchpad/face-kopinaut.png"
+ },
+ {
+  "name": "bob2",
+  "style": "rd_animation__four_angle_walking",
+  "w": 48,
+  "h": 48,
+  "seed": 2506,
+  "prompt": "a skinny man in his twenties with messy dark brown hair and thick dark eyebrows, shirtless with a hairy chest, blue jeans, sneakers",
+  "input": "/tmp/claude-0/-home-user-praha/c4587557-9fc3-5c68-aa5e-415a56490ed2/scratchpad/face-bob.png"
+ },
+ {
+  "name": "face-bob",
+  "style": "rd_plus__default",
+  "w": 64,
+  "h": 64,
+  "seed": 2606,
+  "strength": 0.62,
+  "prompt": "pixel art portrait of a skinny man in his twenties with messy dark brown hair and thick dark eyebrows,  shirtless with a hairy chest,  blue jeans",
+  "input": "/tmp/claude-0/-home-user-praha/c4587557-9fc3-5c68-aa5e-415a56490ed2/scratchpad/face-bob.png"
+ },
+ {
+  "name": "kevin2",
+  "style": "rd_animation__four_angle_walking",
+  "w": 48,
+  "h": 48,
+  "seed": 2507,
+  "prompt": "a skinny man in his thirties with short light brown hair and stubble, a white t-shirt, beige trousers, sneakers",
+  "input": "/tmp/claude-0/-home-user-praha/c4587557-9fc3-5c68-aa5e-415a56490ed2/scratchpad/face-kevin.png"
+ },
+ {
+  "name": "face-kevin",
+  "style": "rd_plus__default",
+  "w": 64,
+  "h": 64,
+  "seed": 2607,
+  "strength": 0.62,
+  "prompt": "pixel art portrait of a skinny man in his thirties with short light brown hair and stubble,  a white t-shirt,  beige trousers",
+  "input": "/tmp/claude-0/-home-user-praha/c4587557-9fc3-5c68-aa5e-415a56490ed2/scratchpad/face-kevin.png"
+ },
+ {
+  "name": "sasa2",
+  "style": "rd_animation__four_angle_walking",
+  "w": 48,
+  "h": 48,
+  "seed": 2508,
+  "prompt": "a skinny man in his thirties with a shaved bald head, a thin dark moustache and a big toothy grin, a white t-shirt, black trousers",
+  "input": "/tmp/claude-0/-home-user-praha/c4587557-9fc3-5c68-aa5e-415a56490ed2/scratchpad/face-sasa.png"
+ },
+ {
+  "name": "face-sasa",
+  "style": "rd_plus__default",
+  "w": 64,
+  "h": 64,
+  "seed": 2608,
+  "strength": 0.62,
+  "prompt": "pixel art portrait of a skinny man in his thirties with a shaved bald head,  a thin dark moustache and a big toothy grin,  a white t-shirt",
+  "input": "/tmp/claude-0/-home-user-praha/c4587557-9fc3-5c68-aa5e-415a56490ed2/scratchpad/face-sasa.png"
+ },
+ {
+  "name": "face-pazout-b",
+  "style": "rd_plus__default",
+  "w": 64,
+  "h": 64,
+  "seed": 2711,
+  "strength": 0.55,
+  "prompt": "pixel art portrait of a man's face, short dark brown hair, round face with dark stubble, white collar",
+  "input": "/tmp/claude-0/-home-user-praha/c4587557-9fc3-5c68-aa5e-415a56490ed2/scratchpad/face-pazout.png"
  }
 ]

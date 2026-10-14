@@ -52,5 +52,45 @@
   "fh": 48,
   "n": 16,
   "feet": 43
+ },
+ "face-patas": {
+  "fw": 64,
+  "fh": 64,
+  "n": 1
+ },
+ "face-stepa": {
+  "fw": 64,
+  "fh": 64,
+  "n": 1
+ },
+ "face-pazout": {
+  "fw": 64,
+  "fh": 64,
+  "n": 1
+ },
+ "face-ado": {
+  "fw": 64,
+  "fh": 64,
+  "n": 1
+ },
+ "face-kopinaut": {
+  "fw": 64,
+  "fh": 64,
+  "n": 1
+ },
+ "face-bob": {
+  "fw": 64,
+  "fh": 64,
+  "n": 1
+ },
+ "face-kevin": {
+  "fw": 64,
+  "fh": 64,
+  "n": 1
+ },
+ "face-sasa": {
+  "fw": 64,
+  "fh": 64,
+  "n": 1
  }
 }
