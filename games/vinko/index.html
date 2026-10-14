@@ -69,6 +69,8 @@
   .taxi-actions button { font: 12px/1 var(--display); color: var(--paper); background: #2a1c12; border: 2px solid var(--accent); padding: 12px 14px; cursor: pointer; }
   .taxi-actions button:disabled { opacity: .4; cursor: not-allowed; } .taxi-actions button:focus-visible { outline: 2px solid var(--paper); outline-offset: 2px; }
   @media (pointer: coarse) { #pad { display: flex; } #hint { display: none; } }
+  #reload { left: 50%; top: calc(12px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); display: flex; gap: 10px; align-items: center; border: 2px solid var(--accent); }
+  #reload button { font: 12px/1 var(--display); color: var(--ink); background: var(--accent); border: 0; padding: 8px 10px; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -77,6 +79,7 @@
 <div id="hint" class="panel">WASD: chůze · E: pivo, sednout, dveře, taxík · Enter: psát · Q: napít se · F: rána · R: runda · B: pivo kámošovi · G: lajna (záchod) · Esc: postava</div>
 <div id="pad"><button type="button" id="btn-e">E</button><button type="button" id="btn-chat">Psát</button><button type="button" id="btn-q">Pít</button><button type="button" id="btn-f">Rána</button><button type="button" id="btn-tab">Esc</button></div>
 <div id="log" class="panel" hidden aria-live="polite"></div>
+<div id="reload" class="panel" hidden role="status"><span>Kámoši už hrajou novou verzi <b id="reload-v" style="font-weight:400;color:var(--accent)"></b>.</span><button type="button" onclick="location.reload()">Obnovit</button></div>
 <div id="chat" hidden><input id="chat-in" maxlength="120" autocomplete="off" placeholder="Napiš něco… (Enter pošle, Esc zruší)" aria-label="Zpráva"></div>
 <section id="taxi" hidden role="dialog" aria-labelledby="taxi-title">
   <div class="taxi-card">

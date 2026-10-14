@@ -237,6 +237,7 @@
   }
   const ARRIVE = { pub: { wc: [231, 30], street: [100, 226] }, wc: { pub: [95, 66] }, street: { pub: [616, 30] } };
 
+  const VERSION = '0.9';   // shown on the intro; bump with every published version. Players on another version are told to reload.
   // ================================================================== ART
   const SPR = {}, META = {};
   async function loadArt() {
@@ -269,7 +270,7 @@
   const OUCH = ['„Au, vole!“', '„Za co?!“', '„Tohle si vypiješ.“', '„Hele, klid.“', '„Ty jsi fakt magor.“', '„To bolelo. Trochu.“'];
   const NAMES = { kevin: 'Kevin', patas: 'Paťas', stepa: 'Štěpa', pazout: 'Pažout', ado: 'Ado', kopinaut: 'Kopinaut', bob: 'Bob', sasa: 'Saša', barman2: 'Výčepní', barman3: 'Výčepní', waiter: 'Číšník' };
   const staff = c => c.id.startsWith('barman') || c.id === 'waiter';
-  const sid = c => c.id === 'waiter' ? 'barman' : c.id;   // the waiter wears the old barman's sheet
+  const sid = c => c.id === 'waiter' && !SPR.waiter ? 'barman' : c.id;   // the waiter: the barman's sheet in black trousers
   const TRAITS = { patas: 'historik, opilý', stepa: 'cyklista, chodí pozdě', pazout: 'konzervativní feťák', ado: 'fitness, gay', kopinaut: 'Bohemka, feťák', bob: 'pije hodně piva', kevin: 'dvě děti, pivo', sasa: 'feťák, vždycky v pohodě' };
   const PLAYABLE = ['kevin', 'patas', 'stepa', 'pazout', 'ado', 'kopinaut', 'bob', 'sasa'];
   const OUTDOORSY = { pazout: 0.3, kopinaut: 0.35, sasa: 0.35 };   // who steps out to Korunní more often
@@ -405,9 +406,11 @@
     if (sinkLines >= 12) { toast('Na umyvadle už není místo.'); return; }
     c.bags--; ev.ly++; sinkLines++; speak(c, `vysypal lajnu (${sinkLines} na umyvadle)`, 2.2, false);
   }
+  // A line takes 3.4 s: lean in over the sink (0.4), the line shrinks under the banknote (to 2.2), the head jerks back, a sniff and a shake.
+  const SNORT = 3.4, snortAt = c => c.smokeT > 0 && c.scene === 'wc' ? SNORT - c.smokeT : -1;
   function takeLine(c) {
     if (sinkLines <= 0) return; ev.tk++; sinkLines--;
-    c.x = 94; c.y = 16; c.dir = 3; c.look = null; c.smokeT = 3; setTimeout(() => { c.high = Math.min(1, c.high + 0.8); }, 2600);
+    c.x = 94; c.y = 16; c.dir = 3; c.look = null; c.smokeT = SNORT; setTimeout(() => { speak(c, '*šňup*', 1.2, true); }, 2300); setTimeout(() => { c.high = Math.min(1, c.high + 0.8); }, 2600);
   }
   // Money: the cash machine on Korunní (1000 Kč, three times a night), and friends can give each other money or a beer.
   const ATM = { x: 494 }; let atmLeft = 3;
@@ -582,8 +585,8 @@
     const [fx2, fy2] = dirVec(c.dir);
     const pk = c.punchT > 0 ? 1 - c.punchT / 0.32 : -1, lean = pk < 0 ? 0 : pk < 0.25 ? -1.5 : pk < 0.65 ? 3 : 3 * (1 - (pk - 0.65) / 0.35);
     const sway = c.moving ? Math.sin(now * 2.3 + c.x * 0.01) * c.drunk * 2 : 0;
-    const bend = c.smokeT > 0 && c.scene === 'wc' ? 3 : 0;   // leaning over the sink
-    const x = Math.round(c.x - ox + fx2 * lean + sway) - 24 - bend, y = Math.round(c.y - oy + fy2 * lean * 0.5) - 44 + bend;
+    const st = snortAt(c), bend = st < 0 ? 0 : st < 0.4 ? 8 * st / 0.4 : st < 2.2 ? 8 + (Math.sin(now * 18) > 0 ? 1 : 0) : st < 2.45 ? 8 - 11 * (st - 2.2) / 0.25 : st < 3 ? -3 + (Math.sin(now * 45) > 0 ? 1 : -1) : -3 * (SNORT - st) / 0.4;   // leaning over the sink, then the head jerks back
+    const x = Math.round(c.x - ox + fx2 * lean + sway - bend) - 24, y = Math.round(c.y - oy + fy2 * lean * 0.5 - Math.max(0, bend) * 0.5) - 44;
     const sip = c.sipT > 0 ? 1.3 - c.sipT : -1, up = sip < 0 ? 0 : sip < 0.3 ? sip / 0.3 : sip < 1.0 ? 1 : (1.3 - sip) / 0.3, tip = up >= 1 ? 1 : 0;
     const flinch = c.hitT > 0 ? c.hitT / 0.5 : 0;
     if (flinch) { g.save(); g.translate(x + 24, y + 44); g.rotate(-fx2 * 0.12 * flinch); g.translate(-x - 24, -y - 44); }
@@ -653,7 +656,8 @@
     if (s.id === 'wc') { px(g, 76 - ox, s.H - 2 - oy, 38, 14, '#5a3a22'); }
     light(s, ox, oy);
     for (const c of here) drawStars(c, ox, oy);
-    for (const c of here) if (c.smokeT > 0) for (let k = 0; k < 5; k++) { const a = (now * 3 + k * 1.3) % 1; px(g, c.x - ox - 2 + Math.sin(k * 2.1) * 6 * a, c.y - oy - 30 - a * 8, 1, 1, `rgba(255,255,255,${1 - a})`); }
+    for (const c of here) { const st = snortAt(c); if (st > 0.5 && st < 2.2) { for (let k = 0; k < 3; k++) { const a = (now * 4 + k / 3) % 1; px(g, 74 + (c.x - 94) - ox + a * 3 - 6, -s.WALL + 41 - oy + a * (s.WALL - 12), 1, 1, `rgba(255,255,255,${0.8 - a * 0.6})`); } }   // dust up the banknote
+      if (st > 2.2) for (let k = 0; k < 5; k++) { const a = (now * 3 + k * 1.3) % 1; px(g, c.x - ox - 8 + Math.sin(k * 2.1) * 6 * a, c.y - oy - 30 - a * 8, 1, 1, `rgba(255,255,255,${1 - a})`); } }
     for (const c of here) if (c.say) bubble(c, ox, oy);
     const a = context(); if (a && !me.say) { g.font = '8px VT323, monospace'; const t = a.label, w2 = g.measureText(t).width + 8, X = Math.round(me.x - ox - w2 / 2), Y = Math.round(me.y - oy + 6); px(g, X, Y, w2, 10, 'rgba(23,17,13,0.8)'); g.fillStyle = '#d9a441'; g.fillText(t, X + 4, Y + 8); }
     if (toastT > 0) { g.save(); g.globalAlpha = Math.min(1, toastT); g.font = '10px VT323, monospace'; const w2 = g.measureText(toastText).width + 12, X = Math.round((VW - w2) / 2), Y = VH - 46; px(g, X, Y, w2, 14, 'rgba(23,17,13,0.9)'); g.fillStyle = '#f3e9d8'; g.fillText(toastText, X + 6, Y + 10); g.restore(); }
@@ -672,7 +676,9 @@
     }
     if (s.id === 'wc') {   // a little mirror tile on the sink; the lines that are laid out stay on it, side by side
       const busy = cast.some(c => c.present && c.scene === 'wc' && c.smokeT > 0);
-      if (sinkLines > 0 || busy) { px(g, 63 - ox, -s.WALL + 32 - oy, 22, 7, '#15171a'); px(g, 63 - ox, -s.WALL + 32 - oy, 22, 1, '#4a5058');
+      if (sinkLines > 0 || busy) { px(g, 63 - ox, -s.WALL + 32 - oy, 22, 10, '#15171a'); px(g, 63 - ox, -s.WALL + 32 - oy, 22, 1, '#4a5058');
+        for (const c of cast) { const st = c.present && c.scene === 'wc' ? snortAt(c) : -1; if (st < 0 || st > 2.2) continue; const L = Math.round(14 * clamp((2.2 - st) / 1.8, 0, 1));   // the line going, under a rolled banknote
+          if (L > 0) px(g, 66 - ox, -s.WALL + 40 - oy, L, 1, '#ffffff'); if (st > 0.4) { px(g, 66 + L - ox, -s.WALL + 37 - oy, 1, 4, '#d8c48a'); px(g, 67 + L - ox, -s.WALL + 37 - oy, 1, 3, '#a8945a'); } }
         for (let i = 0; i < Math.min(sinkLines, 6); i++) px(g, 65 - ox, -s.WALL + 34 - oy + (i % 3) * 2, 8, 1, '#ffffff'), i >= 3 && px(g, 75 - ox, -s.WALL + 34 - oy + (i % 3) * 2, 8, 1, '#ffffff');
         for (let i = 6; i < sinkLines; i++) px(g, 64 - ox + (i - 6) * 3, -s.WALL + 31 - oy, 2, 1, '#ffffff');
         px(g, 86 - ox, -s.WALL + 30 - oy, 1, 6, '#d8c48a'); px(g, 85 - ox, -s.WALL + 30 - oy, 1, 1, '#b8a46a'); } }
@@ -761,8 +767,11 @@
   let room = null, peers = [], sendT = 0, lastSent = '';
   const seenEv = new Map(), seenSay = new Map(), seenAsk = new Map(), seenPu = new Map();
   const viewers = () => peers.filter(p => p.kind === 'viewer');
-  const lowestPeer = () => viewers().map(p => p.peer).sort()[0];
-  function isHost() { if (!room) return true; const v = viewers(); if (!v.length) return true; const low = lowestPeer(); return v.some(p => p.sameTab && p.peer === low); }
+  // The host (staff, clock, the lines on the sink) is the lowest peer running this same version; an old tab left open
+  // somewhere, or a friend who has not reloaded since an update, can't hold the pub hostage.
+  const live = () => viewers().filter(p => p.sameTab || (p.presence && p.presence.v === VERSION));
+  const lowestPeer = () => live().map(p => p.peer).sort()[0];
+  function isHost() { if (!room) return true; const v = live(); if (!v.length) return true; const low = lowestPeer(); return v.some(p => p.sameTab && p.peer === low); }
   const peersHere = () => room ? Math.max(me ? 1 : 0, viewers().filter(p => p.presence && typeof p.presence.who === 'string').length) : (me ? 1 : 0);
   function claims() { const m = new Map(); for (const p of [...viewers()].sort((a, b) => a.peer < b.peer ? -1 : 1)) { const w = p.presence && p.presence.who; if (PLAYABLE.includes(w) && !m.has(w)) m.set(w, p); } return m; }
   const pack = c => [c.id, Math.round(c.x), Math.round(c.y), c.dir, c.moving ? 1 : 0, c.look ?? -1, c.present ? 1 : 0, c.sayKey, c.say ? c.say.text : '', c.scene, c.seat, Math.round(c.beer * 100), c.sipT > 0 ? 1 : 0, Math.round(c.drunk * 100), c.pu ? c.pu.t : '', c.pu ? c.pu.n : 0, c.smokeT > 0 ? Math.round(c.smokeT * 10) : 0];
@@ -777,12 +786,15 @@
   }
   function net(dt) {
     if (!room || (sendT -= dt) > 0) return; sendT = 1 / 15;
-    const P = me ? { who: me.id, me: pack(me), ask, ev } : { who: null, me: null, ask: null, ev: null };
+    const P = me ? { v: VERSION, who: me.id, me: pack(me), ask, ev } : { v: VERSION, who: null, me: null, ask: null, ev: null };
     if (isHost()) { P.clock = Math.round(clock * 10) / 10; P.npc = cast.filter(c => c.ctrl === 'npc').map(pack); P.lines = sinkLines; } else { P.clock = null; P.npc = null; P.lines = null; }
     const k = JSON.stringify(P); if (k === lastSent) return; lastSent = k; room.presence(P).catch(() => {});
   }
+  const newerThan = (a, b) => { const x = a.split('.').map(Number), y = b.split('.').map(Number); for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0); return false; };
   function applyPeers() {
     peers = room ? room.peers() : [];
+    const newer = viewers().map(p => p.presence && p.presence.v).find(v => typeof v === 'string' && newerThan(v, VERSION));
+    if (newer && $('reload').hidden) { $('reload').hidden = false; $('reload-v').textContent = newer; }
     const cl = claims(), host = isHost();
     if (me && cl.get(me.id) && !cl.get(me.id).sameTab) { const lost = me.id; leave(); showIntro(`${NAMES[lost]} už hraje někdo jiný. Vyber si jiného.`); }
     for (const c of cast) {
@@ -859,7 +871,6 @@
       c.k.clearRect(0, 0, 48, 48); c.k.fillStyle = 'rgba(0,0,0,0.35)'; c.k.beginPath(); c.k.ellipse(24, 44, 8, 2.5, 0, 0, 6.283); c.k.fill();
       c.k.drawImage(im, f * 48, 29, 48, 19, 0, 29, 48, 19); c.k.drawImage(im, f * 48, 0, 48, 30, 0, br, 48, 30); }
   }
-  const VERSION = '0.8.1';   // shown on the intro; bump with every published version
   $('ver').textContent = `verze ${VERSION}`;
   // The 18+ gate, once per browser.
   let adultOk = false; try { adultOk = localStorage.getItem('vinko-18') === '1'; } catch (e) {}
