@@ -174,7 +174,7 @@
       const door = Math.abs(x - 610) < 27, w = 22, top = door ? 104 : 108, bot = door ? 142 : 134, r = w / 2;
       for (let yy = top; yy < bot; yy++) for (let xx = x; xx < x + w; xx++) { const dx = xx - (x + r - 0.5), dy = yy - (top + r); if (yy < top + r && dx * dx + dy * dy > r * r) continue;
         const inner = (yy >= top + r || dx * dx + dy * dy <= (r - 2) ** 2) && xx > x + 1 && xx < x + w - 2 && yy < bot - (door ? 0 : 2); px(wx, xx, yy, 1, 1, inner ? (door ? '#3a2414' : '#ffcf86') : '#5a3a22'); }
-      if (door) { px(wx, x + 10, top + 4, 2, bot - top - 4, '#2a180c'); px(wx, x + 15, 124, 2, 3, '#d9b25a'); px(wx, x - 6, 96, 34, 8, '#1d1d1d'); wx.font = 'bold 7px serif'; wx.fillStyle = '#f2ead8'; wx.fillText('Lokál', x - 1, 103); }
+      if (door) { px(wx, x + 10, top + 4, 2, bot - top - 4, '#2a180c'); px(wx, x + 15, 124, 2, 3, '#d9b25a');  }
       else { px(wx, x + r - 1, top + 2, 2, bot - top - 4, '#5a3a22'); px(wx, x + 2, top + r + 4, w - 4, 2, '#5a3a22'); for (let i = 3; i < w - 3; i += 3) px(wx, x + i, top + r + 7, 1, bot - top - r - 10, 'rgba(255,248,232,0.35)'); ARCHW.push(x + r); } }
     // a cash machine set into the wall between two windows
     px(wx, 486, 106, 16, 28, '#6d7176'); px(wx, 487, 107, 14, 26, '#a9adb2'); px(wx, 489, 110, 10, 7, '#1f4a6a'); px(wx, 490, 111, 4, 1, '#9fd2ff');
@@ -231,6 +231,7 @@
       prop(s, 's-bike', 560, 66, { depth: 4 }); prop(s, 's-scooter', 196, 40, { depth: 3 }); prop(s, 's-pigeon', 480, 40, { solid: false });
       // parked along Korunní: the taxi at the near curb, cars at the far one
       prop(s, 't-taxi', TAXI.x + TAXI.w / 2, TAXI.y + TAXI.h, { depth: 16 });
+      if (SPR['lokal-logo']) { s.wx.fillStyle = 'rgba(0,0,0,0.35)'; s.wx.fillRect(597, 66, 68, 31); s.wx.drawImage(SPR['lokal-logo'], 595, 63); }   // Lokál's sign over the door
       prop(s, 's-car1', 360, 198, { depth: 14 }); prop(s, 's-car3', 560, 198, { depth: 14 }); prop(s, 's-car2', 740, 198, { depth: 14 });
       finish(s); }
   }
@@ -706,6 +707,7 @@
       glow(95 - ox, -10 - oy, 130, '220,245,235', 0.16 * flick); glow(74 - ox, -s.WALL + 14 - oy, 26, '230,245,255', 0.1);
     } else {
       for (const L of LAMPS) { glow(L.x - ox, L.y - oy - 88, 18, '255,220,160', 0.8); glow(L.x - ox, L.y - oy, 100, '255,170,90', 0.3); }
+      glow(631 - ox, -72 - oy, 46, '255,214,160', 0.4); glow(631 - ox, -72 - oy, 20, '255,240,210', 0.25);   // Lokál's sign is lit
       for (const ax of ARCHW) { glow(ax - ox, -28 - oy, 16, '255,200,120', 0.35); glow(ax - ox, 10 - oy, 46, '255,170,80', 0.22); }
       glow(TAXI.x + 9 - ox, TAXI.y + 15 - oy, 4, '255,120,60', 0.5 + 0.4 * Math.sin(now * 2));   // a cigarette in the dark of the cab
       const T = tramPos(); if (T) { glow(T.x + 120 - ox, T.y - oy, 160, '255,230,170', 0.22); glow(T.x + (T.right ? 244 : -4) - ox, T.y - oy, 40, '255,250,220', 0.5); }
@@ -857,7 +859,7 @@
       c.k.clearRect(0, 0, 48, 48); c.k.fillStyle = 'rgba(0,0,0,0.35)'; c.k.beginPath(); c.k.ellipse(24, 44, 8, 2.5, 0, 0, 6.283); c.k.fill();
       c.k.drawImage(im, f * 48, 29, 48, 19, 0, 29, 48, 19); c.k.drawImage(im, f * 48, 0, 48, 30, 0, br, 48, 30); }
   }
-  const VERSION = '0.7';   // shown on the intro; bump with every published version
+  const VERSION = '0.8';   // shown on the intro; bump with every published version
   $('ver').textContent = `verze ${VERSION}`;
   // The 18+ gate, once per browser.
   let adultOk = false; try { adultOk = localStorage.getItem('vinko-18') === '1'; } catch (e) {}
