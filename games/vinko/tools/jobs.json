@@ -1,0 +1,74 @@
+[
+ {
+  "name": "patas",
+  "style": "rd_animation__four_angle_walking",
+  "w": 48,
+  "h": 48,
+  "seed": 2401,
+  "prompt": "a chubby man in his thirties with dark slicked-back hair, round dark tortoiseshell glasses, light stubble, a white shirt with rolled-up sleeves, dark jeans, brown shoes"
+ },
+ {
+  "name": "stepa",
+  "style": "rd_animation__four_angle_walking",
+  "w": 48,
+  "h": 48,
+  "seed": 2402,
+  "prompt": "a chubby man in his thirties with a floppy brown fringe, clear transparent-frame glasses, a moustache and chin stubble, a black t-shirt, dark trousers, a white cycling helmet on his head"
+ },
+ {
+  "name": "pazout",
+  "style": "rd_animation__four_angle_walking",
+  "w": 48,
+  "h": 48,
+  "seed": 2403,
+  "prompt": "a chubby man in his thirties with short dark brown hair and stubble, a white collared shirt under a navy blazer, beige chinos, brown leather shoes"
+ },
+ {
+  "name": "ado",
+  "style": "rd_animation__four_angle_walking",
+  "w": 48,
+  "h": 48,
+  "seed": 2404,
+  "prompt": "a slim athletic man in his twenties with messy dark curly hair and a thick dark moustache, white wireless earbuds, a white towel around his neck, a grey tank top, black gym shorts, white sneakers"
+ },
+ {
+  "name": "kopinaut",
+  "style": "rd_animation__four_angle_walking",
+  "w": 48,
+  "h": 48,
+  "seed": 2405,
+  "prompt": "a skinny man in his thirties with short spiky fair hair and light stubble, a green and white striped football jersey, a green and white football scarf, blue jeans, sneakers"
+ },
+ {
+  "name": "bob",
+  "style": "rd_animation__four_angle_walking",
+  "w": 48,
+  "h": 48,
+  "seed": 2406,
+  "prompt": "a skinny man in his twenties with messy dark hair and heavy dark eyebrows, shirtless with a hairy chest, blue jeans, holding a glass of beer"
+ },
+ {
+  "name": "kevin",
+  "style": "rd_animation__four_angle_walking",
+  "w": 48,
+  "h": 48,
+  "seed": 2407,
+  "prompt": "a skinny man in his thirties with short fair hair, a white t-shirt, beige cargo trousers, a grey baseball cap, a tired dad face"
+ },
+ {
+  "name": "sasa",
+  "style": "rd_animation__four_angle_walking",
+  "w": 48,
+  "h": 48,
+  "seed": 2408,
+  "prompt": "a skinny man in his thirties with a shaved bald head, a thin dark moustache and a big grin, a white t-shirt, a thin gold chain, black trousers"
+ },
+ {
+  "name": "barman",
+  "style": "rd_animation__four_angle_walking",
+  "w": 48,
+  "h": 48,
+  "seed": 2409,
+  "prompt": "a tired middle-aged Czech bartender with a grey moustache and receding grey hair, a white shirt, a black waistcoat, a long white apron down to his knees"
+ }
+]
