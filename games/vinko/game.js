@@ -176,6 +176,10 @@
         const inner = (yy >= top + r || dx * dx + dy * dy <= (r - 2) ** 2) && xx > x + 1 && xx < x + w - 2 && yy < bot - (door ? 0 : 2); px(wx, xx, yy, 1, 1, inner ? (door ? '#3a2414' : '#ffcf86') : '#5a3a22'); }
       if (door) { px(wx, x + 10, top + 4, 2, bot - top - 4, '#2a180c'); px(wx, x + 15, 124, 2, 3, '#d9b25a'); px(wx, x - 6, 96, 34, 8, '#1d1d1d'); wx.font = 'bold 7px serif'; wx.fillStyle = '#f2ead8'; wx.fillText('Lokál', x - 1, 103); }
       else { px(wx, x + r - 1, top + 2, 2, bot - top - 4, '#5a3a22'); px(wx, x + 2, top + r + 4, w - 4, 2, '#5a3a22'); for (let i = 3; i < w - 3; i += 3) px(wx, x + i, top + r + 7, 1, bot - top - r - 10, 'rgba(255,248,232,0.35)'); ARCHW.push(x + r); } }
+    // a cash machine set into the wall between two windows
+    px(wx, 486, 106, 16, 28, '#6d7176'); px(wx, 487, 107, 14, 26, '#a9adb2'); px(wx, 489, 110, 10, 7, '#1f4a6a'); px(wx, 490, 111, 4, 1, '#9fd2ff');
+    for (let i = 0; i < 9; i++) px(wx, 490 + (i % 3) * 3, 120 + (i / 3 | 0) * 3, 2, 2, '#5b5f63'); px(wx, 489, 129, 10, 1, '#222');
+    px(wx, 484, 100, 20, 6, '#1d3f8a'); wx.font = '4px sans-serif'; wx.fillStyle = '#fff'; wx.fillText('BANKOMAT', 485, 104);
     s.doors.push({ x0: 596, y0: 2, x1: 636, y1: 22, to: 'pub', at: [616, 14], name: 'do Lokálu' });
     finish(s);
   }
@@ -323,7 +327,7 @@
   const keys = new Set();
   addEventListener('keydown', e => { if (typing() || taxiOpen()) return; const k = e.key.length === 1 ? e.key.toLowerCase() : e.key; keys.add(k);
     if (me && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(k)) e.preventDefault();
-    if (!me || e.repeat) return; if (k === 'Enter' || k === 't') { e.preventDefault(); openChat(); return; } if (k === 'e' || k === ' ') use(); if (k === 'q') drink(me); if (k === 'f') punch(me); if (k === 'g') lightUp(me); if (k === 'Escape') leave(); });
+    if (!me || e.repeat) return; if (k === 'Enter' || k === 't') { e.preventDefault(); openChat(); return; } if (k === 'e' || k === ' ') use(); if (k === 'q') drink(me); if (k === 'f') punch(me); if (k === 'g') lightUp(me); if (k === 'r') buyRound(); if (k === 'b') giftTo('beer'); if (k === 'm') giftTo('money'); if (k === 'Escape') leave(); });
   addEventListener('keyup', e => keys.delete(e.key.length === 1 ? e.key.toLowerCase() : e.key));
   addEventListener('blur', () => keys.clear());
   let touch = null;
@@ -344,12 +348,13 @@
     if (!me) return null; const s = sceneOf(me);
     if (me.seat >= 0) return { k: 'stand', label: 'E: vstát' };
     for (const d of s.doors) if (me.x > d.x0 && me.x < d.x1 && me.y > d.y0 && me.y < d.y1) return { k: 'door', d, label: `E: ${d.name}` };
-    if (s.id === 'pub' && me.x > BAR.x - 8 && me.x < BAR.x + BAR.w + 8 && me.y > BAR.y + BAR.h && me.y < BAR.y + BAR.h + 22) return { k: 'bar', label: me.beer > 0.05 ? 'E: další pivo' : 'E: jedno pivo' };
-    if (s.id === 'wc' && atSink(me) && me.bags > 0 && !(me.smokeT > 0)) return { k: 'line', label: 'E: udělat si lajnu' };
+    if (s.id === 'pub' && me.x > BAR.x - 8 && me.x < BAR.x + BAR.w + 8 && me.y > BAR.y + BAR.h && me.y < BAR.y + BAR.h + 22) return { k: 'bar', label: (me.beer > 0.05 ? 'E: další pivo' : 'E: jedno pivo') + ' · R: runda pro všechny' };
+    if (s.id === 'street' && Math.abs(me.x - ATM.x) < 14 && me.y < 22) return { k: 'atm', label: atmLeft > 0 ? `E: bankomat (ještě ${atmLeft}×)` : 'Bankomat: denní limit' };
+    if (s.id === 'wc' && atSink(me) && !(me.smokeT > 0) && (sinkLines > 0 || me.bags > 0)) return sinkLines > 0 ? { k: 'line', label: `E: dát si lajnu (${sinkLines})` + (me.bags ? ' · G: vysypat další' : '') } : { k: 'lay', label: 'G: vysypat lajnu' };
     { const w = by('waiter'); if (w.present && w.scene === me.scene && Math.hypot(w.x - me.x, w.y - me.y) < 34) return { k: 'waiter', label: 'E: objednat u číšníka' }; }
     let best = null, bd = 30; for (const c of cast) if (c !== me && c.present && c.scene === me.scene) { const d = Math.hypot(c.x - me.x, c.y - me.y); if (d < bd) { bd = d; best = c; } }
     const seat = freeSeatNear(s, me.x, me.y, 16); if (seat >= 0 && (!best || bd > 12)) return { k: 'sit', i: seat, label: 'E: sednout si' };
-    if (best && !staff(best)) return { k: 'talk', c: best, label: 'E / Enter: napsat' };
+    if (best && !staff(best)) return { k: 'talk', c: best, label: 'Enter: napsat · B: koupit mu pivo · M: dát 200 Kč' };
     if (s.id === 'street' && me.x > TAXI.x && me.x < TAXI.x + TAXI.w && me.y > TAXI.y - 18 && me.y < TAXI.y + 12) return { k: 'taxi', label: 'E: k taxíku' };
     return null;
   }
@@ -364,7 +369,9 @@
       setTimeout(() => { if (me) { me.beer = 1; me.beers++; } }, 1700); }
     else if (a.k === 'waiter') { if (me.money < PRICE.beer) { toast('Na pivo už nemáš.'); return; } speak(me, slur('„Jedno pivo, prosím.“', me.drunk), 1.8, true); ask = { target: 'waiter', n: ++askN }; if (isHost()) answer('waiter', me);
       setTimeout(() => { if (me) { me.money -= PRICE.beer; me.beer = 1; me.beers++; toast('Číšník ti přinesl pivo.'); } }, 6000); }
-    else if (a.k === 'line') lightUp(me);
+    else if (a.k === 'line') takeLine(me);
+    else if (a.k === 'lay') lightUp(me);
+    else if (a.k === 'atm') atm();
     else if (a.k === 'talk') { me.dir = dirOf(a.c.x - me.x, a.c.y - me.y); openChat(); }
     else if (a.k === 'taxi') openTaxi();
   }
@@ -383,17 +390,47 @@
   const DRIVER = ['„Dobrej večer, šéfe. Kam to bude?“', '„Jo, ty seš kamarád Saši, ne?“', '„Rychle, támhle jede dvaadvacítka.“', '„Já tu stojím každej večer. Jako hodiny.“'];
   function openTaxi() { keys.clear(); $('taxi').hidden = false; $('taxi-say').textContent = pick(DRIVER); $('taxi-money').textContent = `Máš u sebe ${me.money} Kč.`; $('taxi-buy').disabled = me.money < PRICE.bag; $('taxi-buy').focus(); }
   function closeTaxi() { $('taxi').hidden = true; canvas.focus?.(); }
-  $('taxi-buy').addEventListener('click', () => { if (!me || me.money < PRICE.bag) return; me.money -= PRICE.bag; me.bags++; $('taxi-say').textContent = pick(['„Tady máš. A neviděl jsi mě.“', '„Gram. Čistej jak sníh na Sněžce.“', '„Dobrá volba, šéfe. Pozdravuj Sašu.“']); $('taxi-money').textContent = `Máš u sebe ${me.money} Kč a ${me.bags}× psaníčko. Na záchodě na G.`; $('taxi-buy').disabled = me.money < PRICE.bag; });
+  $('taxi-buy').addEventListener('click', () => { if (!me || me.money < PRICE.bag) return; me.money -= PRICE.bag; me.bags += 10; $('taxi-say').textContent = pick(['„Tady máš. A neviděl jsi mě.“', '„Gram. Čistej jak sníh na Sněžce.“', '„Dobrá volba, šéfe. Pozdravuj Sašu.“']); $('taxi-money').textContent = `Máš u sebe ${me.money} Kč a v kapse na ${me.bags} lajn. Na záchodě u umyvadla G vysype lajnu, E si ji dáš.`; $('taxi-buy').disabled = me.money < PRICE.bag; });
   $('taxi-no').addEventListener('click', closeTaxi);
   $('taxi').addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Escape') closeTaxi(); });
   const atSink = c => c.scene === 'wc' && Math.abs(c.x - 80) < 24 && c.y < 30;
   // G: in the toilet only. For a few minutes everything is faster, sharper and louder; then the comedown.
+  // A gram makes ten lines. G at the sink lays one out; it stays there for anyone (E at the sink takes one).
+  let sinkLines = 0; const ev = { ly: 0, tk: 0, rd: 0, gf: null, gn: 0 };
   function lightUp(c) {
     if (c.bags <= 0) { toast('Nemáš psaníčko. Taxík stojí na Korunní.'); return; }
     if (c.scene !== 'wc') { toast('Tady ne. Na záchod.'); return; }
     if (!atSink(c)) { toast('K umyvadlu. Tam je místo na lajnu.'); return; }
-    c.bags--; c.x = 94; c.y = 16; c.dir = 3; c.look = null; c.smokeT = 3; setTimeout(() => { c.high = Math.min(1, c.high + 0.8); }, 2600);
+    if (sinkLines >= 12) { toast('Na umyvadle už není místo.'); return; }
+    c.bags--; ev.ly++; sinkLines++; speak(c, `vysypal lajnu (${sinkLines} na umyvadle)`, 2.2, false);
   }
+  function takeLine(c) {
+    if (sinkLines <= 0) return; ev.tk++; sinkLines--;
+    c.x = 94; c.y = 16; c.dir = 3; c.look = null; c.smokeT = 3; setTimeout(() => { c.high = Math.min(1, c.high + 0.8); }, 2600);
+  }
+  // Money: the cash machine on Korunní (1000 Kč, three times a night), and friends can give each other money or a beer.
+  const ATM = { x: 494 }; let atmLeft = 3;
+  function atm() { if (atmLeft <= 0) { toast('Denní limit vybrán. Zkus kámoše.'); return; } atmLeft--; me.money += 1000; toast(`Bankomat vydal 1000 Kč. Zůstatek na účtu radši nečti.`); }
+  const nearFriend = () => { let best = null, bd = 30; for (const c of cast) if (c !== me && c.present && !staff(c) && c.scene === me.scene) { const d = Math.hypot(c.x - me.x, c.y - me.y); if (d < bd) { bd = d; best = c; } } return best; };
+  function giftTo(kind) {
+    const f = nearFriend(); if (!f) { toast('Nikdo tu není. Stoupni si ke kámošovi.'); return; }
+    const amt = kind === 'beer' ? PRICE.beer : 200; if (me.money < amt) { toast('Na to nemáš.'); return; }
+    me.money -= amt; ev.gf = { to: f.id, kind, n: ++ev.gn }; logLine(NAMES[me.id], kind === 'beer' ? `koupil pivo pro ${NAMES[f.id]}` : `dal 200 Kč ${NAMES[f.id]}`);
+    if (f.ctrl !== 'remote' && kind === 'beer') { f.beer = 1; }
+  }
+  function receiveGift(from, g) {
+    if (!me || g.to !== me.id) return;
+    if (g.kind === 'beer') { me.beer = 1; me.beers++; toast(`${NAMES[from.id]} ti koupil pivo. Na zdraví!`); }
+    else { me.money += 200; toast(`${NAMES[from.id]} ti dal 200 Kč.`); }
+  }
+  // A round: everyone in the pub gets a fresh beer, on you.
+  function buyRound() {
+    if (sceneOf(me).id !== 'pub' || context()?.k !== 'bar') { toast('Rundu objednáš u baru.'); return; }
+    const n = cast.filter(c => c.present && !staff(c) && c.scene === 'pub').length, cost = n * PRICE.beer;
+    if (me.money < cost) { toast(`Runda pro ${n} stojí ${cost} Kč. Na to nemáš.`); return; }
+    me.money -= cost; ev.rd++; me.beer = 1; me.beers++; speak(me, `„Runda! Platím.“`, 2.2); toast(`Runda pro ${n}: ${cost} Kč.`);
+  }
+  function receiveRound(from) { if (me && me.scene === 'pub' && from.scene === 'pub') { me.beer = 1; me.beers++; toast(`${NAMES[from.id]} platí rundu!`); } }
   let toastT = 0, toastText = '';
   const toast = t => { toastText = t; toastT = 3.5; };
   const nearestStaff = c => ['barman2', 'barman3'].sort((a, b) => Math.abs(by(a).x - c.x) - Math.abs(by(b).x - c.x))[0];
@@ -449,7 +486,7 @@
         else { c.plan = 'home'; walkTo(c, 170, 70); c.planT = 25 + Math.random() * 25; } }
       if (moveAlong(c, dt, 30) && c.plan === 'round' && !c.waved) { c.waved = true; c.dir = 0; } if (c.moving) c.waved = false;
       idleLook(c, dt); return; }
-    if (staff(c)) { c.planT -= dt; if (c.planT <= 0) { c.planT = 6 + Math.random() * 10; walkTo(c, (c.id === 'barman2' ? 60 : 104) + Math.random() * 40, 34); } if (c.attendT > 0) { c.attendT -= dt; c.path = null; c.moving = false; if (c.attend && !c.say) c.dir = dirOf(c.attend.x - c.x, c.attend.y - c.y); } else if (moveAlong(c, dt, 24) && !c.say) c.dir = 0; idleLook(c, dt); return; }
+    if (staff(c)) { c.planT -= dt; if (c.planT <= 0) { c.planT = 6 + Math.random() * 10; c.path = [[(c.id === 'barman2' ? 58 : 100) + Math.random() * 40, 34]]; } c.y = 34; c.x = clamp(c.x, 56, 144); if (c.attendT > 0) { c.attendT -= dt; c.path = null; c.moving = false; if (c.attend && !c.say) c.dir = dirOf(c.attend.x - c.x, c.attend.y - c.y); } else if (moveAlong(c, dt, 24) && !c.say) c.dir = 0; idleLook(c, dt); return; }
     if (!c.present) { if (clock >= 20 * 60 + 40) { c.present = true; c.plan = 'door'; c.door = ST.doors[0]; walkTo(c, 616, 14); } return; }   // Štěpa, late as always
     c.planT -= dt; if (c.attendT > 0) { c.attendT -= dt; if (c.attend) { c.look = null; if (!c.say) c.dir = dirOf(c.attend.x - c.x, c.attend.y - c.y); } }
     if (cast.some(o => o.ctrl !== 'npc' && o.scene === c.scene && Math.hypot(o.x - c.x, o.y - c.y) < 30)) c.planT = Math.max(c.planT, 2);
@@ -632,9 +669,12 @@
         g.restore();
         for (const side of [0, 1]) { const sway = Math.sin(now * 0.7 + a.x + side) * 1.2; for (let k = 0; k < 7; k++) { const cx = side ? X + a.w - 1 - k : X + k; px(g, cx + (k > 4 ? sway : 0), Y + r + 4, 1, s.WALL - 26 - r, `rgba(246,240,228,${0.5 - k * 0.05})`); } } }
     }
-    if (s.id === 'wc') for (const c of cast) if (c.present && c.scene === 'wc' && c.smokeT > 0) { const k = clamp((c.smokeT - 0.4) / 2.4, 0, 1), L = Math.round(14 * k);
-      px(g, 64 - ox, -s.WALL + 34 - oy, 20, 5, '#15171a'); px(g, 64 - ox, -s.WALL + 34 - oy, 20, 1, '#3a3f45');   // a phone on the edge of the sink
-      if (L > 0) px(g, 66 - ox, -s.WALL + 36 - oy, L, 1, '#ffffff'); px(g, 82 - ox, -s.WALL + 32 - oy, 1, 5, '#d8c48a'); px(g, 81 - ox, -s.WALL + 32 - oy, 1, 1, '#b8a46a'); }   // the line, and a rolled-up banknote
+    if (s.id === 'wc') {   // a little mirror tile on the sink; the lines that are laid out stay on it, side by side
+      const busy = cast.some(c => c.present && c.scene === 'wc' && c.smokeT > 0);
+      if (sinkLines > 0 || busy) { px(g, 63 - ox, -s.WALL + 32 - oy, 22, 7, '#15171a'); px(g, 63 - ox, -s.WALL + 32 - oy, 22, 1, '#4a5058');
+        for (let i = 0; i < Math.min(sinkLines, 6); i++) px(g, 65 - ox, -s.WALL + 34 - oy + (i % 3) * 2, 8, 1, '#ffffff'), i >= 3 && px(g, 75 - ox, -s.WALL + 34 - oy + (i % 3) * 2, 8, 1, '#ffffff');
+        for (let i = 6; i < sinkLines; i++) px(g, 64 - ox + (i - 6) * 3, -s.WALL + 31 - oy, 2, 1, '#ffffff');
+        px(g, 86 - ox, -s.WALL + 30 - oy, 1, 6, '#d8c48a'); px(g, 85 - ox, -s.WALL + 30 - oy, 1, 1, '#b8a46a'); } }
     if (s.id === 'wc') { const ph = (now * 1.3) % 1; px(g, 74 - ox, -s.WALL + 37 + ph * 6 - oy, 1, 2, `rgba(170,200,220,${1 - ph})`); }   // the dripping tap
   }
   // tram 22: about once a real minute (an hour of the night) it rolls through Korunní, one way then the other
@@ -709,7 +749,7 @@
   function hud() {
     const n = peersHere(), s = me ? sceneOf(me) : PUB, beers = me ? me.beers : 0, k = fmt(clock) + (me ? me.id + me.money + me.bags : '') + n + s.id + beers; if (k === hudKey) return; hudKey = k;
     $('clock').textContent = `${fmt(clock)} · ${s.name}`;
-    $('who').textContent = me ? NAMES[me.id] + ` · ${me.money} Kč` + (beers ? ` · ${beers} ${beers === 1 ? 'pivo' : beers < 5 ? 'piva' : 'piv'}` : '') + (me.bags ? ` · ${me.bags}× psaníčko` : '') + (n > 1 ? ` · nás ${n}` : '') : 'vyber si, za koho hraješ';
+    $('who').textContent = me ? NAMES[me.id] + ` · ${me.money} Kč` + (beers ? ` · ${beers} ${beers === 1 ? 'pivo' : beers < 5 ? 'piva' : 'piv'}` : '') + (me.bags ? ` · ${me.bags} lajn v kapse` : '') + (n > 1 ? ` · nás ${n}` : '') : 'vyber si, za koho hraješ';
   }
 
   // ================================================================== ONLINE
@@ -717,7 +757,7 @@
   // where they stand or sit, their beer, the line they last said and the last punch they threw. The viewer with the
   // lowest peer label is the host: it runs everyone nobody plays and the clock, and shares them in its presence.
   let room = null, peers = [], sendT = 0, lastSent = '';
-  const seenSay = new Map(), seenAsk = new Map(), seenPu = new Map();
+  const seenEv = new Map(), seenSay = new Map(), seenAsk = new Map(), seenPu = new Map();
   const viewers = () => peers.filter(p => p.kind === 'viewer');
   const lowestPeer = () => viewers().map(p => p.peer).sort()[0];
   function isHost() { if (!room) return true; const v = viewers(); if (!v.length) return true; const low = lowestPeer(); return v.some(p => p.sameTab && p.peer === low); }
@@ -735,8 +775,8 @@
   }
   function net(dt) {
     if (!room || (sendT -= dt) > 0) return; sendT = 1 / 15;
-    const P = me ? { who: me.id, me: pack(me), ask } : { who: null, me: null, ask: null };
-    if (isHost()) { P.clock = Math.round(clock * 10) / 10; P.npc = cast.filter(c => c.ctrl === 'npc').map(pack); } else { P.clock = null; P.npc = null; }
+    const P = me ? { who: me.id, me: pack(me), ask, ev } : { who: null, me: null, ask: null, ev: null };
+    if (isHost()) { P.clock = Math.round(clock * 10) / 10; P.npc = cast.filter(c => c.ctrl === 'npc').map(pack); P.lines = sinkLines; } else { P.clock = null; P.npc = null; P.lines = null; }
     const k = JSON.stringify(P); if (k === lastSent) return; lastSent = k; room.presence(P).catch(() => {});
   }
   function applyPeers() {
@@ -748,6 +788,10 @@
       const p = cl.get(c.id);
       if (p && !p.sameTab) { const q = p.presence; if (c.ctrl !== 'remote') { c.ctrl = 'remote'; c.path = null; }
         if (Array.isArray(q.me) && q.me[0] === c.id) unpack(c, q.me);
+        if (q.ev && typeof q.ev === 'object') { const old = seenEv.get(p.peer); seenEv.set(p.peer, { ...q.ev, gf: q.ev.gf });
+          if (old) { if (host) sinkLines = clamp(sinkLines + ((q.ev.ly | 0) - (old.ly | 0)) - ((q.ev.tk | 0) - (old.tk | 0)), 0, 12);
+            if ((q.ev.rd | 0) > (old.rd | 0)) receiveRound(c);
+            if (q.ev.gf && typeof q.ev.gf === 'object' && q.ev.gf.n !== (old.gf && old.gf.n)) receiveGift(c, q.ev.gf); } }
         if (q.ask && typeof q.ask === 'object') { const n = q.ask.n, first = !seenAsk.has(p.peer); if (n !== seenAsk.get(p.peer)) { seenAsk.set(p.peer, n);
           if (!first && host && typeof q.ask.target === 'string') { if (q.ask.follow && SC[q.ask.follow]) { const fol = q.ask.target.split(',').map(by).filter(f => f && f.ctrl === 'npc'); const door = sceneOf(c).doors.find(d => d.to === q.ask.follow); if (door) setTimeout(() => goThrough(c, door, fol), 0); }
             else answer(q.ask.target, c); } } } }
@@ -755,7 +799,7 @@
     }
     if (!host) { const h = viewers().find(p => p.peer === lowestPeer()), q = h && h.presence;
       if (q && Array.isArray(q.npc)) for (const e of q.npc) { const c = by(e && e[0]); if (c && c.ctrl === 'npc' && Array.isArray(e)) unpack(c, e); }
-      if (q && typeof q.clock === 'number' && Math.abs(q.clock - clock) > 1.5) clock = q.clock; }
+      if (q && typeof q.clock === 'number' && Math.abs(q.clock - clock) > 1.5) clock = q.clock; if (q && Number.isInteger(q.lines)) sinkLines = q.lines; }
     renderCards();
   }
   async function connect() {
@@ -813,6 +857,8 @@
       c.k.clearRect(0, 0, 48, 48); c.k.fillStyle = 'rgba(0,0,0,0.35)'; c.k.beginPath(); c.k.ellipse(24, 44, 8, 2.5, 0, 0, 6.283); c.k.fill();
       c.k.drawImage(im, f * 48, 29, 48, 19, 0, 29, 48, 19); c.k.drawImage(im, f * 48, 0, 48, 30, 0, br, 48, 30); }
   }
+  const VERSION = '0.7';   // shown on the intro; bump with every published version
+  $('ver').textContent = `verze ${VERSION}`;
   // The 18+ gate, once per browser.
   let adultOk = false; try { adultOk = localStorage.getItem('vinko-18') === '1'; } catch (e) {}
   $('adult-ok').addEventListener('click', () => { adultOk = true; try { localStorage.setItem('vinko-18', '1'); } catch (e) {} $('intro').classList.remove('gated'); const f = $('cards').querySelector('button:not(:disabled)'); if (f) f.focus(); });
@@ -835,7 +881,7 @@
   await loadArt(); furnish();
   try { await document.fonts.load('10px VT323', 'Dvě děti, chlapi. Žena volala. Paťas Štěpa Pažout Saša Výčepní ťuk'); } catch (e) {}
   $('load')?.remove();
-  window.__game = { cast, by, keys, use, drink, punch, enter, leave, isHost, context, SC, get me() { return me; }, setClock: m => { clock = m; }, tramPos, screenOf: c => [(c.x - view[0]) * SCALE, (c.y - view[1]) * SCALE] };
+  window.__game = { sink: () => sinkLines, cast, by, keys, use, drink, punch, enter, leave, isHost, context, SC, get me() { return me; }, setClock: m => { clock = m; }, tramPos, screenOf: c => [(c.x - view[0]) * SCALE, (c.y - view[1]) * SCALE] };
   showIntro(); connect();
   window.__ready = true;
   requestAnimationFrame(frame);
