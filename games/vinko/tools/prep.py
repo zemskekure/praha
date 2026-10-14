@@ -5,7 +5,7 @@ import json, os
 from collections import deque
 from PIL import Image, ImageSequence
 
-CAST = ['patas', 'stepa', 'pazout', 'ado', 'kopinaut', 'bob', 'kevin', 'sasa', 'barman']
+CAST = ['patas', 'stepa', 'pazout', 'ado', 'kopinaut', 'bob', 'kevin', 'sasa', 'barman', 'barman2', 'barman3']
 
 def frames(path): return [f.convert('RGBA') for f in ImageSequence.Iterator(Image.open(path))]
 

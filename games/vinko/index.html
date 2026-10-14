@@ -26,21 +26,31 @@
   #pad button { font: 12px/1 var(--display); color: var(--paper); background: var(--panel); border: 2px solid var(--muted); padding: 14px; }
   #load { position: fixed; inset: 0; display: grid; place-content: center; text-align: center; background: var(--ink); font: 18px/1.6 var(--display); letter-spacing: .12em; text-transform: uppercase; }
   #load span { font: 20px var(--body); letter-spacing: 0; text-transform: none; color: var(--muted); }
-  #intro { position: fixed; inset: 0; overflow: auto; display: grid; align-content: center; justify-items: center; gap: 10px; padding: 24px 16px; box-sizing: border-box;
-           background: radial-gradient(ellipse at 50% 30%, rgba(60,36,18,.82), rgba(16,10,6,.94)); }
-  #intro h1 { margin: 0; font: 40px/1 var(--display); letter-spacing: .1em; color: var(--accent); text-shadow: 0 3px 0 #000; }
-  #intro .sub { margin: 0; font: 22px/1 var(--body); color: var(--muted); }
-  #intro h2 { margin: 14px 0 4px; font: 14px/1.2 var(--display); letter-spacing: .08em; text-transform: uppercase; font-weight: 400; }
-  #cards { display: grid; grid-template-columns: repeat(4, minmax(0, 150px)); gap: 10px; width: 100%; max-width: 640px; justify-content: center; }
-  @media (max-width: 560px) { #cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } #intro h1 { font-size: 30px; } }
-  .card { display: grid; justify-items: center; gap: 2px; padding: 10px 6px 8px; background: var(--panel); color: var(--paper); border: 2px solid #4a3220; cursor: pointer; font: 18px/1.05 var(--body); }
-  .card:hover:not(:disabled), .card:focus-visible { border-color: var(--accent); outline: none; background: rgba(60,38,20,.9); }
-  .card .face { width: 72px; height: 72px; image-rendering: pixelated; }
-  .card b { font: 12px/1.4 var(--display); letter-spacing: .06em; text-transform: uppercase; font-weight: 400; }
-  .card span { color: var(--muted); text-align: center; }
-  .card i { font-style: normal; color: var(--accent); font-size: 16px; }
-  .card.taken { opacity: .45; cursor: not-allowed; } .card.taken i { color: var(--muted); }
-  #intro-note { margin: 8px 0 0; font: 20px/1.2 var(--body); color: var(--muted); text-align: center; max-width: 560px; }
+  /* The intro: an enamel pub sign, then the eight of them standing in a row on a wooden shelf. */
+  #intro { position: fixed; inset: 0; overflow: auto; display: grid; align-content: center; justify-items: center; gap: 0; padding: 24px 16px; box-sizing: border-box;
+           background: radial-gradient(ellipse 70% 60% at 50% 45%, rgba(40,22,10,.55), rgba(10,6,3,.92)); }
+  .sign { position: relative; padding: 14px 34px 12px; background: #f1e6cf; color: #8c1f1a; border: 3px solid #8c1f1a; outline: 3px solid #f1e6cf; box-shadow: 0 0 0 6px #2a1a10, 0 18px 40px rgba(0,0,0,.6), 0 0 80px rgba(255,190,110,.25); text-align: center; }
+  .sign::before, .sign::after { content: ''; position: absolute; top: -26px; width: 2px; height: 22px; background: #a88a48; }
+  .sign::before { left: 22%; } .sign::after { right: 22%; }
+  .sign h1 { margin: 0; font: 46px/1 var(--display); letter-spacing: .06em; }
+  .sign p { margin: 6px 0 0; font: 18px/1 var(--body); color: #5a3a22; letter-spacing: .04em; }
+  #intro h2 { margin: 30px 0 16px; font: 13px/1.2 var(--display); letter-spacing: .14em; text-transform: uppercase; font-weight: 400; color: var(--accent); }
+  #cards { display: flex; gap: 2px; justify-content: center; align-items: flex-end; padding: 0 10px; border-bottom: 10px solid #5e3a21; box-shadow: 0 2px 0 #7f5131 inset, 0 12px 24px rgba(0,0,0,.5);
+           background: linear-gradient(to top, rgba(255,180,90,.10), transparent 60%); }
+  .card { display: grid; justify-items: center; gap: 0; padding: 0 2px; background: none; border: 0; color: var(--paper); cursor: pointer; font: inherit; position: relative; }
+  .card .spr { width: min(120px, 11vw); aspect-ratio: 1; image-rendering: pixelated; transition: transform .15s; }
+  .card b { margin: -4px 0 8px; padding: 3px 7px 2px; font: 10px/1.2 var(--display); letter-spacing: .06em; text-transform: uppercase; font-weight: 400; background: #f1e6cf; color: #8c1f1a; border: 1px solid #8c1f1a; white-space: nowrap; }
+  .card::before { content: ''; position: absolute; left: 10%; right: 10%; bottom: 10px; height: 40%; background: radial-gradient(ellipse at 50% 100%, rgba(255,200,120,.35), transparent 70%); opacity: 0; transition: opacity .15s; pointer-events: none; }
+  .card:hover::before, .card:focus-visible::before, .card.mine::before { opacity: 1; }
+  .card:hover .spr, .card:focus-visible .spr { transform: translateY(-4px); }
+  .card:focus-visible { outline: none; } .card:focus-visible b { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .card.taken { cursor: not-allowed; } .card.taken .spr { filter: grayscale(1) brightness(.55); } .card.taken b { background: #8a8174; color: #2a2420; border-color: #2a2420; }
+  #pick { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; align-items: center; min-height: 64px; margin-top: 18px; width: min(460px, 100%); }
+  #pick canvas { grid-row: span 2; width: 64px; height: 64px; image-rendering: pixelated; border: 2px solid #5e3a21; }
+  #pick-name { font: 14px/1.2 var(--display); letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+  #pick-line { font: 20px/1.1 var(--body); color: var(--paper); }
+  #intro-note { margin: 18px 0 0; font: 18px/1.2 var(--body); color: var(--muted); text-align: center; max-width: 560px; }
+  @media (max-width: 640px) { #cards { flex-wrap: wrap; border-bottom-width: 6px; } .card .spr { width: 22vw; } .sign h1 { font-size: 34px; } }
   @media (pointer: coarse) { #pad { display: flex; } #hint { display: none; } }
 </style>
 </head>
@@ -50,10 +60,10 @@
 <div id="hint" class="panel">WASD: chůze · E: mluvit, sednout, pivo, dveře · Q: napít se · F: šťouchnout · Esc: postava</div>
 <div id="pad"><button type="button" id="btn-e">E</button><button type="button" id="btn-q">Pít</button><button type="button" id="btn-f">Rána</button><button type="button" id="btn-tab">Esc</button></div>
 <section id="intro" hidden aria-labelledby="intro-title">
-  <h1 id="intro-title">Vínko</h1>
-  <p class="sub">Lokál Korunní · Vinohrady · úterý večer</p>
+  <div class="sign"><h1 id="intro-title">Vínko</h1><p>Lokál Korunní · Vinohrady · úterý večer</p></div>
   <h2>Za koho dneska hraješ?</h2>
-  <div id="cards"></div>
+  <div id="cards" role="group" aria-label="Postavy"></div>
+  <div id="pick" aria-live="polite"><canvas id="pick-face" width="64" height="64"></canvas><div id="pick-name"></div><div id="pick-line"></div></div>
   <p id="intro-note"></p>
 </section>
 <div id="load">Vínko<br><span>točí se první pivo…</span></div>

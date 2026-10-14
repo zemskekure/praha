@@ -7,7 +7,7 @@
   const canvas = $('c'), g = canvas.getContext('2d');
   let VW = 600, VH = 330, SCALE = 2;
   function resize() {
-    SCALE = Math.max(1, Math.round(Math.min(innerWidth / 600, innerHeight / 330)));
+    SCALE = Math.max(2, Math.round(Math.min(innerWidth / 400, innerHeight / 225)));
     VW = Math.ceil(innerWidth / SCALE); VH = Math.ceil(innerHeight / SCALE);
     canvas.width = VW; canvas.height = VH; g.imageSmoothingEnabled = false;
   }
@@ -33,12 +33,12 @@
     const s = { id, W, H, WALL, name, solids: [], pieces: [], seats: [], doors: [], lightsOut: [] };
     s.block = (x0, y0, x1, y1) => s.solids.push([x0, y0, x1, y1]);
     s.block(-40, -WALL - 40, W + 40, 6); s.block(-40, H - 4, W + 40, H + 60); s.block(-40, -40, 4, H + 40); s.block(W - 4, -40, W + 40, H + 40);
-    s.piece = (w, h, paint, x, y, solid) => { const [c, k] = mk(w, h); paint(k, w, h); s.pieces.push({ c, x, y, w, h }); if (solid) s.block(...solid); };
+    s.piece = (w, h, paint, x, y, solid, base) => { const [c, k] = mk(w, h); paint(k, w, h); s.pieces.push({ c, x, y, w, h, base }); if (solid) s.block(...solid); };   // base: sort the whole piece at one depth
     [s.floor, s.fx] = mk(W, H); [s.wall, s.wx] = mk(W, WALL);
     SC[id] = s; return s;
   }
   function finish(s) {
-    s.bands = []; for (const p of s.pieces) for (let y = 0; y < p.h; y += 8) s.bands.push({ p, sy: y, sh: Math.min(8, p.h - y), base: p.y + Math.min(p.h, y + 8) - (y + 8 >= p.h ? 6 : 0) });
+    s.bands = []; for (const p of s.pieces) for (let y = 0; y < p.h; y += 8) s.bands.push({ p, sy: y, sh: Math.min(8, p.h - y), base: p.base ?? p.y + Math.min(p.h, y + 8) - (y + 8 >= p.h ? 6 : 0) });
     s.blocked = (x, y, r = 3) => x < 6 || y < 8 || x > s.W - 6 || y > s.H - 6 || s.solids.some(q => x + r > q[0] && x - r < q[2] && y + r > q[1] && y - r < q[3]);
     s.GC = 6; s.GW = Math.ceil(s.W / s.GC); s.GH = Math.ceil(s.H / s.GC); s.grid = new Uint8Array(s.GW * s.GH);
     for (let j = 0; j < s.GH; j++) for (let i = 0; i < s.GW; i++) s.grid[j * s.GW + i] = s.blocked(i * s.GC + s.GC / 2, j * s.GC + s.GC / 2, 4) ? 1 : 0;
@@ -47,74 +47,83 @@
   function plankTop(k, x, y, w, h, vertical) { px(k, x, y, w, h, WOOD[3]); for (let i = 0; i < (vertical ? w : h); i++) { const q = hash2(i, x + y, 7); if (q > 0.8) vertical ? px(k, x + i, y, 1, h, WOOD[2]) : px(k, x, y + i, w, 1, WOOD[2]); if (q < 0.12) vertical ? px(k, x + i, y, 1, h, WOOD[4]) : px(k, x, y + i, w, 1, WOOD[4]); } px(k, x, y, w, 1, WOOD[4]); px(k, x, y, 1, h, WOOD[4]); }
 
   // ------------------------------------------------------------------ the pub: Lokál Korunní
-  const PUB = scene('pub', 600, 250, 70, 'Lokál Korunní');
-  const WINDOWS = [384, 452, 520].map(x => ({ x, w: 44 }));
-  const BAR = { x: 30, y: 26, w: 28, h: 176 };
-  const CHANDELIERS = [{ x: 200, y: 112 }, { x: 430, y: 118 }];
+  // Two rooms in one: the tap room on the corner (arched windows, the steel island bar with the tank behind glass)
+  // and the long dining hall (benches and long tables, bentwood chairs by the side windows, the chalk-drawn panelling).
+  const PUB = scene('pub', 640, 250, 84, 'Lokál Korunní');
+  const BAR = { x: 66, y: 44, w: 104, h: 28, face: 22 };          // the island's footprint on the floor; its top is drawn 22 px higher
+  const ARCHES = [{ x: 16, w: 34 }, { x: 186, w: 34 }];
+  const CHANDELIERS = [{ x: 118, y: 150, hang: 84 }, { x: 340, y: 120, hang: 74 }, { x: 520, y: 120, hang: 74 }];
   const CANDLES = [];
+  const SIDE_WINDOWS = [40, 110, 180];                              // windows in the right-hand wall, onto Šumavská
   { const s = PUB, W = s.W, H = s.H, WALL = s.WALL, fx = s.fx, wx = s.wx;
-    // the floor: honey oak in a herringbone, each plank its own shade, a dark groove between
     const OAK = ['#8e5f37', '#986640', '#a06c44', '#a87249', '#92623b', '#885a34'].map(hex);
     texture(fx, W, H, (x, y) => { const C = 8, col = Math.floor(x / C), lx = x - col * C, dir = col % 2 ? 1 : -1, v = y + (dir > 0 ? lx : C - 1 - lx) * 0.5, plank = Math.floor(v / 3), lv = v - plank * 3;
       const h = hash2(col, plank, 3), c = OAK[Math.floor(h * OAK.length)], groove = lv < 0.55 || lx === 0, grain = (hash2(x >> 2, y, 4) - 0.5) * 6 + Math.sin((x + y * 3) * 0.9 + h * 20) * 2, k = groove ? 0.8 : 1;
       return [clamp(c[0] * k + grain, 0, 255), clamp(c[1] * k + grain * 0.8, 0, 255), clamp(c[2] * k + grain * 0.5, 0, 255)]; });
     { const gr = fx.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, 'rgba(255,230,190,0.08)'); gr.addColorStop(0.5, 'rgba(255,230,190,0)'); gr.addColorStop(1, 'rgba(40,20,10,0.18)'); fx.fillStyle = gr; fx.fillRect(0, 0, W, H); }
-    // a long runner rug down the middle aisle, worn at the edges
-    for (let y = 60; y < 236; y++) for (let x = 352; x < 366; x++) { const edge = x === 352 || x === 365 || (y % 8 === 0 && (x === 353 || x === 364)); px(fx, x, y, 1, 1, edge ? '#5a2a20' : ((x + y) % 6 < 3 ? '#7a3a2a' : '#6e3426')); }
-    // the back wall: cream wallpaper with a red pattern over dark panelling covered in white chalk drawings
+    // a steel grate behind the bar where the barmen stand, as in the photo
+    for (let y = 8; y < 42; y++) for (let x = 60; x < 176; x++) px(fx, x, y, 1, 1, (x + y) % 4 === 0 ? '#6c7176' : (x % 4 === 0 || y % 4 === 0) ? '#7f8489' : '#9aa0a5');
+    // wallpaper: cream with a red stamped pattern, over the whole tap room and above the panelling in the hall
     px(wx, 0, 0, W, WALL, '#efe2cf');
-    for (let y = 4; y < WALL - 30; y += 12) for (let x = (y / 12 % 2) * 7; x < W; x += 14) { const c = '#c27466'; px(wx, x + 3, y, 2, 1, c); px(wx, x + 2, y + 1, 4, 1, c); px(wx, x + 1, y + 2, 2, 2, c); px(wx, x + 5, y + 2, 2, 2, c); px(wx, x + 3, y + 3, 2, 3, c); px(wx, x + 2, y + 6, 1, 1, '#d79a8c'); px(wx, x + 5, y + 6, 1, 1, '#d79a8c'); }
-    px(wx, 0, 0, W, 3, '#f7efe2'); px(wx, 0, 3, W, 1, '#d8c8b0');
-    const PY = WALL - 30; px(wx, 0, PY, W, 30, '#5b3a24'); px(wx, 0, PY, W, 2, '#7a5034'); px(wx, 0, PY + 2, W, 1, '#3e2716');
-    for (let x = 0; x < W; x += 30) px(wx, x, PY + 3, 1, 27, '#4a2e1b');
-    px(wx, 0, WALL - 2, W, 2, '#3a2415');
+    for (let y = 4; y < WALL; y += 12) for (let x = (y / 12 % 2) * 7; x < W; x += 14) { const c = '#c27466'; px(wx, x + 3, y, 2, 1, c); px(wx, x + 2, y + 1, 4, 1, c); px(wx, x + 1, y + 2, 2, 2, c); px(wx, x + 5, y + 2, 2, 2, c); px(wx, x + 3, y + 3, 2, 3, c); px(wx, x + 2, y + 6, 1, 1, '#d79a8c'); px(wx, x + 5, y + 6, 1, 1, '#d79a8c'); }
+    px(wx, 0, 0, W, 3, '#f7efe2'); px(wx, 0, 3, W, 1, '#d8c8b0'); px(wx, 0, WALL - 3, 240, 3, '#5b3a24');
+    // the tap room: two tall arched windows to Korunní with dark brown frames, and the steel back counter between them
+    for (const a of ARCHES) { const X = a.x, Y0 = 12, Y1 = WALL - 8, r = a.w / 2;
+      px(wx, X - 3, Y0 + r - 3, a.w + 6, Y1 - Y0 - r + 6, '#e6d8c2'); for (let k = 0; k <= r + 3; k++) { const hh = Math.round(Math.sqrt(Math.max(0, (r + 3) ** 2 - (k - r - 3 + 0.5) ** 2))); }
+      for (let yy = Y0 - 3; yy < Y1 + 3; yy++) for (let xx = X - 3; xx < X + a.w + 3; xx++) { const dx = xx - (X + r - 0.5), dy = yy - (Y0 + r); const inArch = yy >= Y0 + r || dx * dx + dy * dy <= (r + 3) ** 2; if (!inArch) continue;
+        const inner = (yy >= Y0 + r || dx * dx + dy * dy <= r * r) && xx >= X && xx < X + a.w && yy < Y1; px(wx, xx, yy, 1, 1, inner ? '#0f1830' : '#4a2c18'); }
+      px(wx, X + r - 1, Y0, 2, Y1 - Y0, '#4a2c18'); px(wx, X, Y0 + r + 8, a.w, 2, '#4a2c18'); px(wx, X - 4, Y1, a.w + 8, 3, '#e9dcc6'); }
+    px(wx, 66, WALL - 34, 104, 34, '#b8bec3'); px(wx, 66, WALL - 34, 104, 2, '#e3e7ea'); px(wx, 66, WALL - 4, 104, 4, '#8a9095');
+    for (const sy of [WALL - 62, WALL - 50]) { px(wx, 70, sy, 96, 2, 'rgba(210,230,240,0.7)'); for (let bx = 72; bx < 164; bx += 6) { px(wx, bx, sy - 7, 4, 7, 'rgba(230,240,245,0.6)'); px(wx, bx + 1, sy - 6, 1, 5, 'rgba(255,255,255,0.7)'); } }   // glass shelves of upturned mugs
+    for (let i = 0; i < 4; i++) px(wx, 80 + i * 24, WALL - 28, 14, 18, '#a9afb4');
+    // the hall: tall dark panelling covered in white chalk drawings, the toilet door, two vents above
+    const PX0 = 240, PY = WALL - 56; px(wx, PX0, PY, W - PX0, 56, '#5b3a24'); px(wx, PX0, PY, W - PX0, 2, '#7a5034'); px(wx, PX0, PY + 2, W - PX0, 1, '#3e2716');
+    for (let x = PX0; x < W; x += 34) px(wx, x, PY + 3, 1, 53, '#4a2e1b');
     const ch = '#f4efe6';
     const face = (x, y, r) => { pcirc(wx, x, y, r, ch); px(wx, x - 2, y - 1, 1, 1, ch); px(wx, x + 2, y - 1, 1, 1, ch); pcirc(wx, x, y + 1, r * 0.5, ch, 0.4, 2.7); };
     const mug = (x, y) => { pline(wx, [[x, y], [x, y + 9], [x + 7, y + 9], [x + 7, y]], ch); pcirc(wx, x + 9, y + 4, 3, ch, -1.4, 1.4); pline(wx, [[x - 1, y - 1], [x + 2, y - 3], [x + 5, y - 2], [x + 8, y - 3]], ch); };
     const hat = (x, y) => { pline(wx, [[x, y], [x, y - 4], [x + 2, y - 7], [x + 5, y - 6], [x + 8, y - 8], [x + 10, y - 5], [x + 10, y]], ch); pline(wx, [[x, y], [x + 10, y]], ch); };
-    for (let i = 0; i < 9; i++) { const x = 140 + i * 23 + (hash2(i, 1, 9) - 0.5) * 6, y = PY + 9 + hash2(i, 2, 9) * 10;
-      if (i % 3 === 0) { face(x, y + 4, 5); hat(x - 5, y - 1); } else if (i % 3 === 1) mug(x - 3, y); else { face(x, y + 5, 4); pline(wx, [[x - 6, y + 13], [x - 2, y + 10], [x + 3, y + 10], [x + 7, y + 13]], ch); } }
-    pline(wx, [[132, PY + 25], [150, PY + 22], [175, PY + 26], [205, PY + 23], [240, PY + 26], [290, PY + 22], [335, PY + 25]], ch);
-    // coats on hooks along the panelling
-    for (const [cx, col] of [[350, '#4a5a3a'], [360, '#7a3b2e'], [372, '#2f3a52']]) { px(wx, cx + 2, PY + 1, 2, 2, '#c9a43c'); px(wx, cx, PY + 3, 6, 16, col); px(wx, cx + 1, PY + 3, 1, 15, 'rgba(255,255,255,0.12)'); }
-    // the bar's back: shelves with bottles, the TV above
-    px(wx, 2, 14, 66, PY - 14, '#3a2617'); for (const sy of [24, 33]) { px(wx, 4, sy, 62, 2, '#6b4a30');
-      for (let bx = 6; bx < 64; bx += 4) { const c = ['#2f5a33', '#7a2a24', '#c9a43c', '#e7e2d6', '#3b4f6e'][Math.floor(hash2(bx, sy, 2) * 5)]; px(wx, bx, sy - 6, 3, 6, c); px(wx, bx + 1, sy - 8, 1, 2, c); px(wx, bx, sy - 5, 1, 3, 'rgba(255,255,255,0.35)'); } }
-    px(wx, 18, 3, 34, 10, '#111'); px(wx, 19, 4, 32, 8, '#20323d');
-    // the toilet door
-    px(wx, 94, 16, 26, WALL - 16, '#2c1b10'); px(wx, 96, 18, 22, WALL - 18, '#6e4429'); px(wx, 98, 20, 18, 18, '#7d4f31'); px(wx, 98, 41, 18, 24, '#7d4f31'); px(wx, 113, 42, 2, 2, '#d9b25a');
-    px(wx, 101, 8, 12, 6, '#1d1d1d'); px(wx, 102, 9, 10, 4, '#f1ead8'); px(wx, 103, 10, 2, 2, '#1d1d1d'); px(wx, 107, 10, 3, 2, '#1d1d1d');
-    for (const vx of [170, 214]) { px(wx, vx, 8, 26, 14, '#2c2a28'); for (let k = 0; k < 6; k++) px(wx, vx + 1, 9 + k * 2, 24, 1, '#6d6964'); }
-    pcirc(wx, 300, 20, 8, '#2b2420'); for (let r = 7; r > 0; r--) pcirc(wx, 300, 20, r, '#f6f1e6');
-    for (const w of WINDOWS) { px(wx, w.x - 3, 6, w.w + 6, PY - 2, '#d9c9b2'); px(wx, w.x, 9, w.w, PY - 8, '#0d1424'); px(wx, w.x - 3, PY + 1, w.w + 6, 3, '#f2e9da'); px(wx, w.x + 2, PY + 6, w.w - 4, 6, '#8c8378'); for (let i = 0; i < w.w - 4; i += 3) px(wx, w.x + 3 + i, PY + 6, 1, 6, '#6f675d'); }   // radiators under the windows
-    // long tables with a bench each side, end-on to the back wall like in the photo
-    for (const tx of [118, 198, 278]) {
-      const ty = 56, tl = 146, tw = 24;
+    const body = (x, y) => { pline(wx, [[x, y], [x - 4, y + 10], [x - 6, y + 22]], ch); pline(wx, [[x, y], [x + 5, y + 10], [x + 7, y + 22]], ch); pline(wx, [[x - 3, y + 6], [x - 10, y + 2]], ch); pline(wx, [[x + 3, y + 6], [x + 10, y + 1]], ch); };
+    for (let i = 0; i < 13; i++) { const x = PX0 + 50 + i * 27 + (hash2(i, 1, 9) - 0.5) * 8, y = PY + 10 + hash2(i, 2, 9) * 8;
+      if (i % 4 === 0) { face(x, y + 4, 6); hat(x - 5, y - 2); body(x, y + 11); } else if (i % 4 === 1) { mug(x - 3, y + 6); mug(x + 6, y + 14); } else if (i % 4 === 2) { face(x, y + 6, 5); body(x, y + 12); } else { pcirc(wx, x, y + 18, 9, ch, 3.3, 6.1); pline(wx, [[x - 9, y + 18], [x + 9, y + 18]], ch); face(x, y + 6, 4); } }
+    px(wx, 256, PY - 6, 30, 62, '#2c1b10'); px(wx, 258, PY - 4, 26, 60, '#6e4429'); px(wx, 261, PY - 1, 20, 22, '#7d4f31'); px(wx, 261, PY + 25, 20, 28, '#7d4f31'); px(wx, 279, PY + 26, 2, 3, '#d9b25a');
+    px(wx, 264, PY - 16, 14, 7, '#1d1d1d'); px(wx, 265, PY - 15, 12, 5, '#f1ead8'); wx.font = '5px sans-serif'; wx.fillStyle = '#1d1d1d'; wx.fillText('WC', 266, PY - 11);
+    for (const vx of [340, 400]) { px(wx, vx, 6, 30, 16, '#2c2a28'); for (let k = 0; k < 7; k++) px(wx, vx + 1, 7 + k * 2, 28, 1, '#6d6964'); }
+    // the island bar: brushed steel, four taps, a drip tray; through its glass front the polished Pilsner tank
+    s.piece(BAR.w, BAR.h + BAR.face, k => { const w = BAR.w, h = BAR.h, f = BAR.face;
+      for (let y = 0; y < h; y++) px(k, 0, y, w, 1, y % 3 ? '#c9ced2' : '#bfc5c9'); px(k, 0, 0, w, 1, '#eef1f3'); px(k, 0, h - 1, w, 1, '#8d9398');
+      px(k, 30, 9, 44, 6, '#8d9398'); for (let i = 0; i < 4; i++) { const tx = 36 + i * 10; px(k, tx, 4, 3, 8, '#e5e9ec'); px(k, tx - 1, 3, 5, 2, '#f7f9fa'); px(k, tx, 11, 3, 2, '#5d6266'); }
+      px(k, 0, h, w, f, '#1d2226'); px(k, 2, h + 1, w - 4, f - 3, 'rgba(120,140,150,0.35)');
+      for (const cx of [28, 76]) { for (let r = 9; r >= 0; r--) { const c = r > 7 ? '#6f6a64' : r > 4 ? '#c7c2ba' : r > 2 ? '#e6e1d9' : '#a9a49c'; pcirc(k, cx, h + f / 2, r, c); } for (let a = 0; a < 6.28; a += 0.7) px(k, cx + Math.cos(a) * 8, h + f / 2 + Math.sin(a) * 8, 1, 1, '#4a4642'); px(k, cx - 4, h + 5, 3, 2, '#ffffff'); }
+      pline(k, [[4, h + 3], [16, h + f - 2]], 'rgba(255,255,255,0.18)'); pline(k, [[54, h + 3], [66, h + f - 2]], 'rgba(255,255,255,0.18)');
+      px(k, 0, h + f - 2, w, 2, '#8d9398'); px(k, 0, h, 2, f, '#8d9398'); px(k, w - 2, h, 2, f, '#8d9398'); }, BAR.x, BAR.y - BAR.face, [BAR.x, BAR.y, BAR.x + BAR.w, BAR.y + BAR.h], BAR.y + BAR.h);
+    // two tall round standing tables in the tap room
+    for (const [tx, ty] of [[52, 150], [176, 160]]) s.piece(20, 34, k => { pcirc(k, 10, 6, 9, '#3b2414'); for (let r = 8; r >= 0; r--) pcirc(k, 10, 6, r, r > 6 ? '#5e3a21' : '#6f4528'); px(k, 9, 12, 2, 20, '#2a1a10'); px(k, 4, 31, 12, 3, '#2a1a10'); px(k, 6, 3, 3, 4, 'rgba(230,180,80,0.85)'); px(k, 6, 3, 3, 1, '#f4f0e4'); }, tx - 10, ty - 32, [tx - 6, ty - 3, tx + 6, ty + 2]);
+    // long tables with a bench each side in the hall, end-on to the panelling
+    for (const tx of [300, 372]) {
+      const ty = 70, tl = 140, tw = 24;
       s.piece(tw + 2, tl + 14, k => { plankTop(k, 1, 0, tw, tl, true); px(k, 1, tl, tw, 6, WOOD[1]); px(k, 1, tl, tw, 1, WOOD[0]); px(k, 2, tl + 6, 3, 8, WOOD[0]); px(k, tw - 3, tl + 6, 3, 8, WOOD[0]);
-        for (let i = 0; i < 4; i++) { const gy = 10 + i * 34 + hash2(tx, i, 1) * 10, gx = 5 + (i % 2) * 11; px(k, gx, gy, 4, 5, 'rgba(230,180,80,0.85)'); px(k, gx, gy, 4, 2, '#f4f0e4'); px(k, gx + 4, gy + 1, 1, 3, 'rgba(255,255,255,0.4)'); }
-        for (const cy of [40, 104]) { px(k, 10, cy, 5, 5, 'rgba(200,220,230,0.5)'); px(k, 12, cy + 1, 1, 2, '#fff2c0'); } }, tx - 1, ty, [tx, ty + 4, tx + tw, ty + tl + 2]);
-      for (const cy of [40, 104]) CANDLES.push({ x: tx + 12, y: ty + cy + 2 });
-      for (const [bx, face] of [[tx - 13, 1], [tx + tw + 4, 3]]) {
+        for (let i = 0; i < 4; i++) { const gy = 10 + i * 32 + hash2(tx, i, 1) * 10, gx = 5 + (i % 2) * 11; px(k, gx, gy, 4, 5, 'rgba(230,180,80,0.85)'); px(k, gx, gy, 4, 2, '#f4f0e4'); px(k, gx + 4, gy + 1, 1, 3, 'rgba(255,255,255,0.4)'); }
+        for (const cy of [40, 100]) { px(k, 10, cy, 5, 5, 'rgba(200,220,230,0.5)'); px(k, 12, cy + 1, 1, 2, '#fff2c0'); } }, tx - 1, ty, [tx, ty + 4, tx + tw, ty + tl + 2]);
+      for (const cy of [40, 100]) CANDLES.push({ x: tx + 12, y: ty + cy + 2 });
+      for (const [bx, fc] of [[tx - 13, 1], [tx + tw + 4, 3]]) {
         s.piece(10, tl - 8 + 12, k => { plankTop(k, 0, 0, 9, tl - 8, true); px(k, 0, tl - 8, 9, 4, WOOD[1]); px(k, 1, tl - 4, 2, 8, WOOD[0]); px(k, 6, tl - 4, 2, 8, WOOD[0]); }, bx, ty + 4, [bx, ty + 8, bx + 9, ty + tl - 2]);
-        for (let sy = ty + 18; sy < ty + tl - 8; sy += 20) s.seats.push({ x: bx + 4.5, y: sy, face, standX: bx + (face === 1 ? -8 : 17) });
+        for (let sy = ty + 18; sy < ty + tl - 8; sy += 22) s.seats.push({ x: bx + 4.5, y: sy, face: fc, standX: bx + (fc === 1 ? -8 : 17) });
       }
     }
-    // square tables with bentwood chairs by the windows
-    for (const [tx, ty] of [[386, 74], [470, 74], [386, 162], [470, 162]]) {
+    // tables with bentwood chairs along the windowed wall
+    for (const [tx, ty] of [[470, 40], [560, 40], [470, 112], [560, 112], [470, 184], [560, 184]]) {
       s.piece(38, 34, k => { plankTop(k, 0, 0, 38, 24, false); px(k, 0, 24, 38, 5, WOOD[1]); px(k, 0, 24, 38, 1, WOOD[0]); px(k, 2, 29, 3, 5, WOOD[0]); px(k, 33, 29, 3, 5, WOOD[0]); px(k, 7, 6, 4, 5, 'rgba(230,180,80,0.85)'); px(k, 7, 6, 4, 2, '#f4f0e4'); px(k, 25, 8, 5, 5, 'rgba(200,220,230,0.5)'); px(k, 27, 9, 1, 2, '#fff2c0'); }, tx, ty, [tx, ty + 2, tx + 38, ty + 27]);
       CANDLES.push({ x: tx + 27, y: ty + 10 });
-      for (const [cx, cy, back, face] of [[tx - 13, ty + 2, 'left', 1], [tx + 41, ty + 2, 'right', 3]]) {
+      for (const [cx, cy, back, fc] of [[tx - 13, ty + 2, 'left', 1], [tx + 41, ty + 2, 'right', 3]]) {
         s.piece(12, 26, k => { px(k, 1, 8, 10, 8, '#2a1a10'); px(k, 2, 9, 8, 6, '#3a2416'); px(k, 2, 16, 2, 9, '#21140c'); px(k, 8, 16, 2, 9, '#21140c'); const bx = back === 'left' ? 0 : 9; px(k, bx, 0, 3, 16, '#22150d'); pcirc(k, bx + 1, 4, 3, '#22150d'); }, cx, cy, [cx + 1, cy + 8, cx + 11, cy + 18]);
-        s.seats.push({ x: cx + 6, y: cy + 13, face, standX: cx + (face === 1 ? -6 : 18) });
+        s.seats.push({ x: cx + 6, y: cy + 13, face: fc, standX: cx + (fc === 1 ? -6 : 18) });
       }
     }
-    // the bar: a long counter down the left wall, beer taps, the barman's narrow lane behind it
-    s.piece(BAR.w + 2, BAR.h + 16, k => { plankTop(k, 0, 0, BAR.w, BAR.h, true); px(k, 0, 0, BAR.w, 2, '#9a6a3d'); px(k, BAR.w - 3, 0, 3, BAR.h, '#8a5d36'); px(k, 0, BAR.h, BAR.w, 14, WOOD[1]); px(k, 0, BAR.h, BAR.w, 1, WOOD[0]); for (let i = 3; i < BAR.w; i += 6) px(k, i, BAR.h + 2, 1, 12, WOOD[0]);
-      for (let i = 0; i < 3; i++) { const y = 40 + i * 14; px(k, 10, y, 8, 3, '#bfc6c9'); px(k, 13, y - 7, 2, 7, '#d6dcdf'); px(k, 12, y - 10, 4, 3, i === 1 ? '#c9a43c' : '#2b2b2b'); }
-      for (let i = 0; i < 5; i++) { px(k, 6 + (i % 3) * 7, 96 + i * 9, 5, 7, '#e9c35a'); px(k, 6 + (i % 3) * 7, 96 + i * 9, 5, 2, '#fbf6e8'); } }, BAR.x, BAR.y, [BAR.x, BAR.y + 4, BAR.x + BAR.w, BAR.y + BAR.h + 4]);
-    s.piece(14, 40, k => { px(k, 6, 4, 2, 34, '#2a1a10'); px(k, 2, 37, 10, 2, '#2a1a10'); px(k, 1, 6, 6, 12, '#5b6b4a'); px(k, 8, 4, 6, 15, '#7a3b2e'); px(k, 2, 2, 10, 2, '#2a1a10'); }, W - 26, 150, [W - 22, 184, W - 12, 190]);
-    s.doors.push({ x0: 90, y0: 4, x1: 124, y1: 26, to: 'wc', at: [107, 18], name: 'záchod' });
-    s.doors.push({ x0: W - 26, y0: 192, x1: W, y1: 236, to: 'street', at: [W - 16, 214], name: 'ven' });
+    // a coat stand by the way out
+    s.piece(14, 40, k => { px(k, 6, 4, 2, 34, '#2a1a10'); px(k, 2, 37, 10, 2, '#2a1a10'); px(k, 1, 6, 6, 12, '#5b6b4a'); px(k, 8, 4, 6, 15, '#7a3b2e'); px(k, 2, 2, 10, 2, '#2a1a10'); }, 10, 158, [14, 192, 22, 198]);
+    s.doors.push({ x0: 252, y0: 4, x1: 290, y1: 26, to: 'wc', at: [271, 18], name: 'záchod' });
+    s.doors.push({ x0: 0, y0: 202, x1: 22, y1: 244, to: 'street', at: [10, 222], name: 'ven na Korunní' });
     finish(s);
   }
 
@@ -141,46 +150,77 @@
     finish(s);
   }
 
-  // ------------------------------------------------------------------ Korunní street
-  const ST = scene('street', 760, 250, 118, 'Korunní');
-  const TREES = [70, 250, 430, 590].map(x => ({ x, y: 30 })), LAMPS = [160, 340, 520, 700].map(x => ({ x, y: 64 }));
-  const TAXI = { x: 150, y: 80, w: 58, h: 26 };
+  // ------------------------------------------------------------------ the corner of Korunní and Šumavská
+  // Lokál's house is the cream corner block: a rusticated ground floor with brown-framed arched windows and a pink
+  // plinth, white upper floors with pediments. Korunní with its tram runs across the front; Šumavská, with parked cars
+  // and the taxi, runs off to the left past the corner.
+  const ST = scene('street', 860, 240, 150, 'Korunní × Šumavská');
+  const CORNER = 170;                                               // where the house ends and Šumavská begins
+  const TREES = [{ x: 120, y: 14 }, { x: 300, y: 222 }, { x: 560, y: 222 }, { x: 800, y: 222 }];
+  const LAMPS = [{ x: 230, y: 64 }, { x: 500, y: 64 }, { x: 790, y: 64 }];
+  const TAXI = { x: 60, y: 20, w: 28, h: 58 };
+  const ARCHW = [];                                                 // the lit arched windows on the ground floor
   { const s = ST, W = s.W, H = s.H, WALL = s.WALL, fx = s.fx, wx = s.wx;
-    const mosaic = (x, y) => { const sq = ((x / 9 | 0) + (y / 9 | 0)) % 2, n = hash2(x >> 1, y >> 1, 9); const v = sq ? 205 - n * 40 : 70 - n * 30; return [v, v, v + 4]; };
+    const granite = (x, y) => { const row = Math.floor(y / 5), off = (row % 2) * 3 + Math.floor(hash2(row, 0, 4) * 3), cx = Math.floor((x + off) / (5 + (row % 3 === 0 ? 1 : 0))), n = hash2(cx, row, 9), jy = y % 5 === 0, jx = (x + off) % (5 + (row % 3 === 0 ? 1 : 0)) === 0;
+      const v = jy || jx ? 140 + n * 10 : 166 + n * 30 + (hash2(x, y, 2) - 0.5) * 6; return [v, v - 1, v - 5]; };
     texture(fx, W, H, (x, y) => {
-      if (y < 70) return mosaic(x, y);                                                             // the Prague mosaic pavement
-      if (y < 76) return y === 70 ? [120, 120, 118] : [158 - (x % 24 === 0 ? 30 : 0), 156, 150];   // granite curb
-      if (y > 204) return mosaic(x + 4, y);
-      if (y > 198) return [158 - (x % 24 === 0 ? 30 : 0), 156, 150];
-      const n = hash2(x, y, 3) * 14; let c = [54 + n, 55 + n, 58 + n];                                // asphalt
-      for (const ty of [108, 148]) { if (y === ty || y === ty + 9) c = [138, 142, 146]; if (y === ty + 1 || y === ty + 10) c = [30, 30, 32]; }   // tram rails
-      if (x >= 80 && x < 124 && y > 78 && y < 196 && (x - 80) % 10 < 6) c = [196, 196, 190];                  // the zebra crossing
+      if (x < CORNER - 8) {                                        // Šumavská: asphalt, its curb along the corner
+        if (x >= CORNER - 14) return [158, 156, 150];
+        const n = hash2(x, y, 3) * 14; let c = [54 + n, 55 + n, 58 + n];
+        if (y > 92 && y < 132 && x > 8 && (y - 92) % 10 < 6) c = [196, 196, 190];          // the zebra across Šumavská
+        if (x === 44 || x === 45) if (y % 14 < 7) c = [170, 170, 160];
+        return c; }
+      if (y < 70) { const band = (y > 12 && y < 16) || (y > 54 && y < 58); const c = granite(x, y); return band ? [c[0] - 70, c[1] - 70, c[2] - 66] : c; }
+      if (y < 76) return y === 70 ? [120, 120, 118] : [158 - (x % 24 === 0 ? 30 : 0), 156, 150];
+      if (y > 206) return granite(x, y);
+      if (y > 200) return [158 - (x % 24 === 0 ? 30 : 0), 156, 150];
+      const n = hash2(x, y, 3) * 14; let c = [54 + n, 55 + n, 58 + n];
+      for (const ty of [110, 150]) { if (y === ty || y === ty + 9) c = [138, 142, 146]; if (y === ty + 1 || y === ty + 10) c = [30, 30, 32]; }
+      if (x >= 186 && x < 230 && y > 78 && y < 198 && (x - 186) % 10 < 6) c = [196, 196, 190];   // the zebra across Korunní
       return c; });
-    // facades: a cream house at the left, Lokál's ochre Art Nouveau house at the right
-    px(wx, 0, 0, W, WALL, '#e2d3b2'); px(wx, 380, 0, W - 380, WALL, '#d6ad74');
-    for (let y = 6; y < 54; y += 24) for (let x = 16; x < W; x += 46) { const lit = hash2(x, y, 4) > 0.55; px(wx, x - 3, y - 2, 26, 22, x > 380 ? '#efdcb8' : '#f2e8d4'); px(wx, x, y, 20, 18, lit ? '#e7b35c' : '#283246'); px(wx, x + 9, y, 2, 18, x > 380 ? '#efdcb8' : '#f2e8d4'); px(wx, x - 4, y + 18, 28, 3, '#cbb796'); }
-    px(wx, 380, 58, W - 380, 4, '#b98d55'); px(wx, 0, 58, 380, 4, '#cbbd9b');                              // cornice above the shops
-    px(wx, 0, 62, 380, WALL - 62, '#d9c9a6'); px(wx, 380, 62, W - 380, WALL - 62, '#c99d62');
-    for (let y = 66; y < WALL; y += 8) px(wx, 380, y, W - 380, 1, '#b8894f');                               // rusticated ground floor
-    px(wx, 60, 72, 90, 40, '#5b5f63'); for (let y = 74; y < 112; y += 3) px(wx, 60, y, 90, 1, '#4a4d50');     // a closed shutter
-    for (const lx of [412, 470, 528, 586]) { px(wx, lx - 2, 70, 44, 46, '#8b6235'); px(wx, lx, 72, 40, 44, '#ffcf86'); for (let i = 0; i < 40; i += 4) px(wx, lx + i, 72, 2, 44, 'rgba(255,248,232,0.35)'); px(wx, lx, 90, 40, 2, '#8b6235'); }
-    px(wx, 636, 66, 32, 50, '#3a2414'); px(wx, 639, 69, 26, 47, '#5a3a20'); px(wx, 650, 90, 2, 4, '#d9b25a');           // Lokál's door
-    px(wx, 620, 46, 64, 12, '#1d1d1d'); wx.font = 'bold 9px serif'; wx.fillStyle = '#f2ead8'; wx.fillText('Lokál', 634, 56);
-    px(wx, 350, 74, 22, 9, '#b0302a'); px(wx, 351, 75, 20, 7, '#f4ece0'); wx.font = '5px sans-serif'; wx.fillStyle = '#b0302a'; wx.fillText('KORUNNÍ', 352, 81);
-    // trees in iron grates, lamps, the tram stop
+    // the wall: Šumavská receding at the left (dark sky, far houses), the corner house along Korunní
+    { const gr = wx.createLinearGradient(0, 0, 0, WALL); gr.addColorStop(0, '#0b1020'); gr.addColorStop(1, '#1b2236'); wx.fillStyle = gr; wx.fillRect(0, 0, CORNER, WALL); }
+    for (let i = 0; i < 6; i++) { const x = i * 30 - 6, h = 60 + hash2(i, 3, 2) * 40; px(wx, x, WALL - h, 32, h, i % 2 ? '#2a2c38' : '#30323e'); for (let wy = WALL - h + 8; wy < WALL - 10; wy += 12) for (let wxx = x + 4; wxx < x + 28; wxx += 8) px(wx, wxx, wy, 4, 6, hash2(wxx, wy, 1) > 0.65 ? '#d9a453' : '#1b1d26'); }
+    px(wx, 0, WALL - 8, CORNER, 8, '#1c1d22');
+    // upper floors
+    px(wx, CORNER, 0, W - CORNER, 96, '#efe8d6');
+    for (let fl = 0; fl < 2; fl++) for (let x = CORNER + 22; x < W - 10; x += 44) { const y = 10 + fl * 42; const lit = hash2(x, fl, 4) > 0.6;
+      px(wx, x - 4, y - 6, 26, 4, '#d9cdb2'); pline(wx, [[x - 4, y - 6], [x + 9, y - 11], [x + 22, y - 6]], '#cbbd9f');   // the pediment
+      px(wx, x - 2, y - 2, 22, 30, '#d8ccb0'); px(wx, x, y, 18, 26, '#5a3a22'); px(wx, x + 1, y + 1, 7, 11, lit ? '#e7b35c' : '#202838'); px(wx, x + 10, y + 1, 7, 11, lit ? '#e1a752' : '#202838'); px(wx, x + 1, y + 14, 7, 11, lit ? '#d99c4a' : '#1b2230'); px(wx, x + 10, y + 14, 7, 11, lit ? '#d99c4a' : '#1b2230');
+      px(wx, x - 3, y + 26, 24, 3, '#e5dac4'); }
+    px(wx, CORNER, 94, W - CORNER, 6, '#d6c8aa'); px(wx, CORNER, 94, W - CORNER, 1, '#f6f0e2');                 // cornice over the shops
+    // the rusticated ground floor and the pink plinth
+    px(wx, CORNER, 100, W - CORNER, 42, '#eadfc4'); for (let y = 104; y < 142; y += 6) px(wx, CORNER, y, W - CORNER, 1, '#cfc1a2');
+    px(wx, CORNER, 142, W - CORNER, 8, '#e0aaa2'); px(wx, CORNER, 142, W - CORNER, 1, '#c98f86');
+    // the corner itself: a narrow chamfer, a little darker, with the street sign
+    px(wx, CORNER, 0, 12, WALL, 'rgba(120,100,70,0.18)'); px(wx, CORNER + 18, 104, 36, 9, '#b0302a'); px(wx, CORNER + 19, 105, 34, 7, '#f4ece0'); wx.font = '6px sans-serif'; wx.fillStyle = '#b0302a'; wx.fillText('KORUNNÍ', CORNER + 21, 111);
+    // arched windows into the pub, warm inside; the arched door with Lokál's plate above
+    for (let x = CORNER + 70; x < W - 30; x += 54) {
+      const door = Math.abs(x - 610) < 27, w = 22, top = door ? 104 : 108, bot = door ? 142 : 134, r = w / 2;
+      for (let yy = top; yy < bot; yy++) for (let xx = x; xx < x + w; xx++) { const dx = xx - (x + r - 0.5), dy = yy - (top + r); if (yy < top + r && dx * dx + dy * dy > r * r) continue;
+        const inner = (yy >= top + r || dx * dx + dy * dy <= (r - 2) ** 2) && xx > x + 1 && xx < x + w - 2 && yy < bot - (door ? 0 : 2); px(wx, xx, yy, 1, 1, inner ? (door ? '#3a2414' : '#ffcf86') : '#5a3a22'); }
+      if (door) { px(wx, x + 10, top + 4, 2, bot - top - 4, '#2a180c'); px(wx, x + 15, 124, 2, 3, '#d9b25a'); px(wx, x - 6, 96, 34, 8, '#1d1d1d'); wx.font = 'bold 7px serif'; wx.fillStyle = '#f2ead8'; wx.fillText('Lokál', x - 1, 103); }
+      else { px(wx, x + r - 1, top + 2, 2, bot - top - 4, '#5a3a22'); px(wx, x + 2, top + r + 4, w - 4, 2, '#5a3a22'); for (let i = 3; i < w - 3; i += 3) px(wx, x + i, top + r + 7, 1, bot - top - r - 10, 'rgba(255,248,232,0.35)'); ARCHW.push(x + r); } }
+    // Lokál's garden on the pavement: benches and tables in front of the windows, where you can sit outside
+    for (const tx of [654, 724]) {
+      s.piece(34, 30, k => { plankTop(k, 0, 0, 34, 14, false); px(k, 0, 14, 34, 4, WOOD[1]); px(k, 2, 18, 3, 6, WOOD[0]); px(k, 29, 18, 3, 6, WOOD[0]); px(k, 6, 3, 4, 5, 'rgba(230,180,80,0.85)'); px(k, 6, 3, 4, 2, '#f4f0e4'); px(k, 22, 5, 4, 5, 'rgba(230,180,80,0.85)'); px(k, 22, 5, 4, 2, '#f4f0e4'); }, tx, 22, [tx, 24, tx + 34, 38]);
+      for (const [by, fc] of [[16, 0], [44, 2]]) { s.piece(34, 10, k => { plankTop(k, 0, 0, 34, 5, false); px(k, 0, 5, 34, 2, WOOD[1]); px(k, 2, 7, 2, 3, WOOD[0]); px(k, 30, 7, 2, 3, WOOD[0]); }, tx, by, [tx, by + 1, tx + 34, by + 6]);
+        for (const sx of [tx + 9, tx + 25]) s.seats.push({ x: sx, y: by + 4, face: fc, standX: sx, standY: fc === 0 ? by - 6 : by + 14 }); }
+    }
+    // trees, lamps, the no-entry sign on the corner, the red tram-stop pillar
     for (const t of TREES) { px(fx, t.x - 8, t.y - 4, 16, 8, '#2a2a2a'); for (let i = 0; i < 16; i += 2) px(fx, t.x - 8 + i, t.y - 4, 1, 8, '#4a4a4a'); s.piece(8, 26, k => { px(k, 2, 0, 4, 26, '#3a2a1e'); px(k, 2, 0, 1, 26, '#5a4430'); }, t.x - 4, t.y - 22, [t.x - 3, t.y - 2, t.x + 3, t.y + 2]); }
-    for (const L of LAMPS) s.piece(10, 74, k => { px(k, 4, 6, 2, 68, '#2c2f33'); px(k, 3, 70, 4, 4, '#2c2f33'); px(k, 1, 0, 8, 6, '#2c2f33'); px(k, 2, 4, 6, 2, '#ffe2a8'); }, L.x - 5, L.y - 70, [L.x - 2, L.y - 2, L.x + 2, L.y + 2]);
-    s.piece(64, 34, k => { px(k, 0, 0, 64, 4, '#3a3f45'); px(k, 0, 4, 64, 24, 'rgba(170,200,215,0.28)'); px(k, 0, 4, 2, 28, '#3a3f45'); px(k, 62, 4, 2, 28, '#3a3f45'); px(k, 6, 18, 40, 4, '#5a4a3a'); px(k, 48, 6, 12, 22, '#e9e2c8'); px(k, 49, 7, 10, 20, '#d97a4a'); }, 280, 10, [280, 30, 344, 40]);
-    s.piece(8, 60, k => { px(k, 3, 10, 2, 50, '#3a3f45'); px(k, 0, 0, 8, 10, '#e8e8e2'); px(k, 1, 2, 6, 6, '#c22'); }, 352, -14, [353, 42, 359, 48]);
-    // the taxi: an old cream Mercedes W124, parked at the curb, a man in the driver's seat
-    s.piece(TAXI.w, TAXI.h + 6, k => { const w = TAXI.w, h = TAXI.h; px(k, 2, h, w - 4, 6, 'rgba(0,0,0,0.35)'); px(k, 0, 3, w, h - 6, '#e7dbba'); px(k, 2, 1, w - 4, h - 2, '#efe5c8'); px(k, 14, 4, 30, h - 8, '#d9cdaa');
-      px(k, 12, 5, 6, h - 10, '#2b3644'); px(k, 40, 5, 6, h - 10, '#2b3644'); px(k, 19, 4, 20, 2, '#2b3644'); px(k, 19, h - 6, 20, 2, '#2b3644'); px(k, 24, 10, 10, 6, '#f2c437'); px(k, 25, 11, 8, 4, '#222'); k.font = '4px sans-serif'; k.fillStyle = '#f2c437'; k.fillText('TAXI', 25, 15);
-      px(k, w - 2, 4, 2, 4, '#fff4c8'); px(k, w - 2, h - 8, 2, 4, '#fff4c8'); px(k, 0, 4, 2, 4, '#b02a22'); px(k, 0, h - 8, 2, 4, '#b02a22'); px(k, 38, 7, 4, 4, '#2a201a'); }, TAXI.x, TAXI.y, [TAXI.x, TAXI.y + 2, TAXI.x + TAXI.w, TAXI.y + TAXI.h]);
-    s.doors.push({ x0: 632, y0: 2, x1: 672, y1: 24, to: 'pub', at: [652, 16], name: 'do hospody' });
+    for (const L of LAMPS) s.piece(10, 96, k => { px(k, 4, 8, 2, 88, '#8d9196'); px(k, 4, 8, 1, 88, '#b5b9bd'); px(k, 3, 92, 4, 4, '#6f7378'); px(k, 1, 0, 9, 3, '#6f7378'); px(k, 2, 3, 7, 2, '#fff1c8'); }, L.x - 5, L.y - 92, [L.x - 2, L.y - 2, L.x + 2, L.y + 2]);
+    s.piece(14, 48, k => { px(k, 6, 12, 2, 36, '#8d9196'); pcirc(k, 7, 6, 6, '#7a1610'); for (let r = 5; r >= 0; r--) pcirc(k, 7, 6, r, '#d62a20'); px(k, 3, 5, 9, 3, '#ffffff'); }, CORNER + 2, 22, [CORNER + 6, 66, CORNER + 10, 70]);
+    s.piece(10, 46, k => { px(k, 1, 0, 8, 46, '#c0262a'); px(k, 1, 0, 2, 46, '#e04446'); px(k, 2, 6, 6, 10, '#f4ece0'); px(k, 3, 8, 4, 1, '#333'); px(k, 3, 11, 4, 1, '#333'); px(k, 2, 20, 6, 3, '#ffe25a'); }, 700, 20, [701, 62, 709, 66]);
+    // the taxi: an old cream Mercedes W124 parked along Šumavská, a man in the driver's seat
+    s.piece(TAXI.w + 4, TAXI.h + 6, k => { const w = TAXI.w, h = TAXI.h; px(k, 3, 4, w, h, 'rgba(0,0,0,0.35)'); px(k, 2, 0, w - 4, h, '#e7dbba'); px(k, 0, 3, w, h - 6, '#efe5c8'); px(k, 4, 14, w - 8, 30, '#d9cdaa');
+      px(k, 4, 12, w - 8, 6, '#2b3644'); px(k, 4, 38, w - 8, 6, '#2b3644'); px(k, 3, 19, 2, 18, '#2b3644'); px(k, w - 5, 19, 2, 18, '#2b3644'); px(k, 9, 24, 10, 7, '#f2c437'); px(k, 10, 25, 8, 5, '#222'); k.font = '4px sans-serif'; k.fillStyle = '#f2c437'; k.fillText('TAXI', 10, 29);
+      px(k, 3, 0, 4, 2, '#fff4c8'); px(k, w - 7, 0, 4, 2, '#fff4c8'); px(k, 3, h - 2, 4, 2, '#b02a22'); px(k, w - 7, h - 2, 4, 2, '#b02a22'); px(k, 6, 13, 5, 4, '#2a201a'); px(k, 13, 3, 3, 2, '#d8d8d8'); }, TAXI.x, TAXI.y, [TAXI.x, TAXI.y + 2, TAXI.x + TAXI.w, TAXI.y + TAXI.h]);
+    for (const [cx, cy, col] of [[16, 30, '#3a3f4a'], [16, 140, '#6b2a2a'], [16, 196, '#2f4a3a']]) s.piece(28, 52, k => { px(k, 3, 4, 26, 48, 'rgba(0,0,0,0.35)'); px(k, 1, 0, 24, 48, col); px(k, 4, 10, 18, 6, '#1d232c'); px(k, 4, 32, 18, 6, '#1d232c'); px(k, 2, 0, 4, 2, '#fff4c8'); px(k, 20, 0, 4, 2, '#fff4c8'); }, cx, cy, [cx, cy + 2, cx + 26, cy + 48]);
+    s.doors.push({ x0: 596, y0: 2, x1: 636, y1: 22, to: 'pub', at: [616, 14], name: 'do Lokálu' });
     finish(s);
   }
-  // where you arrive through each door
-  const ARRIVE = { pub: { wc: [107, 30], street: [PUB.W - 34, 214] }, wc: { pub: [105, 108] }, street: { pub: [652, 30] } };
+  const ARRIVE = { pub: { wc: [271, 30], street: [32, 222] }, wc: { pub: [105, 108] }, street: { pub: [616, 30] } };
 
   // ================================================================== ART
   const SPR = {}, META = {};
@@ -211,14 +251,15 @@
   };
   const WC_ANY = ['„Kdo to sem napsal? …Aha, já.“', '„Víš, že tě mám rád, jo?“', '„Tohle je nejlepší hospoda na světě. A nejlepší hajzl.“'];
   const OUCH = ['„Au, vole!“', '„Za co?!“', '„Tohle si vypiješ.“', '„Hele, klid.“', '„Ty jsi fakt magor.“', '„To bolelo. Trochu.“'];
-  const NAMES = { kevin: 'Kevin', patas: 'Paťas', stepa: 'Štěpa', pazout: 'Pažout', ado: 'Ado', kopinaut: 'Kopinaut', bob: 'Bob', sasa: 'Saša', barman: 'Výčepní' };
+  const NAMES = { kevin: 'Kevin', patas: 'Paťas', stepa: 'Štěpa', pazout: 'Pažout', ado: 'Ado', kopinaut: 'Kopinaut', bob: 'Bob', sasa: 'Saša', barman2: 'Výčepní', barman3: 'Výčepní' };
+  const staff = c => c.id.startsWith('barman');
   const TRAITS = { patas: 'historik, opilý', stepa: 'cyklista, chodí pozdě', pazout: 'konzervativní feťák', ado: 'fitness, gay', kopinaut: 'Bohemka, feťák', bob: 'pije hodně piva', kevin: 'dvě děti, pivo', sasa: 'feťák, vždycky v pohodě' };
   const PLAYABLE = ['kevin', 'patas', 'stepa', 'pazout', 'ado', 'kopinaut', 'bob', 'sasa'];
   const OUTDOORSY = { pazout: 0.3, kopinaut: 0.35, sasa: 0.35 };   // who steps out to Korunní more often
-  const START = { kevin: [PUB.W - 40, 214], patas: [171, 98], bob: [171, 136], sasa: [251, 104], pazout: [251, 142], ado: [72, 120], kopinaut: [524, 52], stepa: [12, 30], barman: [16, 110] };
+  const START = { kevin: [40, 222], patas: [330, 100], bob: [330, 140], sasa: [404, 104], pazout: [404, 150], ado: [118, 96], kopinaut: [520, 90], stepa: [840, 30], barman2: [92, 34], barman3: [146, 34] };
   const cast = Object.keys(START).map(id => ({ id, x: START[id][0], y: START[id][1], scene: id === 'stepa' ? 'street' : 'pub', dir: 0, step: 0, moving: false, look: null, lookT: 2 + Math.random() * 3,
     path: null, plan: 'idle', planT: 2 + Math.random() * 6, line: 0, say: null, present: id !== 'stepa', idle: 0, ctrl: 'npc', tx: 0, ty: 0, sayKey: 0,
-    seat: -1, beer: id === 'barman' ? -1 : (Math.random() < 0.7 ? 0.6 + Math.random() * 0.4 : -1), sipT: 0, drunk: 0, beers: 0, punchT: 0, hitT: 0, starsT: 0, kx: 0, ky: 0, puN: 0, pu: null }));
+    seat: -1, beer: id.startsWith('barman') ? -1 : (Math.random() < 0.7 ? 0.6 + Math.random() * 0.4 : -1), sipT: 0, drunk: 0, beers: 0, punchT: 0, hitT: 0, starsT: 0, kx: 0, ky: 0, puN: 0, pu: null }));
   const by = id => cast.find(c => c.id === id);
   let me = null;
   const sceneOf = c => SC[c.scene];
@@ -227,10 +268,10 @@
   // drunk speech: vowels stretch, words slip
   function slur(t, d) { if (d < 0.25) return t; let o = ''; for (const ch of t) { o += ch; if ('aeiouyáéíóúůý'.includes(ch) && Math.random() < d * 0.25) o += ch; } return d > 0.7 ? o.replace(/“$/, ' …hik.“') : o; }
   function speak(c, text, dur) { c.say = { text, t: 0, dur: dur || 1.4 + text.length * 0.07 }; c.sayKey++; }
-  function nextLine(c) { const L = LINES[c.id]; const t = L[c.line % L.length]; c.line++; return t; }
+  function nextLine(c) { const L = LINES[c.id] || LINES.barman; const t = L[c.line % L.length]; c.line++; return t; }
   function seatOcc(s, i) { return cast.some(c => c.scene === s.id && c.seat === i && c.present); }
   function sitDown(c, i) { const s = sceneOf(c), q = s.seats[i]; c.seat = i; c.x = q.x; c.y = q.y; c.dir = q.face; c.path = null; c.moving = false; c.look = null; }
-  function standUp(c) { const s = sceneOf(c), q = s.seats[c.seat]; c.seat = -1; if (!q) return; for (const dy of [0, 6, -6, 12, -12]) if (!s.blocked(q.standX, q.y + dy)) { c.x = q.standX; c.y = q.y + dy; return; } c.x = q.standX; }
+  function standUp(c) { const s = sceneOf(c), q = s.seats[c.seat]; c.seat = -1; if (!q) return; const sy = q.standY ?? q.y; for (const dy of [0, 6, -6, 12, -12]) if (!s.blocked(q.standX, sy + dy)) { c.x = q.standX; c.y = sy + dy; return; } c.x = q.standX; c.y = sy; }
   function freeSeatNear(s, x, y, maxD) { let best = -1, bd = maxD; s.seats.forEach((q, i) => { const d = Math.hypot(q.x - x, q.y - y); if (d < bd && !seatOcc(s, i)) { bd = d; best = i; } }); return best; }
 
   // ------------------------------------------------------------------ paths
@@ -290,21 +331,21 @@
     if (!me) return null; const s = sceneOf(me);
     if (me.seat >= 0) return { k: 'stand', label: 'E: vstát' };
     for (const d of s.doors) if (me.x > d.x0 && me.x < d.x1 && me.y > d.y0 && me.y < d.y1) return { k: 'door', d, label: `E: ${d.name}` };
-    if (s.id === 'pub' && me.x < BAR.x + BAR.w + 18 && me.y > BAR.y && me.y < BAR.y + BAR.h) return { k: 'bar', label: me.beer > 0.05 ? 'E: další pivo' : 'E: jedno pivo' };
+    if (s.id === 'pub' && me.x > BAR.x - 8 && me.x < BAR.x + BAR.w + 8 && me.y > BAR.y + BAR.h && me.y < BAR.y + BAR.h + 22) return { k: 'bar', label: me.beer > 0.05 ? 'E: další pivo' : 'E: jedno pivo' };
     let best = null, bd = 30; for (const c of cast) if (c !== me && c.present && c.scene === me.scene) { const d = Math.hypot(c.x - me.x, c.y - me.y); if (d < bd) { bd = d; best = c; } }
     const seat = freeSeatNear(s, me.x, me.y, 16); if (seat >= 0 && (!best || bd > 12)) return { k: 'sit', i: seat, label: 'E: sednout si' };
     if (best) return { k: 'talk', c: best, label: `E: ${NAMES[best.id]}` };
-    if (s.id === 'street' && me.x > TAXI.x - 16 && me.x < TAXI.x + TAXI.w + 16 && me.y < TAXI.y + 4) return { k: 'taxi', label: 'E: k taxíku' };
+    if (s.id === 'street' && me.x > TAXI.x + TAXI.w - 2 && me.x < TAXI.x + TAXI.w + 22 && me.y > TAXI.y && me.y < TAXI.y + TAXI.h) return { k: 'taxi', label: 'E: k taxíku' };
     return null;
   }
   function use() {
     const a = context(); if (!a) { speak(me, slur(nextLine(me), me.drunk)); return; }
     if (a.k === 'stand') standUp(me);
     else if (a.k === 'sit') sitDown(me, a.i);
-    else if (a.k === 'door') { const near = cast.filter(c => c !== me && c.ctrl === 'npc' && c.present && c.scene === me.scene && c.id !== 'barman' && Math.hypot(c.x - me.x, c.y - me.y) < 46);
+    else if (a.k === 'door') { const near = cast.filter(c => c !== me && c.ctrl === 'npc' && c.present && c.scene === me.scene && !staff(c) && Math.hypot(c.x - me.x, c.y - me.y) < 46);
       fade = 1; pending = () => { goThrough(me, a.d, isHost() ? near : []); if (near.length && isHost()) speak(near[0], pick(['„Jdu s tebou.“', '„Počkej, jdu taky.“', '„Jo, jdem.“'])); camSnap = true; };
       if (!isHost() && near.length) ask = { target: near.map(c => c.id).join(','), n: ++askN, follow: a.d.to }; }
-    else if (a.k === 'bar') { speak(me, slur('„Jedno, prosím.“', me.drunk), 1.8); ask = { target: 'barman', n: ++askN }; if (isHost()) answer('barman', me);
+    else if (a.k === 'bar') { speak(me, slur('„Jedno, prosím.“', me.drunk), 1.8); const bm = nearestStaff(me); ask = { target: bm, n: ++askN }; if (isHost()) answer(bm, me);
       setTimeout(() => { if (me) { me.beer = 1; me.beers++; } }, 1700); }
     else if (a.k === 'talk') { const c = a.c; me.dir = dirOf(c.x - me.x, c.y - me.y);
       if (c.ctrl === 'npc') { ask = { target: c.id, n: ++askN }; if (isHost()) answer(c.id, me); } else speak(me, slur(me.scene === 'wc' ? WC_LINES[me.id] : nextLine(me), me.drunk)); }
@@ -312,11 +353,14 @@
   }
   let toastT = 0, toastText = '';
   const toast = t => { toastText = t; toastT = 3.5; };
+  const nearestStaff = c => ['barman2', 'barman3'].sort((a, b) => Math.abs(by(a).x - c.x) - Math.abs(by(b).x - c.x))[0];
   function answer(id, asker) {   // the host makes a pub-run character turn and reply
     const c = by(id); if (!c || c.ctrl !== 'npc') return;
-    c.dir = dirOf(asker.x - c.x, asker.y - c.y); c.look = null; c.planT = Math.max(c.planT, 4);
+    // whoever you speak to stops what they were doing, turns to you, and stays a while
+    c.path = null; c.moving = false; if (c.seat < 0 && !staff(c)) c.plan = 'idle'; c.planT = Math.max(c.planT, staff(c) ? 6 : 14);
+    c.dir = dirOf(asker.x - c.x, asker.y - c.y); c.look = null; c.attend = asker; c.attendT = 8;
     const line = c.scene === 'wc' && WC_LINES[c.id] ? (Math.random() < 0.6 ? WC_LINES[c.id] : pick(WC_ANY)) : nextLine(c);
-    setTimeout(() => speak(c, slur(line, c.drunk)), id === 'barman' ? 900 : 300);
+    setTimeout(() => speak(c, slur(line, c.drunk)), staff(c) ? 900 : 300);
   }
 
   // ------------------------------------------------------------------ beer, punches
@@ -329,23 +373,23 @@
   function punch(c) {
     if (c.punchT > 0 || c.seat >= 0) return;
     const [vx, vy] = dirVec(c.dir); let best = null, bd = 26;
-    for (const o of cast) if (o !== c && o.present && o.scene === c.scene && o.id !== 'barman') { const dx = o.x - c.x, dy = o.y - c.y, d = Math.hypot(dx, dy); if (d < bd && (dx * vx + dy * vy) > -4) { bd = d; best = o; } }
-    c.punchT = 0.28;
+    for (const o of cast) if (o !== c && o.present && o.scene === c.scene && !staff(o)) { const dx = o.x - c.x, dy = o.y - c.y, d = Math.hypot(dx, dy); if (d < bd && (dx * vx + dy * vy) > -4) { bd = d; best = o; } }
+    c.punchT = 0.32;
     if (!best) return;
     c.puN++; c.pu = { t: best.id, n: c.puN };
     land(c, best);
   }
   // the hit itself: everyone sees the stars; whoever runs the one who was hit moves him and makes him say something
   function land(from, to) {
-    to.starsT = 1.5; to.hitT = 0.5; from.punchT = Math.max(from.punchT, 0.28);
+    to.starsT = 1.5; to.hitT = 0.5; from.punchT = Math.max(from.punchT, 0.32);
     const owner = to === me || (to.ctrl === 'npc' && isHost());
     if (!owner) return;
     const d = Math.hypot(to.x - from.x, to.y - from.y) || 1; to.kx = (to.x - from.x) / d * 110; to.ky = (to.y - from.y) / d * 60;
-    if (to.seat >= 0) standUp(to);
+    if (to.seat >= 0) standUp(to); if (to.ctrl === 'npc') { to.path = null; to.plan = 'idle'; to.planT = Math.max(to.planT, 10); to.attend = from; to.attendT = 4; }
     if (to.beer > 0) { to.beer = Math.max(0, to.beer - 0.35); spills.push({ x: to.x + to.kx * 0.1, y: to.y + 4, t: now, scene: to.scene }); if (to.beer <= 0.02) to.beer = -1; }
     setTimeout(() => speak(to, slur(pick(OUCH), to.drunk)), 250);
     if (to.ctrl === 'npc' && Math.random() < 0.3) setTimeout(() => { to.dir = dirOf(from.x - to.x, from.y - to.y); punch(to); }, 700);
-    if (isHost()) { punches = punches.filter(t => now - t < 60).concat(now); if (punches.length >= 4) { punches = []; const b = by('barman'); if (b.ctrl === 'npc' && to.scene === 'pub') setTimeout(() => speak(b, '„Pánové! Ještě jednou a jdete ven!“', 3), 600); } }
+    if (isHost()) { punches = punches.filter(t => now - t < 60).concat(now); if (punches.length >= 4) { punches = []; const b = by(nearestStaff(to)); if (b.ctrl === 'npc' && to.scene === 'pub') setTimeout(() => speak(b, '„Pánové! Ještě jednou a jdete ven!“', 3), 600); } }
   }
   const spills = [];
 
@@ -354,38 +398,40 @@
   const fmt = m => { const h = Math.floor(m / 60) % 24, mi = Math.floor(m % 60); return `Út ${String(h).padStart(2, '0')}:${String(mi).padStart(2, '0')}`; };
   function lifeOf(c, dt) {
     const s = sceneOf(c);
-    if (c.id === 'barman') { c.planT -= dt; if (c.planT <= 0) { c.planT = 4 + Math.random() * 6; walkTo(c, 16, BAR.y + 20 + Math.random() * (BAR.h - 40)); } if (moveAlong(c, dt, 26) && !c.say) c.dir = 1; idleLook(c, dt); return; }
-    if (!c.present) { if (clock >= 20 * 60 + 40) { c.present = true; c.plan = 'door'; c.door = ST.doors[0]; walkTo(c, 652, 16); } return; }   // Štěpa, late as always
-    c.planT -= dt;
+    if (staff(c)) { c.planT -= dt; if (c.planT <= 0) { c.planT = 6 + Math.random() * 10; walkTo(c, (c.id === 'barman2' ? 78 : 122) + Math.random() * 40, 34); } if (c.attendT > 0) { c.attendT -= dt; c.path = null; c.moving = false; if (c.attend && !c.say) c.dir = dirOf(c.attend.x - c.x, c.attend.y - c.y); } else if (moveAlong(c, dt, 24) && !c.say) c.dir = 0; idleLook(c, dt); return; }
+    if (!c.present) { if (clock >= 20 * 60 + 40) { c.present = true; c.plan = 'door'; c.door = ST.doors[0]; walkTo(c, 616, 14); } return; }   // Štěpa, late as always
+    c.planT -= dt; if (c.attendT > 0) { c.attendT -= dt; if (c.attend) { c.look = null; if (!c.say) c.dir = dirOf(c.attend.x - c.x, c.attend.y - c.y); } }
+    if (cast.some(o => o.ctrl !== 'npc' && o.scene === c.scene && Math.hypot(o.x - c.x, o.y - c.y) < 30)) c.planT = Math.max(c.planT, 2);
     if (c.seat >= 0) {   // sitting: sip now and then, look at the others, get up when it is time
       if (c.beer > 0.02 && Math.random() < dt / 9) drink(c);
       if (c.planT <= 0) { standUp(c); c.plan = 'idle'; c.planT = 0; } else { idleLook(c, dt); return; }
     }
+    if (c.plan === 'idle' && c.planT <= 0 && s.id === 'pub' && Math.random() < 0.45) c.planT = 12 + Math.random() * 20;   // often they just stay where they are
     if (c.plan === 'idle' && c.planT <= 0) {
       const r = Math.random(), heavy = c.id === 'bob' || c.id === 'kevin' || c.id === 'patas', out = OUTDOORSY[c.id] || 0.08;
       if (s.id !== 'pub') { c.plan = 'door'; c.door = s.doors[0]; walkTo(c, (c.door.x0 + c.door.x1) / 2, (c.door.y0 + c.door.y1) / 2); }
-      else if (c.beer <= 0.02 && r < (heavy ? 0.8 : 0.5)) { c.plan = 'bar'; walkTo(c, BAR.x + BAR.w + 9, BAR.y + 30 + Math.random() * (BAR.h - 60)); }
-      else if (r < 0.55) { const i = freeSeatNear(s, c.x + (Math.random() - 0.5) * 160, c.y + (Math.random() - 0.5) * 80, 400); if (i >= 0) { c.plan = 'seat'; c.seatGoal = i; const q = s.seats[i]; walkTo(c, q.standX, q.y); } else c.planT = 5; }
-      else if (r < 0.55 + out) { c.plan = 'door'; c.door = s.doors[1]; walkTo(c, s.doors[1].at[0] - 10, s.doors[1].at[1]); }
-      else if (r < 0.7 + out) { c.plan = 'door'; c.door = s.doors[0]; walkTo(c, 107, 20); }
-      else { const o = cast.filter(o => o !== c && o.present && o.scene === c.scene && o.id !== 'barman'); const t = pick(o); if (t) { c.plan = 'visit'; c.target = t; walkTo(c, t.x + (Math.random() < 0.5 ? -18 : 18), t.y + 4); } else c.planT = 5; }
+      else if (c.beer <= 0.02 && r < (heavy ? 0.8 : 0.5)) { c.plan = 'bar'; walkTo(c, BAR.x + 12 + Math.random() * (BAR.w - 24), BAR.y + BAR.h + 10); }
+      else if (r < 0.55) { const i = freeSeatNear(s, c.x + (Math.random() - 0.5) * 160, c.y + (Math.random() - 0.5) * 80, 400); if (i >= 0) { c.plan = 'seat'; c.seatGoal = i; const q = s.seats[i]; walkTo(c, q.standX, q.standY ?? q.y); } else c.planT = 5; }
+      else if (r < 0.55 + out) { c.plan = 'door'; c.door = s.doors[1]; walkTo(c, s.doors[1].at[0] + 6, s.doors[1].at[1]); }
+      else if (r < 0.7 + out) { c.plan = 'door'; c.door = s.doors[0]; walkTo(c, ...s.doors[0].at); }
+      else { const o = cast.filter(o => o !== c && o.present && o.scene === c.scene && !staff(o)); const t = pick(o); if (t) { c.plan = 'visit'; c.target = t; walkTo(c, t.x + (Math.random() < 0.5 ? -18 : 18), t.y + 4); } else c.planT = 5; }
     }
     if (c.plan === 'follow') { const L = c.leader; if (!L || L.scene !== c.scene || c.planT <= 0) { c.plan = 'idle'; c.planT = 1; } else if (Math.hypot(L.x - c.x, L.y - c.y) > 36 && (!c.path || !c.path.length)) walkTo(c, L.x + (c.x < L.x ? -16 : 16), L.y + 6); }
     const arrived = moveAlong(c, dt, 34 - c.drunk * 6);
     if (arrived && c.plan !== 'idle' && c.plan !== 'follow') {
-      if (c.plan === 'bar') { c.dir = 3; c.plan = 'wait'; c.planT = 2; speak(c, slur('„Jedno.“', c.drunk), 1.4); }
+      if (c.plan === 'bar') { c.dir = 2; c.plan = 'wait'; c.planT = 2; speak(c, slur('„Jedno.“', c.drunk), 1.4); }
       else if (c.plan === 'wait' && c.planT <= 0) { c.beer = 1; c.beers++; c.plan = 'idle'; c.planT = 1; }
-      else if (c.plan === 'seat') { if (!seatOcc(s, c.seatGoal)) { sitDown(c, c.seatGoal); c.planT = 25 + Math.random() * 40; } c.plan = 'idle'; if (c.seat < 0) c.planT = 2; }
-      else if (c.plan === 'door') { goThrough(c, c.door); c.plan = c.scene === 'pub' ? 'idle' : 'away'; c.planT = c.scene === 'pub' ? 3 : 14 + Math.random() * 18;
+      else if (c.plan === 'seat') { if (!seatOcc(s, c.seatGoal)) { sitDown(c, c.seatGoal); c.planT = 60 + Math.random() * 90; } c.plan = 'idle'; if (c.seat < 0) c.planT = 2; }
+      else if (c.plan === 'door') { goThrough(c, c.door); c.plan = c.scene === 'pub' ? 'idle' : 'away'; c.planT = c.scene === 'pub' ? 6 : 30 + Math.random() * 30;
         if (c.scene === 'wc') walkTo(c, ...pick(WC.spots)); if (c.scene === 'street') walkTo(c, 420 + Math.random() * 200, 20 + Math.random() * 30); }
-      else if (c.plan === 'visit') { if (c.target) c.dir = dirOf(c.target.x - c.x, c.target.y - c.y); c.plan = 'idle'; c.planT = 8 + Math.random() * 12; if (!c.say && Math.random() < 0.5) speak(c, slur(nextLine(c), c.drunk)); }
+      else if (c.plan === 'visit') { if (c.target) c.dir = dirOf(c.target.x - c.x, c.target.y - c.y); c.plan = 'idle'; c.planT = 25 + Math.random() * 30; if (!c.say && Math.random() < 0.5) speak(c, slur(nextLine(c), c.drunk)); }
       else if (c.plan === 'away' && c.planT <= 0) { c.plan = 'idle'; c.planT = 0; }
     }
     if (c.plan === 'away' && c.planT <= 0) { c.plan = 'idle'; c.planT = 0; }
     if (!c.moving) { idleLook(c, dt); if (c.beer > 0.02 && Math.random() < dt / 14) drink(c); }
   }
   function idleLook(c, dt) {
-    if (c.moving || c.say) { c.look = null; return; }
+    if (c.moving || c.say || c.attendT > 0) { c.look = null; return; }
     if ((c.lookT -= dt) <= 0) { const o = cast.filter(o => o !== c && o.present && o.scene === c.scene); const t = pick(o);
       c.look = c.seat >= 0 ? (Math.random() < 0.6 ? null : (t ? dirOf(t.x - c.x, t.y - c.y) : null)) : Math.random() < 0.65 && t ? dirOf(t.x - c.x, t.y - c.y) : Math.random() < 0.5 ? null : Math.floor(Math.random() * 4); c.lookT = 2 + Math.random() * 4; }
   }
@@ -410,7 +456,7 @@
       if (c.kx || c.ky) { const s = sceneOf(c); if (!s.blocked(c.x + c.kx * dt, c.y)) c.x += c.kx * dt; if (!s.blocked(c.x, c.y + c.ky * dt)) c.y += c.ky * dt; c.kx *= Math.exp(-dt * 9); c.ky *= Math.exp(-dt * 9); if (Math.abs(c.kx) + Math.abs(c.ky) < 2) c.kx = c.ky = 0; }
       c.sipT = Math.max(0, c.sipT - dt); c.punchT = Math.max(0, c.punchT - dt); c.hitT = Math.max(0, c.hitT - dt); c.starsT = Math.max(0, c.starsT - dt);
       if (c.say && (c.say.t += dt) > c.say.dur) c.say = null; }
-    if (host && (chatter -= dt) <= 0) { chatter = 7 + Math.random() * 9; const o = cast.filter(c => c.present && c.ctrl === 'npc' && c.id !== 'barman' && !c.moving && !c.say); const c = pick(o);
+    if (host && (chatter -= dt) <= 0) { chatter = 7 + Math.random() * 9; const o = cast.filter(c => c.present && c.ctrl === 'npc' && !staff(c) && !c.moving && !c.say); const c = pick(o);
       if (c) { const inWc = c.scene === 'wc' && cast.some(x => x !== c && x.scene === 'wc' && x.present); speak(c, slur(inWc ? (Math.random() < 0.6 ? WC_LINES[c.id] : pick(WC_ANY)) : nextLine(c), c.drunk)); } }
     if (toastT > 0) toastT -= dt;
     if (me && me.scene === 'wc' && (knockT -= dt) <= 0) { knockT = 30 + Math.random() * 30; toast(pick(['Ťuk, ťuk. „Bude to?“', 'Někdo bouchá na dveře. „Kluci, pospěšte si!“', 'Ťuk, ťuk. „Je tam někdo?“'])); }
@@ -421,35 +467,76 @@
 
   // ================================================================== DRAWING
   function frameOf(c) { const M = META[c.id]; const d = c.seat >= 0 ? (c.look ?? c.dir) : c.moving || c.look == null ? c.dir : c.look; return [([2, 1, 0, 3][d] * 4 + (c.moving ? Math.floor(c.step * 0.55) % 4 : 1)) * M.fw, M, d]; }
-  function drawGlass(c, x, y, d) {   // a half-litre of Pilsner: gold, a cap of foam, a glint
-    if (c.beer < 0 || d === 2) return;
-    const lift = c.sipT > 0 ? Math.sin(Math.min(1, (1.3 - c.sipT) / 0.4) * Math.PI / 2) * Math.min(1, c.sipT / 0.3) : 0;
-    const side = d === 1 ? 8 : d === 3 ? -12 : 7, gx = Math.round(x + 24 + side), gy = Math.round(y + 24 - lift * 10), lvl = Math.round(clamp(c.beer, 0, 1) * 6);
-    px(g, gx, gy, 5, 7, 'rgba(220,235,240,0.55)'); if (lvl) px(g, gx, gy + 7 - lvl, 5, lvl, '#e3a92e'); if (lvl > 1) px(g, gx, gy + 6 - lvl, 5, 2, '#fbf6e8'); px(g, gx + 4, gy + 1, 1, 5, 'rgba(255,255,255,0.6)'); px(g, d === 3 ? gx - 1 : gx + 5, gy + 2, 1, 3, 'rgba(220,235,240,0.7)');
+  // Each sprite's own sleeve and skin colours, read once from its front-facing frame, so the arms drawn for drinking
+  // and punching match the clothes.
+  const TONES = {};
+  function tones(id) {
+    if (TONES[id]) return TONES[id]; const im = SPR[id]; if (!im) return { sleeve: '#888', skin: '#d9a77f', line: '#2a1d16' };
+    const [c, k] = mk(48, 48); k.drawImage(im, 9 * 48, 0, 48, 48, 0, 0, 48, 48); const d = k.getImageData(0, 0, 48, 48).data;
+    const mode = (x0, y0, x1, y1, ok) => { const m = new Map(); for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) { const i = (y * 48 + x) * 4; if (d[i + 3] < 200) continue; const r = d[i], g2 = d[i + 1], b = d[i + 2]; if (ok && !ok(r, g2, b)) continue; const key = `${r},${g2},${b}`; m.set(key, (m.get(key) || 0) + 1); } let best = null, n = 0; for (const [kk, v] of m) if (v > n) { n = v; best = kk; } return best ? `rgb(${best})` : null; };
+    const skin = mode(18, 12, 30, 24, (r, g2, b) => r > 150 && r > b + 30 && g2 > 90) || '#d9a77f';
+    const sleeve = mode(15, 19, 33, 25, (r, g2, b) => r + g2 + b > 60) || '#777';
+    return (TONES[id] = { skin, sleeve, line: '#21170f' });
   }
+  function thick(x0, y0, x1, y1, w, col) { const n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0))); g.fillStyle = col; for (let i = 0; i <= n; i++) { const t = i / n; g.fillRect(Math.round(x0 + (x1 - x0) * t - w / 2), Math.round(y0 + (y1 - y0) * t - w / 2), w, w); } }
+  function arm(c, sx, sy, hx, hy) { const T = tones(c.id); thick(sx, sy, hx, hy, 4, T.line); thick(sx, sy, hx, hy, 2, T.sleeve); px(g, hx - 2, hy - 2, 4, 4, T.line); px(g, hx - 1, hy - 1, 3, 3, T.skin); }
+  function glass(x, y, lvl, tilt) {   // a half-litre mug of Pilsner; tilt > 0 leans it toward the mouth
+    const t = Math.round(tilt * 2);
+    px(g, x - 1, y - 1, 7, 9, 'rgba(25,18,12,0.7)'); px(g, x, y, 5, 7, 'rgba(225,238,242,0.75)');
+    const L = Math.round(clamp(lvl, 0, 1) * 6); if (L) { px(g, x, y + 7 - L, 5, L, '#e3a92e'); px(g, x, y + 7 - L - (t > 0 ? 0 : 1), 5, 2, '#fbf6e8'); }
+    px(g, x + 4, y + 1, 1, 5, 'rgba(255,255,255,0.7)'); px(g, x + 5, y + 2, 2, 1, 'rgba(225,238,242,0.9)'); px(g, x + 6, y + 2, 1, 3, 'rgba(225,238,242,0.9)');
+  }
+  // Drinking: the mug comes up to the mouth, the head tips back, a few swallows, and down again.
+  // Punching: a short wind-up, the arm shoots out at full length with a lean into it, and back.
   function drawPerson(c, ox, oy) {
     const im = SPR[c.id]; if (!im) return; const [sx, M, d] = frameOf(c);
-    const [fx2, fy2] = dirVec(c.dir), lunge = c.punchT > 0 ? Math.sin((0.28 - c.punchT) / 0.28 * Math.PI) * 4 : 0, shake = c.hitT > 0 ? (Math.random() - 0.5) * 2 : 0;
+    const [fx2, fy2] = dirVec(c.dir);
+    const pk = c.punchT > 0 ? 1 - c.punchT / 0.32 : -1, lean = pk < 0 ? 0 : pk < 0.25 ? -1.5 : pk < 0.65 ? 3 : 3 * (1 - (pk - 0.65) / 0.35);
     const sway = c.moving ? Math.sin(now * 2.3 + c.x * 0.01) * c.drunk * 2 : 0;
-    const x = Math.round(c.x - ox + fx2 * lunge + shake + sway) - 24, y = Math.round(c.y - oy + fy2 * lunge * 0.5) - 44;
-    if (c.seat >= 0) {   // sitting: the upper body on the bench, legs under the table
-      const top = 31; g.drawImage(im, sx, 0, M.fw, top, x, y + 9, M.fw, top);
-      drawGlass(c, x, y + 6, d); return;
+    const x = Math.round(c.x - ox + fx2 * lean + sway) - 24, y = Math.round(c.y - oy + fy2 * lean * 0.5) - 44;
+    const sip = c.sipT > 0 ? 1.3 - c.sipT : -1, up = sip < 0 ? 0 : sip < 0.3 ? sip / 0.3 : sip < 1.0 ? 1 : (1.3 - sip) / 0.3, tip = up >= 1 ? 1 : 0;
+    const flinch = c.hitT > 0 ? c.hitT / 0.5 : 0;
+    if (flinch) { g.save(); g.translate(x + 24, y + 44); g.rotate(-fx2 * 0.12 * flinch); g.translate(-x - 24, -y - 44); }
+    if (c.seat >= 0) { g.drawImage(im, sx, 0, M.fw, 31, x, y + 9 - tip, M.fw, 31); }
+    else { const br = c.moving ? 0 : ((now + c.x * 0.01) % 3.4 > 1.7 ? 1 : 0), cut = 29;
+      g.drawImage(im, sx, cut, M.fw, M.fh - cut, x, y + cut, M.fw, M.fh - cut); g.drawImage(im, sx, 0, M.fw, cut + 1, x, y + br - tip, M.fw, cut + 1); }
+    const by2 = c.seat >= 0 ? 9 : 0;   // seated people sit lower
+    // Body points measured on the walk sheets (48 px frames, feet at row 44): shoulders near row 21, the mouth near
+    // row 16 (front) or 18 (side), the hanging hand near row 31.
+    const P = d === 0 ? { sh: [29, 21], rest: [30, 31], mouth: [24, 16], pSh: [18, 21] }
+            : d === 1 ? { sh: [24, 22], rest: [27, 31], mouth: [30, 18], pSh: [24, 22] }
+            : d === 3 ? { sh: [24, 22], rest: [21, 31], mouth: [18, 18], pSh: [24, 22] }
+            :           { sh: [30, 21], rest: [31, 31], mouth: [24, 14], pSh: [18, 21] };
+    const at = (q, dy = 0) => [x + q[0], y + q[1] + by2 + dy];
+    // the arm with the beer
+    if (c.beer >= 0 && d !== 2) {
+      const [shX, shY] = at(P.sh), [rx, ry] = at(P.rest), [mx, my] = at(P.mouth, -tip);
+      const hx = rx + (mx - rx) * up, hy = ry + (my - ry) * up;
+      if (up > 0.05) arm(c, shX, shY, hx, hy); else { const T = tones(c.id); px(g, hx - 1, hy - 1, 3, 3, T.skin); }
+      const gx = d === 3 ? hx - 5 : d === 1 ? hx : hx - 2 - 3 * up, gy = hy - 4 - up * 2;
+      glass(Math.round(gx), Math.round(gy), c.beer, up);
+      if (tip && Math.floor(now * 4) % 2 === 0) px(g, mx, my + 4, 1, 1, 'rgba(255,255,255,0.6)');   // a swallow
     }
-    const br = c.moving ? 0 : ((now + c.x * 0.01) % 3.4 > 1.7 ? 1 : 0), cut = 29;
-    g.drawImage(im, sx, cut, M.fw, M.fh - cut, x, y + cut, M.fw, M.fh - cut); g.drawImage(im, sx, 0, M.fw, cut + 1, x, y + br, M.fw, cut + 1);
-    if (d !== 2) drawGlass(c, x, y, d);
-    if (c.punchT > 0) { const k = (0.28 - c.punchT) / 0.28, hx = Math.round(c.x - ox + fx2 * (10 + lunge * 2)), hy = Math.round(c.y - oy - 22 + fy2 * 6); px(g, hx - 1, hy - 1, 4, 4, '#e2b391'); px(g, hx - 1, hy - 1, 4, 1, '#c48f6b'); if (k > 0.2) for (let i = 1; i < 4; i++) px(g, hx - fx2 * i * 3, hy + (i % 2), 2, 1, `rgba(255,255,255,${0.5 - i * 0.12})`); }
+    // the punching arm
+    if (pk >= 0) {
+      const side = d === 3 ? -1 : 1, ext = pk < 0.25 ? -2 : pk < 0.65 ? 12 : 12 * (1 - (pk - 0.65) / 0.35);
+      const [shX, shY] = at(P.pSh);
+      const hx = d === 1 || d === 3 ? shX + side * (4 + ext * 0.85) : shX + (d === 0 ? 1 : 0), hy = d === 0 ? shY + 3 + ext * 0.4 : d === 2 ? shY - 3 - ext * 0.4 : shY;
+      arm(c, shX, shY, hx, hy); const T = tones(c.id); px(g, hx - 2, hy - 2, 5, 5, T.line); px(g, hx - 1, hy - 1, 4, 4, T.skin);
+      if (pk > 0.25 && pk < 0.6) for (let i = 1; i <= 3; i++) px(g, hx - fx2 * (4 + i * 3), hy - fy2 * (4 + i * 3) + (i % 2), fx2 ? 3 : 1, fx2 ? 1 : 3, `rgba(255,255,255,${0.55 - i * 0.15})`);
+    }
+    if (flinch) g.restore();
   }
   function drawStars(c, ox, oy) { if (c.starsT <= 0) return; const X = c.x - ox, Y = c.y - oy - (c.seat >= 0 ? 38 : 48); for (let i = 0; i < 3; i++) { const a = now * 6 + i * 2.09; const sx2 = X + Math.cos(a) * 9, sy2 = Y + Math.sin(a) * 3; px(g, sx2 - 1, sy2, 3, 1, '#ffe25a'); px(g, sx2, sy2 - 1, 1, 3, '#ffe25a'); } }
   function blob(x, y, rx, ry, a) { g.save(); g.translate(x, y); g.scale(1, ry / rx); const gr = g.createRadialGradient(0, 0, 0, 0, 0, rx); gr.addColorStop(0, `rgba(30,16,8,${a})`); gr.addColorStop(0.6, `rgba(30,16,8,${a * 0.6})`); gr.addColorStop(1, 'rgba(30,16,8,0)'); g.fillStyle = gr; g.fillRect(-rx, -rx, rx * 2, rx * 2); g.restore(); }
-  let camX = 0, camY = 0;
+  let camX = 0, camY = 0, view = [0, 0];
   function draw() {
     const s = me ? sceneOf(me) : PUB, d = me ? me.drunk : 0;
     const fx = me ? me.x + Math.sin(now * 0.7) * d * 8 : s.W / 2 + Math.sin(now * 0.07) * 180, fy = me ? me.y + Math.cos(now * 0.53) * d * 5 : s.H / 2 - 30 + Math.sin(now * 0.05) * 30;
     const k = camSnap ? 1 : me ? 0.12 : 0.02; camSnap = false; camX += ((fx - VW / 2) - camX) * k; camY += ((fy - 20 - VH / 2) - camY) * k;
     const ox = Math.round(s.W + 24 < VW ? (s.W - VW) / 2 : clamp(camX, -12, s.W + 12 - VW)), oy = Math.round(s.H + s.WALL + 24 < VH ? (s.H - s.WALL - VH) / 2 + 0 : clamp(camY, -s.WALL - 8, s.H + 14 - VH));
     g.fillStyle = '#0d0907'; g.fillRect(0, 0, VW, VH);
+    view = [ox, oy];
     g.drawImage(s.floor, -ox, -oy); g.drawImage(s.wall, -ox, -s.WALL - oy);
     liveWall(s, ox, oy);
     for (const sp of spills) if (sp.scene === s.id && now - sp.t < 90) { const a = 0.35 * (1 - (now - sp.t) / 90); g.fillStyle = `rgba(190,140,40,${a})`; g.beginPath(); g.ellipse(sp.x - ox, sp.y - oy, 7, 3, 0, 0, 6.283); g.fill(); }
@@ -463,7 +550,8 @@
     if (s.id === 'street') tramItem(items, ox, oy);
     items.sort((a, b) => a.y - b.y).forEach(i => i.d());
     px(g, -ox - 12, -s.WALL - oy, 12, s.H + s.WALL + 20, '#1c120b'); px(g, s.W - ox, -s.WALL - oy, 12, s.H + s.WALL + 20, '#1c120b'); px(g, -ox - 12, s.H - oy, s.W + 24, 14, '#24170e');
-    if (s.id === 'pub') { px(g, s.W - ox - 2, 190 - oy, 14, 40, '#120a06'); px(g, s.W - ox, 190 - oy, 2, 40, '#6b4a30'); }
+    if (s.id === 'pub') { px(g, -ox - 12, 200 - oy, 14, 46, '#120a06'); px(g, -ox, 200 - oy, 2, 46, '#6b4a30');   // the way out, in the left wall
+      for (const wy of SIDE_WINDOWS) { px(g, s.W - ox, wy - oy, 4, 40, '#d9c9b2'); px(g, s.W - ox + 1, wy + 2 - oy, 3, 36, '#2a3550'); } }
     if (s.id === 'wc') { px(g, 86 - ox, s.H - 2 - oy, 38, 16, '#5a3a22'); }
     light(s, ox, oy);
     for (const c of here) drawStars(c, ox, oy);
@@ -473,19 +561,20 @@
     if (fade > 0) { g.fillStyle = `rgba(8,5,3,${1 - Math.abs(fade - 0.5) * 2})`; g.fillRect(0, 0, VW, VH); }
   }
   function liveWall(s, ox, oy) {
-    if (s.id === 'pub') {
-      for (const w of WINDOWS) { const X = w.x - ox, Y = -s.WALL - oy;
-        px(g, X, Y + 9, w.w, 32, '#0f1830'); for (let i = 0; i < 4; i++) { const lx = X + 4 + i * 11; px(g, lx, Y + 14, 5, 7, hash2(i, w.x, 1) > 0.4 ? '#e9b45c' : '#26304a'); px(g, lx, Y + 27, 5, 7, hash2(i, w.x, 2) > 0.5 ? '#e0a24e' : '#26304a'); }
-        const tram = tramPos(); if (tram && tram.x > w.x * 1.2 - 300 && tram.x < w.x * 1.2 + 40) px(g, X, Y + 33, w.w, 6, 'rgba(255,220,150,0.6)');
-        px(g, X, Y + 36, w.w, 5, '#3a3f4a'); glow(X + w.w / 2, Y + 30, 14, '255,190,110', 0.5);
-        for (const side of [0, 1]) { const sway = Math.sin(now * 0.7 + w.x + side) * 1.5; for (let k = 0; k < 9; k++) { const cx = side ? X + w.w - 1 - k : X + k; px(g, cx + (k > 5 ? sway : 0), Y + 9, 1, 32, `rgba(246,240,228,${0.55 - k * 0.04})`); } } }
-      { const X = 19 - ox, Y = -s.WALL + 4 - oy, t = now * 0.8; px(g, X, Y, 32, 8, '#cfe2ea'); px(g, X + 15, Y, 1, 8, '#b33'); for (let i = 0; i < 6; i++) px(g, X + 3 + ((i * 7 + t * (i % 2 ? 9 : -7)) % 26 + 26) % 26, Y + 2 + (i % 3) * 2, 2, 2, i < 3 ? '#c22' : '#225'); px(g, X + ((t * 12) % 30), Y + 4, 1, 1, '#000'); }
-      { const X = 300 - ox, Y = -s.WALL + 20 - oy, h = (clock / 60) % 12, m = clock % 60; pline(g, [[X, Y], [X + Math.sin(h / 12 * 6.283) * 4, Y - Math.cos(h / 12 * 6.283) * 4]], '#2b2420'); pline(g, [[X, Y], [X + Math.sin(m / 60 * 6.283) * 6, Y - Math.cos(m / 60 * 6.283) * 6]], '#2b2420'); }
+    if (s.id === 'pub') {   // through the arched windows: Korunní at night, a lamp, and the tram's light sliding past
+      const tram = tramPos();
+      for (const a of ARCHES) { const X = a.x - ox, Y = -s.WALL - oy + 12, r = a.w / 2;
+        g.save(); g.beginPath(); g.rect(X, Y + r, a.w, s.WALL - 20 - r); g.arc(X + r, Y + r, r, Math.PI, 0); g.clip();
+        px(g, X, Y, a.w, 30 + r, '#0f1830'); for (let i = 0; i < 3; i++) px(g, X + 3 + i * 11, Y + 6, 6, 8, hash2(i, a.x, 1) > 0.4 ? '#e9b45c' : '#26304a');
+        px(g, X, Y + 46, a.w, 20, '#262a33'); glow(X + r, Y + 34, 18, '255,190,110', 0.5);
+        if (tram && Math.abs(tram.x + 120 - (a.x * 1.3 + 100)) < 160) px(g, X, Y + 40, a.w, 8, 'rgba(255,214,140,0.75)');
+        g.restore();
+        for (const side of [0, 1]) { const sway = Math.sin(now * 0.7 + a.x + side) * 1.2; for (let k = 0; k < 7; k++) { const cx = side ? X + a.w - 1 - k : X + k; px(g, cx + (k > 4 ? sway : 0), Y + r + 4, 1, s.WALL - 26 - r, `rgba(246,240,228,${0.5 - k * 0.05})`); } } }
     }
     if (s.id === 'wc') { const ph = (now * 1.3) % 1; px(g, 97 - ox, -s.WALL + 35 + ph * 22 - oy, 1, 2, `rgba(170,200,220,${1 - ph})`); }   // the dripping tap
   }
   // tram 22: about once a real minute (an hour of the night) it rolls through Korunní, one way then the other
-  function tramPos() { const t = clock % 60; if (t > 12) return null; const right = Math.floor(clock / 60) % 2 === 0, k = t / 12; return { x: right ? -280 + k * (ST.W + 320) : ST.W + 40 - k * (ST.W + 320), y: right ? 104 : 144, right }; }
+  function tramPos() { const t = clock % 60; if (t > 12) return null; const right = Math.floor(clock / 60) % 2 === 0, k = t / 12; return { x: right ? -280 + k * (ST.W + 320) : ST.W + 40 - k * (ST.W + 320), y: right ? 110 : 150, right }; }
   function tramItem(items, ox, oy) {
     const T = tramPos(); if (!T) return;
     items.push({ y: T.y + 22, d: () => { const X = Math.round(T.x - ox), Y = Math.round(T.y - oy - 14), L = 240;
@@ -502,25 +591,25 @@
     g.globalCompositeOperation = 'multiply'; g.fillStyle = `rgb(${grade.map(Math.round).join(',')})`; g.fillRect(0, 0, VW, VH);
     g.globalCompositeOperation = 'lighter';
     if (s.id === 'pub') {
-      for (const L of CHANDELIERS) { const X = L.x - ox, Y = L.y - oy, fl = 0.97 + 0.03 * Math.sin(now * 3 + L.x); glow(X, Y, 160, '255,180,100', 0.22 * fl); glow(X, Y - 70, 40, '255,220,160', 0.45 * fl); glow(X, Y, 60, '255,214,160', 0.12); }
+      for (const L of CHANDELIERS) { const X = L.x - ox, Y = L.y - oy, fl = 0.97 + 0.03 * Math.sin(now * 3 + L.x); glow(X, Y, 150, '255,180,100', 0.22 * fl); glow(X, Y - L.hang, 40, '255,220,160', 0.45 * fl); glow(X, Y, 60, '255,214,160', 0.12); }
       for (const C of CANDLES) { const f = 0.8 + 0.2 * Math.sin(now * 9 + C.x) * Math.sin(now * 4.1 + C.y); glow(C.x - ox, C.y - oy, 26, '255,170,80', 0.22 * f); glow(C.x - ox, C.y - oy - 2, 5, '255,230,170', 0.6 * f); }
-      for (const w of WINDOWS) glow(w.x - ox + w.w / 2, -oy + 18, 50, '120,150,230', 0.08);
-      { const X = 35 - ox, Y = -s.WALL + 8 - oy, f = 0.6 + 0.4 * Math.abs(Math.sin(now * 5.3) * Math.sin(now * 1.7)); glow(X, Y + 18, 44, '170,200,255', 0.16 * f); }
-      glow(44 - ox, BAR.y + 60 - oy, 100, '255,170,80', 0.12);
+      for (const a of ARCHES) glow(a.x - ox + a.w / 2, -oy + 10, 50, '120,150,230', 0.1);
+      for (const wy of SIDE_WINDOWS) glow(s.W - ox, wy + 20 - oy, 60, '130,160,230', 0.1);
+      glow(BAR.x + BAR.w / 2 - ox, BAR.y + 10 - oy, 110, '255,170,80', 0.12); glow(BAR.x + BAR.w / 2 - ox, BAR.y - 14 - oy, 50, '235,245,255', 0.08);
     } else if (s.id === 'wc') {
       glow(105 - ox, -20 - oy, 160, '220,245,235', 0.22 * flick); glow(97 - ox, -s.WALL + 14 - oy, 30, '230,245,255', 0.1);
     } else {
-      for (const L of LAMPS) { glow(L.x - ox, L.y - oy - 66, 18, '255,220,160', 0.8); glow(L.x - ox, L.y - oy, 90, '255,170,90', 0.3); }
-      for (const lx of [412, 470, 528, 586]) glow(lx + 20 - ox, 6 - oy, 50, '255,180,90', 0.28);
-      glow(TAXI.x + 40 - ox, TAXI.y + 9 - oy, 4, '255,120,60', 0.5 + 0.4 * Math.sin(now * 2));   // a cigarette in the dark of the cab
+      for (const L of LAMPS) { glow(L.x - ox, L.y - oy - 88, 18, '255,220,160', 0.8); glow(L.x - ox, L.y - oy, 100, '255,170,90', 0.3); }
+      for (const ax of ARCHW) { glow(ax - ox, -28 - oy, 16, '255,200,120', 0.35); glow(ax - ox, 10 - oy, 46, '255,170,80', 0.22); }
+      glow(TAXI.x + 9 - ox, TAXI.y + 15 - oy, 4, '255,120,60', 0.5 + 0.4 * Math.sin(now * 2));   // a cigarette in the dark of the cab
       const T = tramPos(); if (T) { glow(T.x + 120 - ox, T.y - oy, 160, '255,230,170', 0.22); glow(T.x + (T.right ? 244 : -4) - ox, T.y - oy, 40, '255,250,220', 0.5); }
     }
     g.globalCompositeOperation = 'source-over';
     if (s.id === 'pub') {
       for (const sm of smoke) { const X = sm.x - ox, Y = sm.y - oy; if (X < -sm.r || X > VW + sm.r) continue; const gr = g.createRadialGradient(X, Y, 0, X, Y, sm.r); gr.addColorStop(0, 'rgba(220,205,185,0.07)'); gr.addColorStop(1, 'rgba(220,205,185,0)'); g.fillStyle = gr; g.fillRect(X - sm.r, Y - sm.r, sm.r * 2, sm.r * 2); }
-      for (let i = 0; i < 40; i++) { const L = CHANDELIERS[i % 2], a = now * 0.1 + i, X = L.x - ox + Math.sin(a * 0.7 + i) * 50, Y = L.y - oy - 40 + Math.sin(a * 0.43 + i * 2) * 40; px(g, X, Y, 1, 1, `rgba(255,236,200,${0.25 + 0.2 * Math.sin(now + i)})`); }
-      for (const L of CHANDELIERS) { const X = L.x - ox, Y = L.y - oy - 74, fl = 0.9 + 0.1 * Math.sin(now * 2 + L.x);
-        px(g, X - 1, Y - 120, 2, 112, '#6b5226'); px(g, X - 1, Y - 120, 1, 112, '#a88a48');
+      for (let i = 0; i < 40; i++) { const L = CHANDELIERS[i % 3], a = now * 0.1 + i, X = L.x - ox + Math.sin(a * 0.7 + i) * 50, Y = L.y - oy - L.hang / 2 + Math.sin(a * 0.43 + i * 2) * 30; px(g, X, Y, 1, 1, `rgba(255,236,200,${0.25 + 0.2 * Math.sin(now + i)})`); }
+      for (const L of CHANDELIERS) { const X = L.x - ox, Y = L.y - oy - L.hang, fl = 0.9 + 0.1 * Math.sin(now * 2 + L.x), rod = L.y - L.hang + PUB.WALL;
+        px(g, X - 1, Y - rod, 2, rod - 8, '#6b5226'); px(g, X - 1, Y - rod, 1, rod - 8, '#a88a48');
         for (let i = 0; i < 6; i++) { const a = i / 6 * 6.283; pline(g, [[X, Y - 9], [X + Math.cos(a) * 20, Y + Math.sin(a) * 7]], 'rgba(150,118,56,0.8)'); }
         const back = [], front = []; for (let k = 0; k < 12; k++) { const a = k / 12 * 6.283; (Math.sin(a) < 0 ? back : front).push(a); }
         const candle = a => { const bx = X + Math.cos(a) * 21, by2 = Y + Math.sin(a) * 7; px(g, bx - 1, by2 - 7, 3, 6, '#fff3d6'); px(g, bx - 1, by2 - 7, 1, 6, '#ffffff'); px(g, bx - 1, by2 - 1, 3, 2, '#8a6a2e'); };
@@ -531,7 +620,7 @@
     if (s.id === 'street') {   // the lime trees' canopies and the tram wires overhead
       for (const t of TREES) { const X = t.x - ox, Y = t.y - oy - 46, sw = Math.sin(now * 0.8 + t.x) * 1.5;
         for (let i = 0; i < 26; i++) { const a = i * 2.4, r = 6 + hash2(i, t.x, 2) * 22, bx = X + Math.cos(a) * r + sw, by2 = Y + Math.sin(a) * r * 0.6; g.fillStyle = ['#1f3a22', '#284a2a', '#2f5531', '#3a6638'][i % 4]; g.beginPath(); g.arc(bx, by2, 9 - r * 0.15, 0, 6.283); g.fill(); } }
-      for (const wy of [104, 144]) { px(g, -ox, wy - 40 - oy, ST.W, 1, 'rgba(20,20,24,0.8)'); }
+      for (const wy of [110, 150]) { px(g, CORNER - 10 - ox, wy - 46 - oy, ST.W, 1, 'rgba(20,20,24,0.8)'); }
     }
     const vg = g.createRadialGradient(VW / 2, VH / 2, Math.min(VW, VH) * 0.35, VW / 2, VH / 2, Math.max(VW, VH) * 0.72); vg.addColorStop(0, 'rgba(20,10,4,0)'); vg.addColorStop(1, `rgba(20,10,4,${0.5 + dr * 0.2})`); g.fillStyle = vg; g.fillRect(0, 0, VW, VH);
     g.restore();
@@ -603,28 +692,44 @@
   }
 
   // ================================================================== THE INTRO: who are you tonight?
-  function portrait(id) {
-    const f = SPR['face-' + id]; if (f) { const [c, k] = mk(64, 64); k.drawImage(f, 0, 0, 64, 64); return c; }
-    const [c, k] = mk(48, 34), im = SPR[id]; if (im) k.drawImage(im, 8 * 48, 2, 48, 34, 0, 0, 48, 34); return c;
-  }
+  // Each card holds a small canvas with the friend's own sprite: breathing at rest, walking in place when picked out.
+  let cardCv = [], hoverId = null;
   function renderCards(note) {
     const box = $('cards'); if (!box) return; const cl = claims();
     if (!box.childElementCount) for (const id of PLAYABLE) {
-      const b = document.createElement('button'); b.type = 'button'; b.className = 'card'; b.dataset.id = id;
-      const cv = portrait(id); cv.className = 'face'; const n = document.createElement('b'); n.textContent = NAMES[id]; const t = document.createElement('span'); t.textContent = TRAITS[id]; const st = document.createElement('i');
-      b.append(cv, n, t, st); b.addEventListener('click', () => enter(id)); box.append(b); }
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'card'; b.dataset.id = id; b.setAttribute('aria-label', `${NAMES[id]}, ${TRAITS[id]}`);
+      const [cv] = mk(48, 48); cv.className = 'spr'; const n = document.createElement('b'); n.textContent = NAMES[id];
+      b.append(cv, n); b.addEventListener('click', () => enter(id));
+      for (const ev of ['pointerenter', 'focus']) b.addEventListener(ev, () => { hoverId = id; pickInfo(); });
+      for (const ev of ['pointerleave', 'blur']) b.addEventListener(ev, () => { if (hoverId === id) { hoverId = null; pickInfo(); } });
+      box.append(b); cardCv.push({ id, cv, k: cv.getContext('2d') }); }
     for (const b of box.children) { const p = cl.get(b.dataset.id), mine = me && me.id === b.dataset.id, taken = p && !p.sameTab;
-      b.disabled = !!taken; b.classList.toggle('taken', !!taken); b.querySelector('i').textContent = mine ? 'ty' : taken ? 'hraje někdo' : 'volný'; }
+      b.disabled = !!taken; b.classList.toggle('taken', !!taken); b.classList.toggle('mine', !!mine); }
+    pickInfo();
     const n = viewers().length, line = $('intro-note');
     if (note) line.textContent = note;
     else line.textContent = room ? (n > 1 ? `Online · na stránce je vás ${n}. Každý hraje za jednoho.` : 'Online · zatím jsi tu sám. Pošli odkaz klukům.') : 'Hraješ sám. Online se hraje přes sdílený odkaz na tuhle stránku.';
+  }
+  function pickInfo() {
+    const id = hoverId, cl = claims(), face = $('pick-face'), k = face.getContext('2d'); k.imageSmoothingEnabled = false; k.clearRect(0, 0, 64, 64);
+    if (!id) { face.style.visibility = 'hidden'; $('pick-name').textContent = ''; $('pick-line').textContent = 'Najeď na někoho, klikni na toho, za koho hraješ.'; return; }
+    face.style.visibility = ''; const f = SPR['face-' + id]; if (f) k.drawImage(f, 0, 0, 64, 64);
+    const p = cl.get(id), taken = p && !p.sameTab;
+    $('pick-name').textContent = NAMES[id] + (taken ? ' · hraje někdo jiný' : me && me.id === id ? ' · to jsi ty' : '');
+    $('pick-line').textContent = TRAITS[id].charAt(0).toUpperCase() + TRAITS[id].slice(1) + '. ' + (LINES[id][0] || '');
+  }
+  function animateCards() {
+    if ($('intro').hidden) return;
+    for (const c of cardCv) { const im = SPR[c.id]; if (!im) continue; const walk = c.id === hoverId, f = walk ? 8 + Math.floor(now * 7) % 4 : 9, br = !walk && (now + c.id.length * 0.4) % 3.4 > 1.7 ? 1 : 0;
+      c.k.clearRect(0, 0, 48, 48); c.k.fillStyle = 'rgba(0,0,0,0.35)'; c.k.beginPath(); c.k.ellipse(24, 44, 8, 2.5, 0, 0, 6.283); c.k.fill();
+      c.k.drawImage(im, f * 48, 29, 48, 19, 0, 29, 48, 19); c.k.drawImage(im, f * 48, 0, 48, 30, 0, br, 48, 30); }
   }
   function showIntro(note) { $('intro').hidden = false; renderCards(note); const f = $('cards').querySelector('button:not(:disabled)'); if (f) f.focus(); }
   function enter(id) {
     const p = claims().get(id); if (p && !p.sameTab) { renderCards(`${NAMES[id]} už hraje někdo jiný.`); return; }
     if (me) leave(true);
     me = by(id); me.ctrl = 'me'; me.path = null; me.moving = false;
-    if (!me.present) { me.present = true; me.scene = 'pub'; me.x = PUB.W - 34; me.y = 214; }
+    if (!me.present) { me.present = true; me.scene = 'pub'; me.x = 34; me.y = 222; }
     $('intro').hidden = true; hudKey = ''; lastSent = ''; camSnap = true;
   }
   function leave(quiet) {
@@ -634,13 +739,13 @@
 
   // ================================================================== GO
   let last = performance.now();
-  function frame(t) { const dt = Math.min(0.05, (t - last) / 1000); last = t; update(dt); draw(); hud(); requestAnimationFrame(frame); }
+  function frame(t) { const dt = Math.min(0.05, (t - last) / 1000); last = t; update(dt); draw(); hud(); animateCards(); requestAnimationFrame(frame); }
   await loadArt();
   try { await document.fonts.load('10px VT323', 'Dvě děti, chlapi. Žena volala. Paťas Štěpa Pažout Saša Výčepní ťuk'); } catch (e) {}
   // seat the pub before the night starts: most of them already have a table
-  for (const c of cast) if (c.present && c.id !== 'barman' && c.id !== 'ado' && c.id !== 'kevin' && Math.random() < 0.85) { const i = freeSeatNear(PUB, c.x, c.y, 400); if (i >= 0) { sitDown(c, i); c.planT = 10 + Math.random() * 40; } }
+  for (const c of cast) if (c.present && !staff(c) && c.id !== 'ado' && c.id !== 'kevin' && Math.random() < 0.85) { const i = freeSeatNear(PUB, c.x, c.y, 400); if (i >= 0) { sitDown(c, i); c.planT = 10 + Math.random() * 40; } }
   $('load')?.remove();
-  window.__game = { cast, by, keys, use, drink, punch, enter, leave, isHost, context, SC, get me() { return me; }, setClock: m => { clock = m; }, tramPos };
+  window.__game = { cast, by, keys, use, drink, punch, enter, leave, isHost, context, SC, get me() { return me; }, setClock: m => { clock = m; }, tramPos, screenOf: c => [(c.x - view[0]) * SCALE, (c.y - view[1]) * SCALE] };
   showIntro(); connect();
   window.__ready = true;
   requestAnimationFrame(frame);

@@ -1,5 +1,5 @@
 {
- "spent": 1.730000000000001,
+ "spent": 1.8700000000000012,
  "done": {
   "patas": {
    "file": "art/raw/patas.gif",
@@ -104,6 +104,14 @@
   "face-pazout-b": {
    "file": "art/raw/face-pazout-b.png",
    "cost": 0.06
+  },
+  "barman2": {
+   "file": "art/raw/barman2.gif",
+   "cost": 0.07
+  },
+  "barman3": {
+   "file": "art/raw/barman3.gif",
+   "cost": 0.07
   }
  },
  "pending": {
@@ -132,6 +140,8 @@
   "sasa2": "0f0fa715-520a-465d-9459-377d5c868c2f",
   "face-kevin": "b19a055f-5b0c-4541-af87-f270790c026b",
   "face-sasa": "2e1c1565-6587-4023-959d-4b1fcc785db3",
-  "face-pazout-b": "2a1a509b-d75a-4307-afe2-f6796f804594"
+  "face-pazout-b": "2a1a509b-d75a-4307-afe2-f6796f804594",
+  "barman2": "2ba9aea0-18a5-4e69-a6cd-d78bde4f2ae0",
+  "barman3": "d7ba50cd-dc6d-42c5-b976-507cb6acf489"
  }
 }

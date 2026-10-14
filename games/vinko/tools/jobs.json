@@ -168,5 +168,21 @@
   "strength": 0.55,
   "prompt": "pixel art portrait of a man's face, short dark brown hair, round face with dark stubble, white collar",
   "input": "/tmp/claude-0/-home-user-praha/c4587557-9fc3-5c68-aa5e-415a56490ed2/scratchpad/face-pazout.png"
+ },
+ {
+  "name": "barman2",
+  "style": "rd_animation__four_angle_walking",
+  "w": 48,
+  "h": 48,
+  "seed": 2801,
+  "prompt": "a stocky Czech bartender in his forties with short dark hair and a short dark beard, a white shirt with rolled sleeves, a long brown leather apron, black trousers"
+ },
+ {
+  "name": "barman3",
+  "style": "rd_animation__four_angle_walking",
+  "w": 48,
+  "h": 48,
+  "seed": 2802,
+  "prompt": "a tall slim Czech bartender in his thirties with a shaved head and a red-brown beard, a white shirt, black trousers"
  }
 ]
